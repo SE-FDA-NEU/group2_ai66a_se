@@ -8,7 +8,7 @@ One-paragraph description of what your team is building goes here.
 | --- | --- | --- |
 | Nguyen Trong Dai | Dai-Nguyen1506 | Member |
 | Le Ba Phong | CaMapCon26 | Member |
-| Mai Tuan Manh | maimanhbel | NPC |
+| Mai Tuan Manh | maimanhbel | Member |
 | Pham Huu Gia An | happyhusky3303 | Member |
 | Mai Huy Dang | huydang2006 | Leader |
 
