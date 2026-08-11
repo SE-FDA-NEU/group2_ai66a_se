@@ -6,6 +6,7 @@ One-paragraph description of what your team is building goes here.
 
 | Name | GitHub username | Role |
 | --- | --- | --- |
+| Le Ba Phong | CaMapCon26 | Member |
 | Pham Huu Gia An | happyhusky3303 | Member |
 | Mai Huy Dang | huydang2006 | Leader |
 
