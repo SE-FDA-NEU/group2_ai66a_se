@@ -6,7 +6,7 @@ One-paragraph description of what your team is building goes here.
 
 | Name | GitHub username | Role |
 | --- | --- | --- |
-| Mai Tuan Manh_maimanhbel_NPC | | |
+| Mai Tuan Manh | maimanhbel | NPC |
 
 ## Setup
 
