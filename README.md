@@ -1,7 +1,16 @@
-*Group 2*
-Member:
-1. Mai Huy Đăng - Leader
-2. Nguyễn Trọng Đại
-3. Lê Bá Phong
-4. Phạm Hữu Gia Ân
-5. Mai Tuấn Mạnh
+# Team Project
+
+One-paragraph description of what your team is building goes here.
+
+## Team
+
+| Name | GitHub username | Role |
+| --- | --- | --- |
+| _add yourself here_ | | |
+
+## Setup
+
+```bash
+git clone <this-repo-url>
+cd <repo-name>
+```
