@@ -51,3 +51,8 @@ Thu thập insight ngoài dự kiến:
 - Ngoài những vấn đề vừa hỏi, bạn còn gặp khó khăn/bực bội nào khác trong quá trình săn sale mà chưa ai giải quyết được cho bạn không?
 
 ## Context
+
+- Bạn thường kiểm tra hoặc săn giá sản phẩm vào thời điểm nào trong ngày hoặc trong tuần?
+- Khi đó bạn thường ở đâu (ở nhà/phòng trọ, trên lớp/giảng đường, đang di chuyển...)?
+- Khi đó bạn thường đang làm gì?
+- Bạn có hay kiểm tra giá trong lúc đang học, làm việc khác, hoặc bận rộn không?
