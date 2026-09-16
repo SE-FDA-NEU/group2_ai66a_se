@@ -3,9 +3,7 @@
 ***Link làm việc chung:*** [Docs](https://docs.google.com/document/d/1xqGyDUoXLk4SYCvp9l83zuP17tEXFumfeysdwefFWVA/edit?usp=sharing)  
 ***Link bộ câu hỏi khảo sát trực tiếp:*** [Direct Survey](./02-direct-questions.md)  
 ***Link bộ câu hỏi khảo sát online:*** [Online Survey](./03-online-questions.md)  
-***Link bản final:***  [Final Survey](04-final.md)  
-***Link forms:*** [Forms](https://forms.gle/BsVX6rP5i2kSoKsd6)  
-***Link sheets:*** (Đang update)
+***Link câu trả lời:***  [Answers](04-answers.md)  
 
 ---
 
