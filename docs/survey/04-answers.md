@@ -127,7 +127,7 @@
     - Chi tiêu TMĐT dưới 1 triệu/tháng; 
     - Thường chọn shop ≥ 4.5 sao (yên tâm nhất 4.9 sao);
     - Ví dụ voucher không phù hợp: giảm 20% cho đơn 2 triệu trong khi mức chi tiêu không tới 2 triệu.
-- Quote: -
+- Quote: "Trước mình có mua một nồi chiên không dầu 4.5 lít gần 700k xong thì em họ của mình check trên máy điện thoại ở shopee cùng một shop thì kết quả là có một nồi chiên không dầu khác 5.5 lít giá cũng 700k."
 
 **Context:**
 - Thời điểm & bối cảnh sử dụng: 
@@ -143,7 +143,7 @@
 
 ---
 
-### Sinh viên Tâm lý năm 1
+### Đối tượng Ẩn danh
 
 **Identity:**
 - Vai trò: 
@@ -170,7 +170,7 @@
 - Số liệu cụ thể: 
     - Chi tiêu TMĐT dưới 5 triệu/tháng; 
     - Chênh lệch giá xảy ra sau 1 ngày (mua hôm trước, giá giảm hôm sau).
-- Quote: -
+- Quote: "Thỉnh thoảng mình có để ý thấy tình trạng nâng giá lên rồi gắn mác giảm giá sâu, thường bắt gặp ở các mặt hàng lướt qua dù bản thân không có nhu cầu mua."
 
 **Context:**
 - Thời điểm & bối cảnh sử dụng: 
