@@ -2,7 +2,7 @@
 
 ```
 Team:           Team 02 - Automated E-commerce Price Tracker  
-Topic:          <your assigned topic>  
+Topic:          A3
 Members:        Nguyen Trong Dai (11247268), Mai Huy Dang (11247269)
                 Pham Huu Gia An (11247254), Mai Tuan Manh (11247318),
                 Le Ba Phong (11247339)
@@ -11,7 +11,7 @@ Scrum Master:   @CaMapCon26   (Sprint 1)
 
 Repository:     https://github.com/SE-FDA-NEU/group2_ai66a_se.git;  
 Project board:  https://github.com/orgs/SE-FDA-NEU/projects/19/views/1;  
-Pull Request:   https://github.com/<org>/<repo>/pull/7  
+Pull Request:   https://github.com/SE-FDA-NEU/group2_ai66a_se/pull/56  
 Merge commit:   a1b2c3d
 
 Submitted by:   Nguyen Trong Dai
