@@ -1,18 +1,18 @@
 # Milestone 1 - Requirements Document
 
 ```
-Team:           Team 02 - Automated E-commerce Price Tracker  
+Team:           Team 02 - Automated E-commerce Price Tracker
 Topic:          A3
 Members:        Nguyen Trong Dai (11247268), Mai Huy Dang (11247269)
                 Pham Huu Gia An (11247254), Mai Tuan Manh (11247318),
                 Le Ba Phong (11247339)
 Product Owner:  @Dai-nguyen1506
-Scrum Master:   @CaMapCon26   (Sprint 1)  
+Scrum Master:   @CaMapCon26   (Sprint 1)
 
-Repository:     https://github.com/SE-FDA-NEU/group2_ai66a_se.git;  
-Project board:  https://github.com/orgs/SE-FDA-NEU/projects/19/views/1;  
-Pull Request:   https://github.com/SE-FDA-NEU/group2_ai66a_se/pull/56  
-Merge commit:   a1b2c3d
+Repository:     https://github.com/SE-FDA-NEU/group2_ai66a_se.git;
+Project board:  https://github.com/orgs/SE-FDA-NEU/projects/19/views/1;
+Pull Request:   https://github.com/SE-FDA-NEU/group2_ai66a_se/pull/56
+Merge commit:   4e720f6decdec7a4cd3393a0fa5eaac5efc06912
 
 Submitted by:   Nguyen Trong Dai
 ```
@@ -96,20 +96,20 @@ For students who shop on Shopee and TikTok Shop and want to buy at the right mom
 
 ## 4. User stories
 
-| ID | Story | Priority | Points |
-|---|---|---|---|
-| US01 | As Ha, I want to paste a Shopee or TikTok Shop product link and see its current price right away so that I can start tracking it without checking prices myself | P0 | 5 |
-| US02 | As Ha, I want to set a target price and be notified when the price reaches it so that I buy at the right moment without watching the price | P0 | 8 |
-| US03 | As Ha, I want to see a price-history chart for up to 30 days so that I know whether the current price is high or low compared with usual | P0 | 5 |
-| US04 | As Trang, I want to sign in with Google so that my tracked products and target prices are saved | P0 | 3 |
-| US05 | As Trang, I want to see all my tracked products on one page, each as a row with its price chart, name, star rating and labels, so that I can see at a glance which product is close to a good price | P0 | 5 |
-| US06 | As Ha, I want to be warned when a "discount" is actually above the usual price so that I am not fooled by a price that was raised and then cut | P1 | 5 |
-| US07 | As Trang, I want to see a Good price / Normal / Expensive label and choose "Buy when price is good" so that I do not have to invent a target price myself | P1 | 5 |
-| US08 | As Van, I want to sort my tracked products by current price so that I can compare shops selling the same item at a glance and pick the best one | P1 | 3 |
-| US09 | As Van, I want to see a product's shop, brand, ratings and customer reviews so that I avoid counterfeit or poor-quality goods | P1 | 5 |
-| US10 | As Van, I want to receive notifications via email and set quiet hours so that I still get alerts when my browser does not support push and I am not disturbed while sleeping | P1 | 3 |
-| US11 | As Van, I want to be warned before big sales so that I do not miss a flash sale | P2 | 3 |
-| US12 | As Admin, I want to manage the sale calendar so that the app warns users about upcoming sales accurately | P2 | 3 |
+| ID   | Story                                                                                                                                                                                               | Priority | Points |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ |
+| US01 | As Ha, I want to paste a Shopee or TikTok Shop product link and see its current price right away so that I can start tracking it without checking prices myself                                     | P0       | 5      |
+| US02 | As Ha, I want to set a target price and be notified when the price reaches it so that I buy at the right moment without watching the price                                                          | P0       | 8      |
+| US03 | As Ha, I want to see a price-history chart for up to 30 days so that I know whether the current price is high or low compared with usual                                                            | P0       | 5      |
+| US04 | As Trang, I want to sign in with Google so that my tracked products and target prices are saved                                                                                                     | P0       | 3      |
+| US05 | As Trang, I want to see all my tracked products on one page, each as a row with its price chart, name, star rating and labels, so that I can see at a glance which product is close to a good price | P0       | 5      |
+| US06 | As Ha, I want to be warned when a "discount" is actually above the usual price so that I am not fooled by a price that was raised and then cut                                                      | P1       | 5      |
+| US07 | As Trang, I want to see a Good price / Normal / Expensive label and choose "Buy when price is good" so that I do not have to invent a target price myself                                           | P1       | 5      |
+| US08 | As Van, I want to sort my tracked products by current price so that I can compare shops selling the same item at a glance and pick the best one                                                     | P1       | 3      |
+| US09 | As Van, I want to see a product's shop, brand, ratings and customer reviews so that I avoid counterfeit or poor-quality goods                                                                       | P1       | 5      |
+| US10 | As Van, I want to receive notifications via email and set quiet hours so that I still get alerts when my browser does not support push and I am not disturbed while sleeping                        | P1       | 3      |
+| US11 | As Van, I want to be warned before big sales so that I do not miss a flash sale                                                                                                                     | P2       | 3      |
+| US12 | As Admin, I want to manage the sale calendar so that the app warns users about upcoming sales accurately                                                                                            | P2       | 3      |
 
 ### Acceptance criteria and Tasks
 
@@ -126,6 +126,7 @@ Acceptance criteria:
 - Given I am viewing a product on /detail that I do not track, when I tap "Track this product", then it appears as a new row on /watchlist.
 
 Tasks:
+
 - Link input on /watchlist, with validation (Shopee, TikTok Shop, short links) - @Dai-Nguyen1506
 - Database lookup, API call when the product is missing, save the first price - @huydang2006
 - "Track this product" action on /detail - @CaMapCon26
@@ -135,6 +136,7 @@ Tasks:
 As Ha, I want to set a target price for a tracked product and be notified when the price drops to it so that I buy at the right moment without watching the price.
 
 Acceptance criteria:
+
 - Given I am tracking a product priced 239,000đ, when I set a target price of 195,000đ, then the target is saved and the product shows "Alert at 195,000đ".
 - Given the target is 195,000đ, when the price drops to 189,000đ, then I receive a notification within 6 minutes with the product name, the new price 189,000đ and a link to the product; tapping it opens the product page on Shopee (BR4).
 - Given the current price is 239,000đ, when I set a target of 250,000đ, then it is rejected with "Target must be lower than the current price 239,000đ" (BR1).
@@ -142,20 +144,24 @@ Acceptance criteria:
 - Given I was notified at 189,000đ, when the price rises to 196,000đ, then I receive "Price is now above your target of 195,000đ" within 6 minutes; if it later drops to 192,000đ I am notified again that the target is reached (BR2).
 
 Tasks:
+
 - Target price form and BR1 validation - @happyhusky3303
 - Job that refreshes prices every 5 minutes and sends notifications (BR2, BR4) - @maimanhbel
 - Link that opens the product page on the marketplace - @Dai-Nguyen1506
+
 #### US03 – See the 30-day price history · P0 · 5 points · Screen: /detail
 
 As Ha, I want to see a price-history chart for up to 30 days so that I know whether the current price is high or low compared with usual.
 
 Acceptance criteria:
+
 - Given a product has 30 days of data with a lowest price of 189,000đ and a highest price of 399,000đ, when I open /detail, then the chart shows 30 days and marks both 189,000đ and 399,000đ.
 - Given a product was added to the system 3 days ago, when I open /detail, then the chart shows only 3 days and the note "Only 3 days of data so far" (BR3, BR5).
 - Given I tap a point on the chart, when the point is selected, then its price and time are shown, for example "239,000đ – 18/09 14:00".
 - Given a phone screen 375px wide, when I open /detail, then the page has no horizontal scrolling.
 
 Tasks:
+
 - Store one price record every time a price is refreshed - @huydang2006
 - API that returns price history for a product - @CaMapCon26
 - Price chart that works on a phone screen - @happyhusky3303
@@ -172,6 +178,7 @@ Acceptance criteria:
 - Given I am signed in, when I open /, then I am redirected to /watchlist.
 
 Tasks:
+
 - Google Sign-In integration - @maimanhbel
 - /login page and a landing page with the sign-in option only - @Dai-Nguyen1506
 - Block signed-in-only pages for guests - @huydang2006
@@ -181,6 +188,7 @@ Tasks:
 As Trang, I want to see all my tracked products on one page, each as a row with its price chart, name, star rating and labels, so that I can see at a glance which product is close to a good price.
 
 Acceptance criteria:
+
 - Given I track 5 products, when I open /watchlist, then I see 5 rows, each with a price chart, product name, current price, star rating and labels, and the page loads within 2 seconds.
 - Given a product has 5 days of data, when I open /watchlist, then its chart shows 5 days and its price label reads "Not enough data to assess" (BR5).
 - Given I track 10 products, when I add an 11th, then it is rejected with "You can track at most 10 products" (BR8).
@@ -189,6 +197,7 @@ Acceptance criteria:
 - Given a phone screen 375px wide and 5 tracked products, when I open /watchlist, then all 5 rows are shown without horizontal scrolling.
 
 Tasks:
+
 - Product row with mini price chart, name, price, stars and labels - @CaMapCon26
 - API to add, remove and list tracked products, with BR8 check - @happyhusky3303
 - Responsive layout for phone screens - @maimanhbel
@@ -198,11 +207,13 @@ Tasks:
 As Ha, I want to be warned when a "discount" is actually above the usual price so that I am not fooled by a price that was raised and then cut.
 
 Acceptance criteria:
+
 - Given the 30-day median price is 195,000đ, the price was once raised to 399,000đ and the marketplace now shows "40% off" at 239,000đ, when I open /detail, then it shows "Fake discount: 23% above the usual price" (BR6).
 - Given the same product, when I open /watchlist, then its row shows the label "Fake discount" (BR6).
 - Given a product has 5 days of data, when I open /detail, then it shows "Not enough data to assess" instead of the warning (BR5).
 
 Tasks:
+
 - Fake-discount detection (30-day median × 1.10) - @Dai-Nguyen1506
 - Show the warning on /detail and the label on /watchlist rows - @huydang2006
 
@@ -211,24 +222,29 @@ Tasks:
 As Trang, I want to see a Good price / Normal / Expensive label and choose "Buy when price is good" so that I do not have to invent a target price myself.
 
 Acceptance criteria:
+
 - Given the lowest price in 30 days is 189,000đ, when the current price is 195,000đ, then the label "Good price" is shown because 195,000đ ≤ 189,000đ × 1.05 = 198,450đ (BR7).
 - Given the 30-day median is 195,000đ, when the current price is 239,000đ, then the label "Expensive – wait" is shown because 239,000đ > 195,000đ × 1.10 = 214,500đ; at 205,000đ the label is "Normal" (BR7).
 - Given I choose "Buy when price is good" instead of entering a number, when the label changes to "Good price", then I receive 1 notification within 6 minutes and am not notified again (BR2, BR4).
 - Given a product has 4 days of data, when I open /detail or /watchlist, then it shows "Not enough data to assess" instead of a price label (BR5).
 
 Tasks:
+
 - Price label logic - @CaMapCon26
 - "Buy when price is good" option in the tracking form - @happyhusky3303
+
 #### US08 – Sort tracked products by price · P1 · 3 points · Screen: /watchlist
 
 As Van, I want to sort my tracked products by current price so that I can compare shops selling the same item at a glance and pick the best one.
 
 Acceptance criteria:
+
 - Given I track 3 lamps priced 70,000đ, 40,000đ and 55,000đ, when I sort by price from low to high, then the rows appear in the order 40,000đ, 55,000đ, 70,000đ.
 - Given the same 3 lamps, when I sort by price from high to low, then the rows appear in the order 70,000đ, 55,000đ, 40,000đ.
 - Given I track 8 products, when I change the sort order, then all 8 rows are reordered within 1 second.
 
 Tasks:
+
 - Sort control on /watchlist - @maimanhbel
 - Sort logic by current price (ascending and descending) - @Dai-Nguyen1506
 
@@ -237,6 +253,7 @@ Tasks:
 As Van, I want to see a product's shop, brand, ratings and customer reviews so that I avoid counterfeit or poor-quality goods.
 
 Acceptance criteria:
+
 - Given a product sold by a shop with 4.8★ and 1,200 ratings, when I open /detail, then it shows the shop name, brand, product name and the label "Trusted" (BR10).
 - Given a shop with 4.9★ but only 12 ratings, when I open /detail, then it shows the label "Risky: few ratings" (BR10).
 - Given a shop with 4.5★ and 800 ratings, when I open /detail, then it shows the label "Needs caution" (BR10).
@@ -244,6 +261,7 @@ Acceptance criteria:
 - Given a tracked product from a "Trusted" shop, when I open /watchlist, then its row shows the label "Trusted" (BR10).
 
 Tasks:
+
 - Fetch shop name, brand, ratings and reviews from the marketplace API - @huydang2006
 - Shop trust label logic and /detail layout - @CaMapCon26
 
@@ -259,6 +277,7 @@ Acceptance criteria:
 - Given I am on /detail of a tracked product, when I tap "Notification settings", then /notifications opens; when I then tap "Back", I return to the same product on /detail.
 
 Tasks:
+
 - Notifications permission request - @happyhusky3303
 - Email notifications - @maimanhbel
 - /notifications page and saving quiet hours - @Dai-Nguyen1506
@@ -269,11 +288,13 @@ Tasks:
 As Van, I want to be warned before big sales so that I do not miss a flash sale.
 
 Acceptance criteria:
+
 - Given a big sale starts at 00:00 on Sunday and I track at least 1 product, when 00:00 on Friday (48 hours before) arrives, then I receive a notification with the sale name, its start time and the current price of my tracked product (BR12).
 - Given I track no products, when the 48-hour mark before a sale arrives, then I receive no notification (BR12).
 - Given I turn off "Sale alerts", when a sale is coming, then I receive no sale alert but still receive target-price notifications.
 
 Tasks:
+
 - Job that sends the 48-hour pre-sale notification - @huydang2006
 - "Sale alerts" switch on /notifications - @CaMapCon26
 
@@ -289,51 +310,52 @@ Acceptance criteria:
 - Given I am a regular user, when I open /admin/sales, then a 403 page is shown with the message "You do not have permission to view this page".
 
 Tasks:
+
 - Page to add, edit and delete sales - @happyhusky3303
 - Admin role check - @maimanhbel
 
 ## 5. Business rules
 
-| ID | Rule | Worked example |
-|---|---|---|
-| BR1 | A target price must be lower than the product's current price | Current price 239,000đ: setting 250,000đ → rejected; setting 239,000đ → rejected; setting 195,000đ → saved |
-| BR2 | When the price falls to or below the target, the system notifies once and does not repeat while the price stays at or below the target. When the price rises above the target, it sends one "above target" notice. If the price falls to or below the target again, it notifies again | Target 195,000đ. 189,000đ → "target reached" sent. 190,000đ → nothing. 196,000đ → "price is now above your target" sent. 210,000đ → nothing. 192,000đ → "target reached" sent a second time |
-| BR3 | When a user pastes a link, the system looks for the product in the database first. If found, it returns the stored data without calling the API. If not found, it calls the marketplace API, saves the product and starts recording price history from that moment. It does not retrieve prices from earlier days | Ha pastes a link at 21:00 on 21 Sep and the product has been in the database since 22 Aug → 30 days of history returned, 0 API calls. Another student pastes a link not yet stored at 09:00 on 1 Oct → 1 API call, price 239,000đ saved; the product's history starts at 09:00 on 1 Oct and has 3 days of data on 4 Oct |
-| BR4 | A product tracked by at least 1 user has its price refreshed every 5 minutes; a target-price notification is sent within 1 minute after the system detects the price reached the target (6 minutes at most in total) | Price drops at 16:02 → next refresh at 16:07 at the latest → notification arrives at 16:08 at the latest |
-| BR5 | Price labels and the fake-discount warning are shown only when a product has at least 7 days of data; with less, the app shows "Not enough data to assess" | Product added on 15 Sep: viewed on 19 Sep (4 days) → "Not enough data to assess"; viewed on 22 Sep (7 days) → price label shown |
-| BR6 | A product gets the "Fake discount" label when the marketplace shows a discount but the current price is more than 10% above the 30-day median price | Median 195,000đ → threshold 195,000 × 1.10 = 214,500đ. Marketplace shows "40% off" at 239,000đ > 214,500đ → labelled (23% above the usual price). Marketplace shows 205,000đ → not labelled |
-| BR7 | Price label: **Good price** when the current price ≤ the 30-day lowest price × 1.05; **Expensive** when it is > the 30-day median × 1.10; otherwise **Normal** | Lowest 189,000đ, median 195,000đ → Good price when ≤ 198,450đ, Expensive when > 214,500đ. 195,000đ → Good price; 205,000đ → Normal; 239,000đ → Expensive |
-| BR8 | Each user can track at most 10 products | Tracking 10 products and adding an 11th → rejected |
-| BR9 | Only one Shopee or TikTok Shop product link is accepted per submission (short links included) | An amazon.com link → rejected. A shopee.vn link → accepted. Text containing 2 links → rejected |
-| BR10 | Shop trust label: **Trusted** when ≥ 4.7★ and ≥ 500 ratings; **Risky** when < 4.3★ or < 50 ratings; all other cases are **Needs caution** | 4.8★ / 1,200 ratings → Trusted. 4.9★ / 12 ratings → Risky. 4.5★ / 800 ratings → Needs caution |
-| BR11 | Target-price notifications are sent at any hour unless the user sets quiet hours; a notification that occurs during quiet hours is sent when they end | Price hits the target at 02:00. No quiet hours → sent within 6 minutes. Quiet hours 23:00–07:00 → sent at 07:00 |
-| BR12 | A big sale is announced 48 hours in advance, only to users who track at least 1 product | Sale starts 00:00 Sunday → notice sent 00:00 Friday. User tracking 0 products → no notice |
+| ID   | Rule                                                                                                                                                                                                                                                                                                              | Worked example                                                                                                                                                                                                                                                                                                          |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BR1  | A target price must be lower than the product's current price                                                                                                                                                                                                                                                     | Current price 239,000đ: setting 250,000đ → rejected; setting 239,000đ → rejected; setting 195,000đ → saved                                                                                                                                                                                                              |
+| BR2  | When the price falls to or below the target, the system notifies once and does not repeat while the price stays at or below the target. When the price rises above the target, it sends one "above target" notice. If the price falls to or below the target again, it notifies again                             | Target 195,000đ. 189,000đ → "target reached" sent. 190,000đ → nothing. 196,000đ → "price is now above your target" sent. 210,000đ → nothing. 192,000đ → "target reached" sent a second time                                                                                                                             |
+| BR3  | When a user pastes a link, the system looks for the product in the database first. If found, it returns the stored data without calling the API. If not found, it calls the marketplace API, saves the product and starts recording price history from that moment. It does not retrieve prices from earlier days | Ha pastes a link at 21:00 on 21 Sep and the product has been in the database since 22 Aug → 30 days of history returned, 0 API calls. Another student pastes a link not yet stored at 09:00 on 1 Oct → 1 API call, price 239,000đ saved; the product's history starts at 09:00 on 1 Oct and has 3 days of data on 4 Oct |
+| BR4  | A product tracked by at least 1 user has its price refreshed every 5 minutes; a target-price notification is sent within 1 minute after the system detects the price reached the target (6 minutes at most in total)                                                                                              | Price drops at 16:02 → next refresh at 16:07 at the latest → notification arrives at 16:08 at the latest                                                                                                                                                                                                                |
+| BR5  | Price labels and the fake-discount warning are shown only when a product has at least 7 days of data; with less, the app shows "Not enough data to assess"                                                                                                                                                        | Product added on 15 Sep: viewed on 19 Sep (4 days) → "Not enough data to assess"; viewed on 22 Sep (7 days) → price label shown                                                                                                                                                                                         |
+| BR6  | A product gets the "Fake discount" label when the marketplace shows a discount but the current price is more than 10% above the 30-day median price                                                                                                                                                               | Median 195,000đ → threshold 195,000 × 1.10 = 214,500đ. Marketplace shows "40% off" at 239,000đ > 214,500đ → labelled (23% above the usual price). Marketplace shows 205,000đ → not labelled                                                                                                                             |
+| BR7  | Price label: **Good price** when the current price ≤ the 30-day lowest price × 1.05; **Expensive** when it is > the 30-day median × 1.10; otherwise **Normal**                                                                                                                                                    | Lowest 189,000đ, median 195,000đ → Good price when ≤ 198,450đ, Expensive when > 214,500đ. 195,000đ → Good price; 205,000đ → Normal; 239,000đ → Expensive                                                                                                                                                                |
+| BR8  | Each user can track at most 10 products                                                                                                                                                                                                                                                                           | Tracking 10 products and adding an 11th → rejected                                                                                                                                                                                                                                                                      |
+| BR9  | Only one Shopee or TikTok Shop product link is accepted per submission (short links included)                                                                                                                                                                                                                     | An amazon.com link → rejected. A shopee.vn link → accepted. Text containing 2 links → rejected                                                                                                                                                                                                                          |
+| BR10 | Shop trust label: **Trusted** when ≥ 4.7★ and ≥ 500 ratings; **Risky** when < 4.3★ or < 50 ratings; all other cases are **Needs caution**                                                                                                                                                                         | 4.8★ / 1,200 ratings → Trusted. 4.9★ / 12 ratings → Risky. 4.5★ / 800 ratings → Needs caution                                                                                                                                                                                                                           |
+| BR11 | Target-price notifications are sent at any hour unless the user sets quiet hours; a notification that occurs during quiet hours is sent when they end                                                                                                                                                             | Price hits the target at 02:00. No quiet hours → sent within 6 minutes. Quiet hours 23:00–07:00 → sent at 07:00                                                                                                                                                                                                         |
+| BR12 | A big sale is announced 48 hours in advance, only to users who track at least 1 product                                                                                                                                                                                                                           | Sale starts 00:00 Sunday → notice sent 00:00 Friday. User tracking 0 products → no notice                                                                                                                                                                                                                               |
 
 ## 6. Screens and flow
 
 Access: G = guest (not signed in), U = signed-in user, A = admin. A guest can only reach / and /login; every other screen requires sign-in.
 
-| Route | Purpose | Access | Priority |
-| --- | --- | --- | --- |
-| /   | Introduction Page and Landing page with the Google sign-in. A signed-in user is redirected to /watchlist | G   | P0  |
-| /login | Sign in with Google. Sends users to /watchlist and admins to /admin/sales | G   | P0  |
-| /watchlist | Main page. One row per tracked product: price chart, product name, current price, star rating and labels (price label, fake discount, shop trust). Paste a link to add a product, sort by price, remove a product. Tapping a row to opens /detail | U   | P0  |
-| /detail | Everything about one product: full 30-day chart with lowest and highest price, price label, fake-discount warning, set target price, "Track this product", shop name, brand, shop trust label, product rating and customer reviews, link to the marketplace page, and "Notification settings" which opens /notifications | U   | P0  |
-| /notifications | Notification channel (web push or email), quiet hours, sale alerts on/off. Opened from /detail; "Back" returns to that product | U   | P1  |
-| /admin/sales | Manage the sale calendar | A   | P2  |
+| Route          | Purpose                                                                                                                                                                                                                                                                                                                  | Access | Priority |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | -------- |
+| /              | Introduction Page and Landing page with the Google sign-in. A signed-in user is redirected to /watchlist                                                                                                                                                                                                                 | G      | P0       |
+| /login         | Sign in with Google. Sends users to /watchlist and admins to /admin/sales                                                                                                                                                                                                                                                | G      | P0       |
+| /watchlist     | Main page. One row per tracked product: price chart, product name, current price, star rating and labels (price label, fake discount, shop trust). Paste a link to add a product, sort by price, remove a product. Tapping a row to opens /detail                                                                        | U      | P0       |
+| /detail        | Everything about one product: full 30-day chart with lowest and highest price, price label, fake-discount warning, set target price, "Track this product", shop name, brand, shop trust label, product rating and customer reviews, link to the marketplace page, and "Notification settings" which opens /notifications | U      | P0       |
+| /notifications | Notification channel (web push or email), quiet hours, sale alerts on/off. Opened from /detail; "Back" returns to that product                                                                                                                                                                                           | U      | P1       |
+| /admin/sales   | Manage the sale calendar                                                                                                                                                                                                                                                                                                 | A      | P2       |
 
 Main path: / → /login → /watchlist → /detail → /notifications. A guest who opens /watchlist, /detail, /notifications or /admin/sales directly is redirected to /login.
 
 How each screen is reached:
 
-| Screen | Reached from |
-| --- | --- |
-| /   | Web Introduction (starting point) |
-| /login | / (sign in) |
-| /watchlist | /login (signed in); /detail (product tracked or back) |
-| /detail | /watchlist (tap a row); /notifications (back) |
-| /notifications | /detail (notification settings) |
-| /admin/sales | /login (admin account) |
+| Screen         | Reached from                                          |
+| -------------- | ----------------------------------------------------- |
+| /              | Web Introduction (starting point)                     |
+| /login         | / (sign in)                                           |
+| /watchlist     | /login (signed in); /detail (product tracked or back) |
+| /detail        | /watchlist (tap a row); /notifications (back)         |
+| /notifications | /detail (notification settings)                       |
+| /admin/sales   | /login (admin account)                                |
 
 **Flow diagram:**
 
