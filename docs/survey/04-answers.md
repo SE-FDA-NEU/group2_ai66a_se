@@ -36,8 +36,7 @@
 
 **Ghi chú:**
 
-- Các thông tin khác từ người dùng (Nếu trực tiếp): -
-- Các câu hỏi mở (Nếu là online): (Form online, 16/09/2026 0:40) Q22: như Quote; Q23: (bỏ trống). Đề xuất chọn: gặp vấn đề giá ảo thường xuyên, chủ động muốn xem lịch sử giá và độ uy tín shop, có ví dụ cụ thể và quote rõ → phù hợp Persona 1 “Thợ săn deal sành sỏi”.
+- Các câu hỏi mở: (Form online, 16/09/2026 0:40) Q22: như Quote; Q23: (bỏ trống). Đề xuất chọn: gặp vấn đề giá ảo thường xuyên, chủ động muốn xem lịch sử giá và độ uy tín shop, có ví dụ cụ thể và quote rõ → phù hợp Persona 1 “Thợ săn deal sành sỏi”.
 
 **Dùng làm Persona chính thức ?:** Có (Persona 1 – Thợ săn deal)
 
@@ -69,8 +68,7 @@
 
 **Ghi chú:**
 
-- Các thông tin khác từ người dùng (Nếu trực tiếp): -
-- Các câu hỏi mở (Nếu là online): (Form online, 16/09/2026 19:20) Q22: như Quote; Q23: “ko”. Đề xuất chọn: vừa học vừa làm, công nghệ cơ bản, chi tiêu cao, cần công cụ tự động và dễ dùng, thường xuyên theo dõi giá trong lúc bận → phù hợp Persona 2 “Người mua sắm bận rộn”.
+- Các câu hỏi mở: (Form online, 16/09/2026 19:20) Q22: như Quote; Q23: “ko”. Đề xuất chọn: vừa học vừa làm, công nghệ cơ bản, chi tiêu cao, cần công cụ tự động và dễ dùng, thường xuyên theo dõi giá trong lúc bận → phù hợp Persona 2 “Người mua sắm bận rộn”.
 
 **Dùng làm Persona chính thức ?:** Có (Persona 2 – Người mua sắm bận rộn)
 
@@ -102,8 +100,7 @@
 
 **Ghi chú:**
 
-- Các thông tin khác từ người dùng (Nếu trực tiếp): -
-- Các câu hỏi mở (Nếu là online): (Form online, 16/09/2026 19:59) Q22: “Không có”; Q23: “Không” → chưa có quote, cần bổ sung bằng phỏng vấn. Đề xuất chọn: người dùng nặng nhất mẫu (chi nhiều, săn thường xuyên, gặp vấn đề hằng tuần, canh giá cả lúc đang học) và có nhu cầu tự động hóa/cảnh báo rõ ràng → phù hợp Persona 2 “Người mua sắm bận rộn”.
+- Các câu hỏi mở: (Form online, 16/09/2026 19:59) Q22: “Không có”; Q23: “Không” → chưa có quote, cần bổ sung bằng phỏng vấn. Đề xuất chọn: người dùng nặng nhất mẫu (chi nhiều, săn thường xuyên, gặp vấn đề hằng tuần, canh giá cả lúc đang học) và có nhu cầu tự động hóa/cảnh báo rõ ràng → phù hợp Persona 2 “Người mua sắm bận rộn”.
 
 **Dùng làm Persona chính thức ?:** Có (Persona 2 – Người mua sắm bận rộn)
 
@@ -127,7 +124,7 @@
 - Rào cản/nỗi đau chính (Blocked by): Mua xong mới phát hiện giá giảm sâu hơn sau đó.
 - Tình huống cụ thể từng gặp: Từng gặp 4/5 tình huống: mua xong giá giảm mạnh hơn, quên sản phẩm muốn mua, bỏ lỡ flash sale vì không online đúng giờ, so sánh kỹ vẫn mua phải hàng không như mong muốn; đơn hàng bị shipper tự ý hoàn lại sau khi mua.
 - Số liệu cụ thể (%, phút, số lần/tháng, ngưỡng giá...): Gặp tình trạng không mong muốn “thỉnh thoảng” (≈ 1–2 lần/tháng); chi tiêu 3–5 triệu/tháng; ngưỡng giá: -.
-- Quote (1 câu trích dẫn nguyên văn): “:)) mua xong bị shipper tự ý hoàn lại”
+- Quote (1 câu trích dẫn nguyên văn): “mua xong bị shipper tự ý hoàn lại”
 
 **Context:**
 
@@ -135,8 +132,7 @@
 
 **Ghi chú:**
 
-- Các thông tin khác từ người dùng (Nếu trực tiếp): -
-- Các câu hỏi mở (Nếu là online): (Form online, 16/09/2026 21:25) Q22: như Quote; Q23: “Không hẳn”. Đề xuất chọn: săn sale thường xuyên, so sánh đa nền tảng, theo dõi giá cả khi chưa có ý định mua, gặp nhiều vấn đề về giá → phù hợp Persona 1 “Thợ săn deal sành sỏi”. Hạn chế: trải nghiệm bức xúc nêu ra thuộc về vận chuyển, không liên quan giá → nên hỏi thêm bằng phỏng vấn.
+- Các câu hỏi mở: (Form online, 16/09/2026 21:25) Q22: như Quote; Q23: “Không hẳn”. Đề xuất chọn: săn sale thường xuyên, so sánh đa nền tảng, theo dõi giá cả khi chưa có ý định mua, gặp nhiều vấn đề về giá → phù hợp Persona 1 “Thợ săn deal sành sỏi”. Hạn chế: trải nghiệm bức xúc nêu ra thuộc về vận chuyển, không liên quan giá → nên hỏi thêm bằng phỏng vấn.
 
 **Dùng làm Persona chính thức ?:** Có (Persona 1 – Thợ săn deal)
 

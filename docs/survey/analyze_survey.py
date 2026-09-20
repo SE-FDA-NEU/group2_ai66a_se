@@ -4,7 +4,7 @@ Phân tích khảo sát "Thói quen mua sắm & săn sale của học sinh, sinh
 
 Cách dùng:
     Để file CSV xuất từ Google Form trong cùng thư mục với script, sau đó chạy:
-    python analyze_survey.py <đường_dẫn_file.csv> [--out thong_ke.md]
+    python analyze_survey.py <đường_dẫn_file.csv> [--out 05-analyze-survey.md]
 
 Ndung:
   1) Kiểm tra dữ liệu (kích thước, ô trống, trùng lặp, khoảng trắng, mâu thuẫn).
@@ -420,7 +420,7 @@ def build_markdown(df):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("csv")
-    ap.add_argument("--out", default="thong_ke.md")
+    ap.add_argument("--out", default="05-analyze-survey.md")
     a = ap.parse_args()
     df = load(a.csv)
     check_data(df, a.csv)
