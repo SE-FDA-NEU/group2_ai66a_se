@@ -24,9 +24,9 @@ async def verify_action_token(email: str, reason: str, token: str, redis: Redis)
 
 def _get_otp_html_content(otp: str) -> tuple[str, str]:
     """Trả về (Tiêu đề email, Nội dung HTML email) cho xác minh tài khoản"""
-    subject = "Xác thực tài khoản - Schiffs Code FDA"
+    subject = "Xác thực tài khoản - Trakora App"
     title = "Xác thực tài khoản của bạn"
-    description = "Cảm ơn bạn đã sử dụng dịch vụ tại <strong>Schiffs Code FDA</strong>. Vui lòng sử dụng mã OTP bên dưới để hoàn tất việc xác thực tài khoản của bạn:"
+    description = "Cảm ơn bạn đã sử dụng dịch vụ tại <strong>Trakora App</strong>. Vui lòng sử dụng mã OTP bên dưới để hoàn tất việc xác thực tài khoản của bạn:"
 
     html = f"""<!DOCTYPE html>
 <html lang="vi">
@@ -128,7 +128,7 @@ def _get_otp_html_content(otp: str) -> tuple[str, str]:
     <div class="wrapper">
         <div class="container">
             <div class="header">
-                <h1>Schiffs Code FDA</h1>
+                <h1>Trakora App</h1>
             </div>
             <div class="content">
                 <div class="greeting">Xin chào,</div>
@@ -146,7 +146,7 @@ def _get_otp_html_content(otp: str) -> tuple[str, str]:
                 </div>
             </div>
             <div class="footer">
-                &copy; 2026 Schiffs Code FDA. All rights reserved.
+                &copy; 2026 Trakora App. All rights reserved.
             </div>
         </div>
     </div>
@@ -159,7 +159,7 @@ def _send_email_sync(to_email: str, subject: str, html_content: str) -> None:
     """Hàm gửi email đồng bộ chạy trong thread pool"""
     message = MIMEMultipart("alternative")
     message["Subject"] = subject
-    message["From"] = f"Schiffs Code FDA <{sender_email}>"
+    message["From"] = f"Trakora Security <{sender_email}>"
     message["To"] = to_email
 
     part = MIMEText(html_content, "html", "utf-8")
