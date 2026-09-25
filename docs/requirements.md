@@ -86,7 +86,7 @@ For students who shop on Shopee and TikTok Shop and want to buy at the right mom
 
 1. On Monday Van wants a new night lamp. She finds 4 shops on Shopee selling it for between 50,000đ and 100,000đ and cannot decide which to buy from.
 2. She opens the app, signs in with her Google account, then copies the 4 product links and adds them to the app one by one.
-3. The app shows the 4 products together, each with its price chart, current price, star rating and a trust label for its shop. Three products already have price history from other students; the fourth is new, so the app shows only today's price.
+3. The app shows the 4 products together, each with its current price, lowest and highest price, star rating and a trust label for its shop. Three products already have price history from other students; the fourth is new, so the app shows only today's price.
 4. Van orders the products from the cheapest to the most expensive and notices that one shop is marked as risky because it has very few reviews.
 5. She opens the product of the most trusted shop to read about the shop and the customer reviews, and decides to buy from it.
 6. She stops tracking the other 3 products, sets her desired price for the chosen one at 60,000đ, turns on notifications and goes back to her own things.
@@ -102,7 +102,7 @@ For students who shop on Shopee and TikTok Shop and want to buy at the right mom
 | US02 | As Ha, I want to set a target price and be notified when the price reaches it so that I buy at the right moment without watching the price                                                          | P0       | 8      |
 | US03 | As Ha, I want to see a price-history chart for up to 30 days so that I know whether the current price is high or low compared with usual                                                            | P0       | 5      |
 | US04 | As Trang, I want to sign in with Google so that my tracked products and target prices are saved                                                                                                     | P0       | 3      |
-| US05 | As Trang, I want to see all my tracked products on one page, each as a row with its price chart, name, star rating and labels, so that I can see at a glance which product is close to a good price | P0       | 5      |
+| US05 | As Trang, I want to see all my tracked products on one page, each as a row with its current price, lowest price, highest price, name, star rating and labels, so that I can see at a glance which product is close to a good price | P0       | 5      |
 | US06 | As Ha, I want to be warned when a "discount" is actually above the usual price so that I am not fooled by a price that was raised and then cut                                                      | P1       | 5      |
 | US07 | As Trang, I want to see a Good price / Normal / Expensive label and choose "Buy when price is good" so that I do not have to invent a target price myself                                           | P1       | 5      |
 | US08 | As Van, I want to sort my tracked products by current price so that I can compare shops selling the same item at a glance and pick the best one                                                     | P1       | 3      |
@@ -127,7 +127,7 @@ Acceptance criteria:
 
 Tasks:
 
-- Link input on /watchlist, with validation (Shopee, TikTok Shop, short links) - @Dai-Nguyen1506
+- "+" button and link input on /watchlist, with validation (Shopee, TikTok Shop, short links) - @Dai-Nguyen1506
 - Database lookup, API call when the product is missing, save the first price - @huydang2006
 - "Track this product" action on /detail - @CaMapCon26
 
@@ -183,14 +183,14 @@ Tasks:
 - /login page and a landing page with the sign-in option only - @Dai-Nguyen1506
 - Block signed-in-only pages for guests - @huydang2006
 
-#### US05 – See tracked products as price-chart rows · P0 · 5 points · Screen: /watchlist
+#### US05 – See tracked products as summary rows · P0 · 5 points · Screen: /watchlist
 
-As Trang, I want to see all my tracked products on one page, each as a row with its price chart, name, star rating and labels, so that I can see at a glance which product is close to a good price.
+As Trang, I want to see all my tracked products on one page, each as a row with its current price, lowest price, highest price, name, star rating and labels, so that I can see at a glance which product is close to a good price.
 
 Acceptance criteria:
 
-- Given I track 5 products, when I open /watchlist, then I see 5 rows, each with a price chart, product name, current price, star rating and labels, and the page loads within 2 seconds.
-- Given a product has 5 days of data, when I open /watchlist, then its chart shows 5 days and its price label reads "Not enough data to assess" (BR5).
+- Given I track 5 products, when I open /watchlist, then I see 5 rows, each with product name, current price, lowest price, highest price, star rating and labels, and the page loads within 2 seconds.
+- Given a product has 5 days of data, when I open /watchlist, then its price label reads "Not enough data to assess" (BR5).
 - Given I track 10 products, when I add an 11th, then it is rejected with "You can track at most 10 products" (BR8).
 - Given a tracked product, when I remove it, then its row disappears and I receive no more notifications about it.
 - Given a row on /watchlist, when I tap it, then /detail opens for that same product.
@@ -198,7 +198,7 @@ Acceptance criteria:
 
 Tasks:
 
-- Product row with mini price chart, name, price, stars and labels - @CaMapCon26
+- Product row with name, current price, lowest and highest price, stars and labels - @CaMapCon26
 - API to add, remove and list tracked products, with BR8 check - @happyhusky3303
 - Responsive layout for phone screens - @maimanhbel
 
@@ -339,7 +339,7 @@ Access: G = guest (not signed in), U = signed-in user, A = admin. A guest can on
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | -------- |
 | /              | Introduction Page and Landing page with the Google sign-in. A signed-in user is redirected to /watchlist                                                                                                                                                                                                                 | G      | P0       |
 | /login         | Sign in with Google. Sends users to /watchlist and admins to /admin/sales                                                                                                                                                                                                                                                | G      | P0       |
-| /watchlist     | Main page. One row per tracked product: price chart, product name, current price, star rating and labels (price label, fake discount, shop trust). Paste a link to add a product, sort by price, remove a product. Tapping a row to opens /detail                                                                        | U      | P0       |
+| /watchlist     | Main page. One row per tracked product: product name, current price, lowest price, highest price, star rating and labels (price label, fake discount, shop trust). Tap the "+" button and paste a link to add a product, sort by price, remove a product. Tapping a row to opens /detail                                                                        | U      | P0       |
 | /detail        | Everything about one product: full 30-day chart with lowest and highest price, price label, fake-discount warning, set target price, "Track this product", shop name, brand, shop trust label, product rating and customer reviews, link to the marketplace page, and "Notification settings" which opens /notifications | U      | P0       |
 | /notifications | Notification channel (web push or email), quiet hours, sale alerts on/off. Opened from /detail; "Back" returns to that product                                                                                                                                                                                           | U      | P1       |
 | /admin/sales   | Manage the sale calendar                                                                                                                                                                                                                                                                                                 | A      | P2       |
