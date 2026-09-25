@@ -13,7 +13,7 @@ class ErrorDetail:
 
     def throw(self, dynamic_message: str = None):
         """Ném lỗi nhanh"""
-        CustomAppException(self, dynamic_message)
+        return CustomAppException(self, dynamic_message)
 
 
 class CustomAppException(Exception):
