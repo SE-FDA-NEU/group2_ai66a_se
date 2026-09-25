@@ -1,0 +1,17 @@
+/* 
+  Globals.css
+  - Chứa các biến CSS toàn cục (Design tokens) lấy từ Figma (Colors, Typography, Spacing...).
+  - Ví dụ về biến CSS:
+  
+  :root {
+    --primary-color: #007bff;
+    --font-family-main: 'Inter', sans-serif;
+  }
+*/
+
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif; /* Bạn có thể đổi theo font Figma */
+}
