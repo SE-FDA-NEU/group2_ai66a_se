@@ -172,11 +172,13 @@ As Trang, I want to sign in with Google so that my tracked products and target p
 
 Acceptance criteria:
 
-- Given I am not signed in, when I register a new email account or sign in with valid email/password, then my session is saved and I land on `/watchlist`.
-- Given I am not signed in, when I choose Google sign-in and grant permission, then I land on `/watchlist` within 3 seconds.
-- Given I am not signed in, when I open `/watchlist`, `/detail`, `/notifications` or `/admin/sales` directly, then I am redirected to `/login`.
-- Given I am not signed in, when I open `/`, then the sign-in options are shown and there is no box for pasting a link.
-- Given I am signed in (including when reopening the browser), when I open `/`, then I am automatically redirected to `/watchlist` without having to log in again.
+- [ ] Given I am registering or signing in with Email, when I submit my email address, then a 6-digit OTP is sent to my email and I am prompted to enter the OTP code.
+- [ ] Given I am on the OTP verification step, when I enter a valid and unexpired OTP, then my account is verified, my session is saved, and I land on `/watchlist`.
+- [ ] Given I am on the OTP verification step, when I enter an incorrect or expired OTP, then an error message is shown and I remain on the verification screen.
+- [ ] Given I am not signed in, when I choose Google sign-in and grant permission, then I land on `/watchlist` within 3 seconds.
+- [ ] Given I am not signed in, when I open `/watchlist`, `/detail`, `/notifications` or `/admin/sales` directly, then I am redirected to `/login`.
+- [ ] Given I am not signed in, when I open `/`, then the sign-in options are shown and there is no box for pasting a link.
+- [ ] Given I am signed in (including when reopening the browser), when I open `/`, then I am automatically redirected to `/watchlist` without having to log in again.
 
 Tasks:
 
