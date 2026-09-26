@@ -19,9 +19,9 @@ Submitted by:   Nguyen Trong Dai
 
 ## Proof board
 
-![Board start for Sprint 1](./images/Sprint_01_Board_Start.png)
+![Board start for Sprint 1](./images/sprint-01/Sprint_01_Board_Start.png)
 
-![Board end for Srpint 1](./images/Sprint_01_Board_End.png)
+![Board end for Srpint 1](./images/sprint-01/Sprint_01_Board_End.png)
 
 ---
 
@@ -101,7 +101,7 @@ For students who shop on Shopee and TikTok Shop and want to buy at the right mom
 | US01 | As Ha, I want to paste a Shopee or TikTok Shop product link and see its current price right away so that I can start tracking it without checking prices myself                                     | P0       | 5      |
 | US02 | As Ha, I want to set a target price and be notified when the price reaches it so that I buy at the right moment without watching the price                                                          | P0       | 8      |
 | US03 | As Ha, I want to see a price-history chart for up to 30 days so that I know whether the current price is high or low compared with usual                                                            | P0       | 5      |
-| US04 | As Trang, I want to sign in with Google or Email so that my tracked products and target prices are saved                                                                                                     | P0       | 3      |
+| US04 | As Trang, I want to register and sign in with Google or Email (with a nickname, OTP verification and password recovery) so that my tracked products and target prices are saved                            | P0       | 8      |
 | US05 | As Trang, I want to see all my tracked products on one page, each as a row with its current price, lowest price, highest price, name, star rating and labels, so that I can see at a glance which product is close to a good price | P0       | 5      |
 | US06 | As Ha, I want to be warned when a "discount" is actually above the usual price so that I am not fooled by a price that was raised and then cut                                                      | P1       | 5      |
 | US07 | As Trang, I want to see a Good price / Normal / Expensive label and choose "Buy when price is good" so that I do not have to invent a target price myself                                           | P1       | 5      |
@@ -166,24 +166,46 @@ Tasks:
 - API that returns price history for a product - @CaMapCon26
 - Price chart that works on a phone screen - @happyhusky3303
 
-#### US04 – Sign in with Google or Email · P0 · 3 points · Screen: /login
+#### US04 – Register and sign in with Google or Email · P0 · 8 points · Screens: /register, /login, /forgot-password
 
-As Trang, I want to sign in with Google or Email so that my tracked products and target prices are saved.
+As Trang, I want to register and sign in with Google or Email so that my tracked products and target prices are saved.
 
-Acceptance criteria:
+Acceptance criteria — Register:
 
-- [ ] Given I am registering or signing in with Email, when I submit my email address, then a 6-digit OTP is sent to my email and I am prompted to enter the OTP code.
-- [ ] Given I am on the OTP verification step, when I enter a valid and unexpired OTP, then my account is verified, my session is saved, and I land on `/watchlist`.
-- [ ] Given I am on the OTP verification step, when I enter an incorrect or expired OTP, then an error message is shown and I remain on the verification screen.
-- [ ] Given I am not signed in, when I choose Google sign-in and grant permission, then I land on `/watchlist` within 3 seconds.
-- [ ] Given I am not signed in, when I open `/watchlist`, `/detail`, `/notifications` or `/admin/sales` directly, then I am redirected to `/login`.
-- [ ] Given I am not signed in, when I open `/`, then the sign-in options are shown and there is no box for pasting a link.
-- [ ] Given I am signed in (including when reopening the browser), when I open `/`, then I am automatically redirected to `/watchlist` without having to log in again.
+- Given I choose to register with Google, when I grant permission, then my nickname is taken automatically from my Google profile, my account is created, and I land on `/watchlist` (no extra field to fill in).
+- Given I choose to register with Email, when I open the register form, then I am asked for nickname, email, password and confirm password.
+- Given I fill in the Email register form, when password and confirm password do not match, then the message "Passwords do not match" is shown and the form is not submitted.
+- Given I submit a valid Email register form, when it is accepted, then a 6-digit OTP is sent to my email and I am prompted to enter it within 5 minutes (BR13).
+- Given I am on the OTP verification step, when I enter a valid, unexpired OTP, then my account is verified, my session is saved, and I land on `/watchlist`.
+- Given I am on the OTP verification step, when I enter an incorrect OTP, then an error is shown and I may try again, up to 5 attempts (BR13).
+- Given I have used all 5 attempts or the 5-minute window has passed, when I try again, then I am told the code has expired and offered a new OTP.
+
+Acceptance criteria — Sign in:
+
+- Given I am not signed in, when I choose Google sign-in and grant permission, then I land on `/watchlist` within 3 seconds, with no extra form.
+- Given I am not signed in, when I choose Email sign-in, then I am asked for email and password only (no OTP at this step).
+- Given I am not signed in, when I open `/watchlist`, `/detail`, `/notifications` or `/admin/sales` directly, then I am redirected to `/login`.
+- Given I am not signed in, when I open `/`, then the sign-in options (Google and Email) are shown and there is no box for pasting a link.
+- Given I am signed in (including when reopening the browser), when I open `/`, then I am automatically redirected to `/watchlist` without having to log in again.
+
+Acceptance criteria — Forgot password:
+
+- Given I am on `/login` and tap "Forgot password", when I enter my email, then a 6-digit OTP is sent to that email (BR13).
+- Given I enter a valid, unexpired OTP, when I submit it, then I am asked to enter and confirm a new password, and can then sign in with it.
+- Given the OTP is wrong or expired, when I submit it, then an error is shown and I am offered a new OTP, following the same 5-attempt/5-minute rule as registration (BR13).
+- Given I registered with Google only, when I try "Forgot password", then this option is not offered, since Google accounts have no app password to reset.
+
+Acceptance criteria — Nickname:
+
+- Given my account was created via Google, when I open my profile, then my nickname shows the one taken from Google, and I can edit and save a new one (BR14).
+- Given my account was created via Email, when I open my profile, then I can edit and save my nickname at any time (BR14).
 
 Tasks:
 
-- Sign-In with Google or Email - @maimanhbel
-- /login page and a landing page with the sign-in option only - @Dai-Nguyen1506
+- Google Sign-In and Email register/sign-in forms - @maimanhbel
+- OTP generation, delivery, expiry and attempt-limit logic (BR13) - @huydang2006
+- /login, /register, /forgot-password pages and a landing page with the sign-in options only - @Dai-Nguyen1506
+- Profile screen with editable nickname (BR14) - @CaMapCon26
 - Block signed-in-only pages for guests - @huydang2006
 
 #### US05 – See tracked products as summary rows · P0 · 5 points · Screen: /watchlist
@@ -194,7 +216,7 @@ Acceptance criteria:
 
 - Given I track 5 products, when I open /watchlist, then I see 5 rows, each with product name, current price, lowest price, highest price, star rating and labels, and the page loads within 2 seconds.
 - Given a product has 5 days of data, when I open /watchlist, then its price label reads "Not enough data to assess" (BR5).
-- Given I track 10 products, when I add an 11th, then it is rejected with "You can track at most 10 products" (BR8).
+- Given I already track 10 products, when I tap the "+" button, then the form to paste a link never opens, and I instead see "You have reached the limit of 10 tracked products" (BR8).
 - Given a tracked product, when I remove it, then its row disappears and I receive no more notifications about it.
 - Given a row on /watchlist, when I tap it, then /detail opens for that same product.
 - Given a phone screen 375px wide and 5 tracked products, when I open /watchlist, then all 5 rows are shown without horizontal scrolling.
@@ -328,37 +350,45 @@ Tasks:
 | BR5  | Price labels and the fake-discount warning are shown only when a product has at least 7 days of data; with less, the app shows "Not enough data to assess"                                                                                                                                                        | Product added on 15 Sep: viewed on 19 Sep (4 days) → "Not enough data to assess"; viewed on 22 Sep (7 days) → price label shown                                                                                                                                                                                         |
 | BR6  | A product gets the "Fake discount" label when the marketplace shows a discount but the current price is more than 10% above the 30-day median price                                                                                                                                                               | Median 195,000đ → threshold 195,000 × 1.10 = 214,500đ. Marketplace shows "40% off" at 239,000đ > 214,500đ → labelled (23% above the usual price). Marketplace shows 205,000đ → not labelled                                                                                                                             |
 | BR7  | Price label: **Good price** when the current price ≤ the 30-day lowest price × 1.05; **Expensive** when it is > the 30-day median × 1.10; otherwise **Normal**                                                                                                                                                    | Lowest 189,000đ, median 195,000đ → Good price when ≤ 198,450đ, Expensive when > 214,500đ. 195,000đ → Good price; 205,000đ → Normal; 239,000đ → Expensive                                                                                                                                                                |
-| BR8  | Each user can track at most 10 products                                                                                                                                                                                                                                                                           | Tracking 10 products and adding an 11th → rejected                                                                                                                                                                                                                                                                      |
-| BR9  | Only one Shopee or TikTok Shop product link is accepted per submission (short links included)                                                                                                                                                                                                                     | An amazon.com link → rejected. A shopee.vn link → accepted. Text containing 2 links → rejected                                                                                                                                                                                                                          |
+| BR8  | Each user can track at most 10 products. The "+" button is blocked as soon as the limit is reached — the paste-link form is never shown for an 11th product                                                                                                                                                       | Tracking 10 products, tapping "+" → form does not open, "You have reached the limit of 10 tracked products" is shown                                                                                                                                                                                                    |
+| BR9  | Only one Shopee or TikTok Shop product link is accepted per submission (short links included). *(Dev/test note: while Shopee/TikTok API access is not yet available, the same validation temporarily also accepts one Amazon link, for testing purposes only — this is not part of the official product scope.)* | An amazon.com link → rejected (official scope). A shopee.vn link → accepted. Text containing 2 links → rejected                                                                                                                                                                                                         |
 | BR10 | Shop trust label: **Trusted** when ≥ 4.7★ and ≥ 500 ratings; **Risky** when < 4.3★ or < 50 ratings; all other cases are **Needs caution**                                                                                                                                                                         | 4.8★ / 1,200 ratings → Trusted. 4.9★ / 12 ratings → Risky. 4.5★ / 800 ratings → Needs caution                                                                                                                                                                                                                           |
 | BR11 | Target-price notifications are sent at any hour unless the user sets quiet hours; a notification that occurs during quiet hours is sent when they end                                                                                                                                                             | Price hits the target at 02:00. No quiet hours → sent within 6 minutes. Quiet hours 23:00–07:00 → sent at 07:00                                                                                                                                                                                                         |
 | BR12 | A big sale is announced 48 hours in advance, only to users who track at least 1 product                                                                                                                                                                                                                           | Sale starts 00:00 Sunday → notice sent 00:00 Friday. User tracking 0 products → no notice                                                                                                                                                                                                                               |
+| BR13 | An OTP (Email registration and forgot-password) is 6 digits, expires after 5 minutes, and allows at most 5 attempts before it must be reissued                                                                                                                                                                    | OTP sent at 21:00 → valid until 21:05. 5 wrong entries before 21:05 → "code expired, request a new one"; correct on the 3rd try before 21:05 → accepted                                                                                                                                                                |
+| BR14 | A Google account's nickname defaults to the name from the Google profile; an Email account's nickname is the one entered at registration. Either way, the user can edit their nickname at any time from their profile                                                                                            | User registers with Google as "Trang Nguyen" → nickname "Trang Nguyen"; later edits it to "Trang" → nickname becomes "Trang" everywhere it is shown                                                                                                                                                                     |
 
 ## 6. Screens and flow
 
 Access: G = guest (not signed in), U = signed-in user, A = admin. A guest can only reach / and /login; every other screen requires sign-in.
 
-| Route          | Purpose                                                                                                                                                                                                                                                                                                                  | Access | Priority |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | -------- |
-| /              | Introduction Page and Landing page with the Google sign-in. A signed-in user is redirected to /watchlist                                                                                                                                                                                                                 | G      | P0       |
-| /login         | Sign in with Google. Sends users to /watchlist and admins to /admin/sales                                                                                                                                                                                                                                                | G      | P0       |
-| /watchlist     | Main page. One row per tracked product: product name, current price, lowest price, highest price, star rating and labels (price label, fake discount, shop trust). Tap the "+" button and paste a link to add a product, sort by price, remove a product. Tapping a row to opens /detail                                                                        | U      | P0       |
-| /detail        | Everything about one product: full 30-day chart with lowest and highest price, price label, fake-discount warning, set target price, "Track this product", shop name, brand, shop trust label, product rating and customer reviews, link to the marketplace page, and "Notification settings" which opens /notifications | U      | P0       |
-| /notifications | Notification channel (web push or email), quiet hours, sale alerts on/off. Opened from /detail; "Back" returns to that product                                                                                                                                                                                           | U      | P1       |
-| /admin/sales   | Manage the sale calendar                                                                                                                                                                                                                                                                                                 | A      | P2       |
+| Route            | Purpose                                                                                                                                                                                                                                                                                                                    | Access | Priority |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- |
+| /                | Introduction Page and Landing page with Google and Email sign-in. A signed-in user is redirected to /watchlist                                                                                                                                                                                                            | G      | P0       |
+| /register        | Create an account with Google (nickname taken from Google) or Email (nickname, email, password, confirm password, then OTP verification). Sends users to /watchlist on success                                                                                                                                          | G      | P0       |
+| /login           | Sign in with Google (straight through) or Email (email + password). "Forgot password" opens /forgot-password. Sends users to /watchlist and admins to /admin/sales                                                                                                                                                       | G      | P0       |
+| /forgot-password | Enter email, receive and verify a 6-digit OTP, then set a new password. Email-account only                                                                                                                                                                                                                                | G      | P0       |
+| /watchlist       | Main page. One row per tracked product: product name, current price, lowest price, highest price, star rating and labels (price label, fake discount, shop trust). Tap the "+" button and paste a link to add a product (blocked once 10 products are tracked, BR8), sort by price, remove a product. Tapping a row opens /detail | U      | P0       |
+| /detail          | Everything about one product: full 30-day chart with lowest and highest price, price label, fake-discount warning, set target price, "Track this product", shop name, brand, shop trust label, product rating and customer reviews, link to the marketplace page, and "Notification settings" which opens /notifications | U      | P0       |
+| /notifications   | Notification channel (web push or email), quiet hours, sale alerts on/off. Opened from /detail; "Back" returns to that product                                                                                                                                                                                            | U      | P1       |
+| /profile         | Shows the user's nickname (auto-filled from Google, or as entered at Email registration) and lets them edit and save a new nickname                                                                                                                                                                                       | U      | P1       |
+| /admin/sales     | Manage the sale calendar                                                                                                                                                                                                                                                                                                   | A      | P2       |
 
-Main path: / → /login → /watchlist → /detail → /notifications. A guest who opens /watchlist, /detail, /notifications or /admin/sales directly is redirected to /login.
+Main path: / → /login (or /register) → /watchlist → /detail → /notifications. A guest who opens /watchlist, /detail, /notifications, /profile or /admin/sales directly is redirected to /login.
 
 How each screen is reached:
 
-| Screen         | Reached from                                          |
-| -------------- | ----------------------------------------------------- |
-| /              | Web Introduction (starting point)                     |
-| /login         | / (sign in)                                           |
-| /watchlist     | /login (signed in); /detail (product tracked or back) |
-| /detail        | /watchlist (tap a row); /notifications (back)         |
-| /notifications | /detail (notification settings)                       |
-| /admin/sales   | /login (admin account)                                |
+| Screen            | Reached from                                          |
+| ----------------- | ----------------------------------------------------- |
+| /                 | Web Introduction (starting point)                     |
+| /register         | / (create account); /login ("Don't have an account?") |
+| /login            | / (sign in); /register (already have an account)      |
+| /forgot-password  | /login ("Forgot password")                            |
+| /watchlist        | /login or /register (signed in); /detail (product tracked or back) |
+| /detail           | /watchlist (tap a row); /notifications (back)         |
+| /notifications    | /detail (notification settings)                       |
+| /profile          | /watchlist (profile menu); anywhere signed-in (back)  |
+| /admin/sales      | /login (admin account)                                |
 
 **Flow diagram:**
 
