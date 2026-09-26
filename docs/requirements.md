@@ -101,7 +101,7 @@ For students who shop on Shopee and TikTok Shop and want to buy at the right mom
 | US01 | As Ha, I want to paste a Shopee or TikTok Shop product link and see its current price right away so that I can start tracking it without checking prices myself                                     | P0       | 5      |
 | US02 | As Ha, I want to set a target price and be notified when the price reaches it so that I buy at the right moment without watching the price                                                          | P0       | 8      |
 | US03 | As Ha, I want to see a price-history chart for up to 30 days so that I know whether the current price is high or low compared with usual                                                            | P0       | 5      |
-| US04 | As Trang, I want to sign in with Google so that my tracked products and target prices are saved                                                                                                     | P0       | 3      |
+| US04 | As Trang, I want to sign in with Google or Email so that my tracked products and target prices are saved                                                                                                     | P0       | 3      |
 | US05 | As Trang, I want to see all my tracked products on one page, each as a row with its current price, lowest price, highest price, name, star rating and labels, so that I can see at a glance which product is close to a good price | P0       | 5      |
 | US06 | As Ha, I want to be warned when a "discount" is actually above the usual price so that I am not fooled by a price that was raised and then cut                                                      | P1       | 5      |
 | US07 | As Trang, I want to see a Good price / Normal / Expensive label and choose "Buy when price is good" so that I do not have to invent a target price myself                                           | P1       | 5      |
@@ -166,20 +166,23 @@ Tasks:
 - API that returns price history for a product - @CaMapCon26
 - Price chart that works on a phone screen - @happyhusky3303
 
-#### US04 – Sign in with Google · P0 · 3 points · Screen: /login
+#### US04 – Sign in with Google or Email · P0 · 3 points · Screen: /login
 
-As Trang, I want to sign in with Google so that my tracked products and target prices are saved.
+As Trang, I want to sign in with Google or Email so that my tracked products and target prices are saved.
 
 Acceptance criteria:
 
-- Given I am not signed in, when I choose Google sign-in and grant permission, then I land on /watchlist within 3 seconds.
-- Given I am not signed in, when I open /watchlist, /detail, /notifications or /admin/sales directly, then I am redirected to /login.
-- Given I am not signed in, when I open /, then the Google sign-in option is shown and there is no box for pasting a link.
-- Given I am signed in, when I open /, then I am redirected to /watchlist.
+- [ ] Given I am registering or signing in with Email, when I submit my email address, then a 6-digit OTP is sent to my email and I am prompted to enter the OTP code.
+- [ ] Given I am on the OTP verification step, when I enter a valid and unexpired OTP, then my account is verified, my session is saved, and I land on `/watchlist`.
+- [ ] Given I am on the OTP verification step, when I enter an incorrect or expired OTP, then an error message is shown and I remain on the verification screen.
+- [ ] Given I am not signed in, when I choose Google sign-in and grant permission, then I land on `/watchlist` within 3 seconds.
+- [ ] Given I am not signed in, when I open `/watchlist`, `/detail`, `/notifications` or `/admin/sales` directly, then I am redirected to `/login`.
+- [ ] Given I am not signed in, when I open `/`, then the sign-in options are shown and there is no box for pasting a link.
+- [ ] Given I am signed in (including when reopening the browser), when I open `/`, then I am automatically redirected to `/watchlist` without having to log in again.
 
 Tasks:
 
-- Google Sign-In integration - @maimanhbel
+- Sign-In with Google or Email - @maimanhbel
 - /login page and a landing page with the sign-in option only - @Dai-Nguyen1506
 - Block signed-in-only pages for guests - @huydang2006
 

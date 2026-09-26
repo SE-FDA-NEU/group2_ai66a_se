@@ -1,12 +1,53 @@
 # Python
 __pycache__/
 *.pyc
-venv/
-.env
-# Data & models (too large for Git)
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+*.log
+app.log
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Data & models
 data/raw/*.csv
 *.pkl
 checkpoints/
-# Editor / OS junk
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE / OS
+.idea/
 .vscode/
+*.swp
+*.swo
 .DS_Store
+Thumbs.db
