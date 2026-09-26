@@ -1,4 +1,4 @@
-# Automated E-commerce Price Tracker
+# Trakora - Automated E-commerce Price Tracker
 
 An automated system that tracks and visualizes e-commerce price history over time, sending alerts whenever a product drops below a user-defined price threshold.
 

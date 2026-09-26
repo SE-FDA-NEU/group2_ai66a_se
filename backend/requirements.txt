@@ -1,0 +1,23 @@
+# Fast API
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+
+# Validation
+pydantic[email]>=2.0
+pydantic-settings>=2.0
+
+# Cơ sở dữ liệu
+sqlalchemy[asyncio]>=2.0
+asyncpg>=0.28.0
+alembic>=1.11.0
+
+# JWT Token
+python-jose[cryptography]>=3.3.0
+passlib>=1.7.4
+bcrypt==4.0.1
+
+# File uploads
+python-multipart>=0.0.7
+
+# Redis client
+redis>=5.0.1
