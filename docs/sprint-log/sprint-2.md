@@ -1,13 +1,8 @@
 # Sprint 2 - 22/09/2026 to 04/10/2026
 
-<!-- One section per sprint. Fill it in **during** the sprint, not the night before
-the milestone deadline - the commit timestamps on this file are part of the
-evidence that the process was real. -->
-
 ## Sprint goal
 
-<!-- One sentence. If you cannot state the goal in one sentence, the sprint
-has no goal and you are just doing tasks. -->
+Đến cuối Sprint 2, sinh viên có thể đăng nhập vào ứng dụng, dán link sản phẩm Shopee hoặc TikTok Shop để lưu vào danh sách theo dõi, xem biểu đồ lịch sử giá và đặt mức giá mục tiêu mong muốn.
 
 ## Committed
 
