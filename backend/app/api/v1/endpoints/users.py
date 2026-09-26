@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.schemas.common import ApiResponse
-from app.schemas.user_schema import UserCreate, UserResponse, UserListResponse
+from app.schemas.user_schema import UserCreate, UserResponse
 from app.services.user_service import user_service
 from app.api.deps import get_current_user
 from app.models.user_model import User
