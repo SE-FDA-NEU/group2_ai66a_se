@@ -9,7 +9,7 @@ from app.crud.user_crud import user_crud
 from app.core.security import verify_password, create_access_token
 from app.schemas.token_schema import AuthErrors
 from app.schemas.user_schema import UserErrors
-from app.schemas.otp_schema import OTPErrors
+from app.schemas.otp_schema import OTPReason, OTPErrors
 from app.helper.otp import send_email
 
 class AuthService:
@@ -26,14 +26,14 @@ class AuthService:
             "token_type": "bearer"
         }
 
-    async def send_otp_email(self, email: str, reason: str, db: AsyncSession, redis: Redis):
+    async def send_otp_email(self, email: str, reason: OTPReason, db: AsyncSession, redis: Redis) -> None:
         """Nghiệp vụ gửi mã OTP"""
         existed_user = await user_crud.get_by_email(db, email=email)
 
-        if reason == "verify-email":
+        if reason == OTPReason.VERIFY_EMAIL:
             if existed_user:
                 raise UserErrors.EMAIL_ALREADY_EXISTS.throw()
-        elif reason == "change-password":
+        elif reason == OTPReason.CHANGE_PASSWORD:
             if not existed_user:
                 raise UserErrors.USER_NOT_FOUND.throw()
 
@@ -44,7 +44,7 @@ class AuthService:
         await send_email(email=email, otp=code)
 
 
-    async def verify_otp_email(self, email: str, reason: str, otp: str, redis: Redis) -> str:
+    async def verify_otp_email(self, email: str, reason: OTPReason, otp: str, redis: Redis) -> str:
         """Nghiệp vụ xác minh mã OTP"""
         redis_key = f"otp:{reason}:{email}"
 
@@ -71,6 +71,16 @@ class AuthService:
         await redis.delete(redis_key)
 
         return verification_token
+
+    async def verify_action_token(self, email: str, reason: OTPReason, token: str, redis: Redis) -> None:
+        """Nghiệp vụ xác minh token hành động (sau khi xác thực OTP)"""
+        token_key = f"verified-token:{reason}:{email}"
+        saved_token = await redis.get(token_key)
+
+        if not saved_token or saved_token != token:
+            raise OTPErrors.OTP_EXPIRED.throw()
+
+        await redis.delete(token_key)
 
 
 auth_service = AuthService()

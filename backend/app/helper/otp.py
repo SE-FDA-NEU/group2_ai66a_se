@@ -10,17 +10,6 @@ from app.schemas.otp_schema import OTPErrors
 sender_email = settings.ADMIN_EMAIL
 sender_password = settings.ADMIN_PASSWORD
 
-async def verify_action_token(email: str, reason: str, token: str, redis: Redis) -> None:
-    """Hàm kiểm tra OTP đã được xác thực hay chưa"""
-    token_key = f"verified-token:{reason}:{email}"
-
-    saved_token = await redis.get(token_key)
-
-    if not saved_token or saved_token.decode("utf-8") != token:
-        raise OTPErrors.OTP_EXPIRED.throw()
-
-    await redis.delete(token_key)
-
 def _get_otp_html_content(otp: str) -> tuple[str, str]:
     """Trả về (Tiêu đề email, Nội dung HTML email) cho xác minh tài khoản"""
     subject = "Xác thực tài khoản - Trakora App"
