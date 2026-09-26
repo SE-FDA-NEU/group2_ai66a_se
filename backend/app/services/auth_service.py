@@ -17,7 +17,7 @@ class AuthService:
         """Nghiệp vụ xác thực thông tin đăng nhập và cấp Token"""
         user = await user_crud.get_by_email(db, email=form_data.username)
 
-        if not user or not user.is_activate or not await verify_password(form_data.password, user.password_hashed):
+        if not user or not user.is_activate or not user.password_hashed or not await verify_password(form_data.password, user.password_hashed):
             raise AuthErrors.INVALID_LOGIN.throw()
 
         access_token = create_access_token(subject=user.id, is_developer=user.is_developer)
