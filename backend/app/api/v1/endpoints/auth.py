@@ -17,6 +17,7 @@ from app.schemas.user_schema import UserCreate, UserResponse
 
 router = APIRouter()
 
+# Endpoints cho việc đăng nhập người dùng bang email và mật khẩu, nhận về Access Token
 
 @router.post("/login", response_model=Token)
 async def login_access_token(
