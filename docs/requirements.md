@@ -19,9 +19,9 @@ Submitted by:   Nguyen Trong Dai
 
 ## Proof board
 
-![Board start for Sprint 1](./images/sprint-01/Sprint_01_Board_Start.png)
+![Board start for Sprint 1](./images/sprint-01/Start.png)
 
-![Board end for Srpint 1](./images/sprint-01/Sprint_01_Board_End.png)
+![Board end for Srpint 1](./images/sprint-01/End.png)
 
 ---
 

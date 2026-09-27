@@ -1,5 +1,4 @@
-import asyncio
-import smtplib
+import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from redis.asyncio import Redis
@@ -10,17 +9,6 @@ from app.schemas.otp_schema import OTPErrors
 
 sender_email = settings.ADMIN_EMAIL
 sender_password = settings.ADMIN_PASSWORD
-
-async def verify_action_token(email: str, reason: str, token: str, redis: Redis) -> None:
-    """Hàm kiểm tra OTP đã được xác thực hay chưa"""
-    token_key = f"verified-token:{reason}:{email}"
-
-    saved_token = await redis.get(token_key)
-
-    if not saved_token or saved_token.decode("utf-8") != token:
-        raise OTPErrors.OTP_EXPIRED.throw()
-
-    await redis.delete(token_key)
 
 def _get_otp_html_content(otp: str) -> tuple[str, str]:
     """Trả về (Tiêu đề email, Nội dung HTML email) cho xác minh tài khoản"""
@@ -155,8 +143,8 @@ def _get_otp_html_content(otp: str) -> tuple[str, str]:
 """
     return subject, html
 
-def _send_email_sync(to_email: str, subject: str, html_content: str) -> None:
-    """Hàm gửi email đồng bộ chạy trong thread pool"""
+async def _send_email(to_email: str, subject: str, html_content: str) -> None:
+    """Hàm gửi email bất đồng bộ qua SMTP"""
     message = MIMEMultipart("alternative")
     message["Subject"] = subject
     message["From"] = f"Trakora Security <{sender_email}>"
@@ -166,11 +154,15 @@ def _send_email_sync(to_email: str, subject: str, html_content: str) -> None:
     message.attach(part)
 
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(sender_email, sender_password)
-        server.send_message(message)
-        server.quit()
+        server = aiosmtplib.SMTP(
+            hostname="smtp.gmail.com",
+            port=587,
+            start_tls=True,
+        )
+        await server.connect()
+        await server.login(sender_email, sender_password)
+        await server.send_message(message)
+        await server.quit()
         logger.info(f"Gửi mã OTP qua email đến {to_email} thành công.")
     except Exception as e:
         logger.error(f"Lỗi gửi email đến {to_email}: {e}", exc_info=True)
@@ -179,4 +171,4 @@ def _send_email_sync(to_email: str, subject: str, html_content: str) -> None:
 async def send_email(email: str, otp: str) -> None:
     """Hàm gửi mã OTP cho người dùng bất đồng bộ"""
     subject, html_content = _get_otp_html_content(otp)
-    await asyncio.to_thread(_send_email_sync, email, subject, html_content)
+    await _send_email(email, subject, html_content)
