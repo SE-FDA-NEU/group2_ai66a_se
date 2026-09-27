@@ -14,10 +14,10 @@ from app.schemas.token_schema import Token
 from app.schemas.common import ApiResponse
 from app.schemas.otp_schema import OTPReason
 from app.schemas.user_schema import UserCreate, UserResponse
+from app.schemas.google_schema import GoogleTokenRequest
 
 router = APIRouter()
 
-# Endpoints cho việc đăng nhập người dùng bang email và mật khẩu, nhận về Access Token
 
 @router.post("/login", response_model=Token)
 async def login_access_token(
@@ -27,9 +27,17 @@ async def login_access_token(
     """Đăng nhập và nhận về Access Token"""
     return await auth_service.authenticate_user(db, form_data=form_data)
 
-# Endpoints cho việc đăng ký người dùng bằng email và xác nhận email thông qua OTP
 
-@router.post("/register/email", response_model=ApiResponse[UserResponse], status_code=status.HTTP_201_CREATED)
+@router.post("/google", response_model=Token)
+async def login_or_sign_up_with_google(
+    google_token: GoogleTokenRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Đăng nhập hoặc đăng ký bằng Google"""
+    return await auth_service.authenticate_google(db, google_token=google_token)
+
+
+@router.post("/register", response_model=ApiResponse[UserResponse], status_code=status.HTTP_201_CREATED)
 async def register_user_email(
     user_in: UserCreate,
     verify_token: str,

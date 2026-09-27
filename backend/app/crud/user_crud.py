@@ -4,7 +4,6 @@ from sqlalchemy import select, update
 
 from app.crud.base import CRUDBase
 from app.models.user_model import User
-from app.schemas.user_schema import UserCreate
 
 class CRUDUser(CRUDBase[User]):
     async def get_by_email(self, db: AsyncSession, email: str) -> Optional[User]:
@@ -13,13 +12,22 @@ class CRUDUser(CRUDBase[User]):
         return result.scalars().first()
 
 
-    async def create(self, db: AsyncSession, obj_in: UserCreate, hashed_password: str, auth_provider: str) -> User:
+    async def create(
+        self,
+        db: AsyncSession,
+        email: str,
+        nickname: str,
+        hashed_password: Optional[str],
+        auth_provider: str = "email",
+        google_sub: Optional[str] = None,
+    ) -> User:
         """Tạo mới một người dùng vào Database"""
         db_obj = User(
-            email=obj_in.email,
-            nickname=obj_in.nickname,
+            email=email,
+            nickname=nickname,
             password_hashed=hashed_password,
             auth_provider=auth_provider,
+            google_sub=google_sub,
             is_activate=True
         )
         db.add(db_obj)
@@ -49,5 +57,4 @@ class CRUDUser(CRUDBase[User]):
         await db.commit()
 
 
-# Khởi tạo một thực thể dùng chung (Singleton) cho toàn ứng dụng
 user_crud = CRUDUser(User)
