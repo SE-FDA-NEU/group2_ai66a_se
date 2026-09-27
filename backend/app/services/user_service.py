@@ -57,5 +57,21 @@ class UserService:
         )
         return updated_user
 
+    async def reset_user_password(self, db: AsyncSession, email: str, new_password: str) -> User:
+        """Nghiệp vụ đặt lại mật khẩu người dùng"""
+        user = await user_crud.get_by_email(db, email=email)
+        if not user:
+            raise UserErrors.USER_NOT_FOUND.throw()
+
+        hashed_new_password = await hash_password(new_password)
+        updated_user = await user_crud.update(
+            db,
+            db_obj=user,
+            obj_in={
+                "password_hashed": hashed_new_password
+            }
+        )
+        return updated_user
+
 
 user_service = UserService()
