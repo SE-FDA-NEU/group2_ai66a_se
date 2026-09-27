@@ -25,7 +25,12 @@ class UserService:
             )
             return updated_user
 
-        new_user =  await user_crud.create(db, obj_in=user_in, hashed_password=hashed_pwd, auth_provider="email")
+        new_user = await user_crud.create(
+            db,
+            email=user_in.email,
+            nickname=user_in.nickname,
+            hashed_password=hashed_pwd,
+        )
         return new_user
 
 user_service = UserService()
