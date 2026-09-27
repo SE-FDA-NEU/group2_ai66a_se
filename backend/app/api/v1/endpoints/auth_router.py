@@ -55,6 +55,28 @@ async def register_user_email(
 
     user = await user_service.register_by_email(db, user_in=user_in)
     return ApiResponse(
-        message="Đăng ký tài khoản thành công. Vui lòng kiểm tra email để xác nhận.",
+        message="Đăng ký tài khoản thành công.",
         data=user
+    )
+
+@router.post("/reset-password", response_model=ApiResponse[None], status_code=status.HTTP_200_OK)
+async def reset_password(
+    email: EmailStr,
+    new_password: str,
+    verify_token: str,
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis)
+):
+    """Đặt lại mật khẩu người dùng"""
+    # Xác thực token OTP đã được xác nhận
+    await auth_service.verify_action_token(
+        email=email,
+        reason=OTPReason.RESET_PASSWORD,
+        token=verify_token,
+        redis=redis,
+    )
+
+    await user_service.reset_user_password(db, email=email, new_password=new_password)
+    return ApiResponse(
+        message="Đặt lại mật khẩu thành công."
     )

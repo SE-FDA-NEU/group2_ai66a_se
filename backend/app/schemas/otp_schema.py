@@ -6,7 +6,7 @@ from app.core.exceptions import ErrorDetail
 
 class OTPReason(str, Enum):
     VERIFY_EMAIL = "verify-email"
-    CHANGE_PASSWORD = "change-password"
+    RESET_PASSWORD = "reset-password"
 
 
 class OTPVerifyData(BaseModel):
