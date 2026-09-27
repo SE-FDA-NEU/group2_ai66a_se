@@ -1,6 +1,5 @@
-from pydantic import BaseModel, EmailStr
-from datetime import datetime
-from typing import Optional, List
+from pydantic import BaseModel, ConfigDict, EmailStr
+from typing import Optional
 from app.core.exceptions import ErrorDetail
 
 class UserBase(BaseModel):
@@ -16,16 +15,7 @@ class UserResponse(UserBase):
     is_activate: Optional[bool] = True
     is_developer: Optional[bool] = False
 
-    class Config:
-        from_attributes = True
-
-class UserListResponse(BaseModel):
-    page: int
-    limit: int
-    items: List[UserResponse]
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserErrors:
     EMAIL_ALREADY_EXISTS = ErrorDetail("EMAIL_ALREADY_EXISTS", 400, "Email này đã tồn tại.")

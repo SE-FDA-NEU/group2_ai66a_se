@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.core.redis import get_redis
 from app.services.auth_service import auth_service
 from app.schemas.common import ApiResponse
-from app.schemas.otp_schema import OTPVerifyData
+from app.schemas.otp_schema import OTPReason, OTPVerifyData
 
 router = APIRouter()
 
@@ -15,7 +15,7 @@ router = APIRouter()
 @router.post("/send", response_model=ApiResponse[None])
 async def send_otp_email(
     email: EmailStr,
-    reason: str = "verify-email",
+    reason: OTPReason = OTPReason.VERIFY_EMAIL,
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis)
 ):
@@ -28,7 +28,7 @@ async def send_otp_email(
 async def verify_otp_email(
     email: EmailStr,
     otp: str,
-    reason: str = "verify-email",
+    reason: OTPReason = OTPReason.VERIFY_EMAIL,
     redis: Redis = Depends(get_redis)
 ):
     """Xác nhận mã OTP đã gửi về email"""
