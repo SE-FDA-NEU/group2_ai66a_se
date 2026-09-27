@@ -28,6 +28,7 @@ async def create_admin_user(db: AsyncSession):
                 email=admin_useremail,
                 nickname=admin_username,
                 password_hashed= await hash_password(admin_password),
+                auth_provider="email",
                 is_developer=True
             )
             db.add(new_admin)

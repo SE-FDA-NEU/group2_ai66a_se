@@ -6,10 +6,15 @@ from redis.asyncio import Redis
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.crud.user_crud import user_crud
+
 from app.core.security import verify_password, create_access_token
+
 from app.schemas.token_schema import AuthErrors
 from app.schemas.user_schema import UserErrors
-from app.schemas.otp_schema import OTPErrors
+from app.schemas.otp_schema import OTPReason, OTPErrors
+from app.schemas.google_schema import GoogleTokenRequest
+
+from app.helper.google import verify_google_id_token
 from app.helper.otp import send_email
 
 class AuthService:
@@ -17,7 +22,7 @@ class AuthService:
         """Nghiệp vụ xác thực thông tin đăng nhập và cấp Token"""
         user = await user_crud.get_by_email(db, email=form_data.username)
 
-        if not user or not user.is_activate or not await verify_password(form_data.password, user.password_hashed):
+        if not user or not user.is_activate or not user.password_hashed or not await verify_password(form_data.password, user.password_hashed):
             raise AuthErrors.INVALID_LOGIN.throw()
 
         access_token = create_access_token(subject=user.id, is_developer=user.is_developer)
@@ -26,14 +31,54 @@ class AuthService:
             "token_type": "bearer"
         }
 
-    async def send_otp_email(self, email: str, reason: str, db: AsyncSession, redis: Redis):
+
+    async def authenticate_google(self, db: AsyncSession, google_token: GoogleTokenRequest) -> dict:
+        """Nghiệp vụ xác thực thông tin đăng nhập bằng Google và cấp Token"""
+        google_payload = await verify_google_id_token(google_token.id_token)
+        google_sub = google_payload["sub"]
+        email = google_payload["email"].lower()
+
+        user = await user_crud.get_by_email(db, email=email)
+
+        if not user:
+            user = await user_crud.create(
+                db,
+                email=email,
+                nickname=google_payload.get("name") or email.split("@", 1)[0],
+                hashed_password=None,
+                auth_provider="google",
+                google_sub=google_sub,
+            )
+
+        if user and user.auth_provider == "email":
+            user = await user_crud.update(
+                db,
+                db_obj=user, 
+                obj_in={
+                    "google_sub": google_sub, 
+                    "auth_provider": "both"
+                    }
+                )
+
+        if not user.is_activate:
+            raise AuthErrors.INVALID_LOGIN.throw()
+
+        access_token = create_access_token(subject=user.id, is_developer=user.is_developer)
+        return {
+            "access_token": access_token, 
+            "token_type": "bearer"
+        }
+
+
+    async def send_otp_email(self, email: str, reason: OTPReason, db: AsyncSession, redis: Redis) -> None:
         """Nghiệp vụ gửi mã OTP"""
         existed_user = await user_crud.get_by_email(db, email=email)
 
-        if reason == "verify-email":
+        if reason == OTPReason.VERIFY_EMAIL:
             if existed_user:
-                raise UserErrors.EMAIL_ALREADY_EXISTS.throw()
-        elif reason == "change-password":
+                if existed_user.auth_provider != "google":
+                    raise UserErrors.EMAIL_ALREADY_EXISTS.throw()
+        elif reason == OTPReason.RESET_PASSWORD:
             if not existed_user:
                 raise UserErrors.USER_NOT_FOUND.throw()
 
@@ -44,7 +89,7 @@ class AuthService:
         await send_email(email=email, otp=code)
 
 
-    async def verify_otp_email(self, email: str, reason: str, otp: str, redis: Redis) -> str:
+    async def verify_otp_email(self, email: str, reason: OTPReason, otp: str, redis: Redis) -> str:
         """Nghiệp vụ xác minh mã OTP"""
         redis_key = f"otp:{reason}:{email}"
 
@@ -71,6 +116,17 @@ class AuthService:
         await redis.delete(redis_key)
 
         return verification_token
+
+
+    async def verify_action_token(self, email: str, reason: OTPReason, token: str, redis: Redis) -> None:
+        """Nghiệp vụ xác minh token hành động (sau khi xác thực OTP)"""
+        token_key = f"verified-token:{reason}:{email}"
+        saved_token = await redis.get(token_key)
+
+        if not saved_token or saved_token != token:
+            raise OTPErrors.OTP_EXPIRED.throw()
+
+        await redis.delete(token_key)
 
 
 auth_service = AuthService()

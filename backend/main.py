@@ -13,7 +13,7 @@ from app.core.exceptions import (
     unhandled_exception_handler,
 )
 from app.core.logger import logger
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, engine
 from app.core.redis import redis_client
 
 from app.api.v1.api import api_router
@@ -33,9 +33,12 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"không thể tạo tài khoản Admin: {e}")
             
-    yield
-    # Đóng kết nối Redis
-    await redis_client.close()
+    try:
+        yield
+    finally:
+        # Đóng các kết nối dùng chung khi ứng dụng shutdown.
+        await redis_client.close()
+        await engine.dispose()
 
 app = FastAPI(title=settings.PROJECT_NAME,
               version="1.0.0",

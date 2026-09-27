@@ -1,0 +1,82 @@
+from fastapi import APIRouter, Depends, status
+from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import EmailStr
+from sqlalchemy.ext.asyncio import AsyncSession
+from redis.asyncio import Redis
+
+from app.core.database import get_db
+from app.core.redis import get_redis
+
+from app.services.auth_service import auth_service
+from app.services.user_service import user_service
+    
+from app.schemas.token_schema import Token
+from app.schemas.common import ApiResponse
+from app.schemas.otp_schema import OTPReason
+from app.schemas.user_schema import UserCreate, UserResponse
+from app.schemas.google_schema import GoogleTokenRequest
+
+router = APIRouter()
+
+
+@router.post("/login", response_model=Token)
+async def login_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db)
+):
+    """Đăng nhập và nhận về Access Token"""
+    return await auth_service.authenticate_user(db, form_data=form_data)
+
+
+@router.post("/google", response_model=Token)
+async def login_or_sign_up_with_google(
+    google_token: GoogleTokenRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Đăng nhập hoặc đăng ký bằng Google"""
+    return await auth_service.authenticate_google(db, google_token=google_token)
+
+
+@router.post("/register", response_model=ApiResponse[UserResponse], status_code=status.HTTP_201_CREATED)
+async def register_user_email(
+    user_in: UserCreate,
+    verify_token: str,
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis)
+):
+    """Đăng ký người dùng bằng email"""
+    # Xác thực token OTP đã được xác nhận
+    await auth_service.verify_action_token(
+        email=user_in.email,
+        reason=OTPReason.VERIFY_EMAIL,
+        token=verify_token,
+        redis=redis,
+    )
+
+    user = await user_service.register_by_email(db, user_in=user_in)
+    return ApiResponse(
+        message="Đăng ký tài khoản thành công.",
+        data=user
+    )
+
+@router.post("/reset-password", response_model=ApiResponse[None], status_code=status.HTTP_200_OK)
+async def reset_password(
+    email: EmailStr,
+    new_password: str,
+    verify_token: str,
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis)
+):
+    """Đặt lại mật khẩu người dùng"""
+    # Xác thực token OTP đã được xác nhận
+    await auth_service.verify_action_token(
+        email=email,
+        reason=OTPReason.RESET_PASSWORD,
+        token=verify_token,
+        redis=redis,
+    )
+
+    await user_service.reset_user_password(db, email=email, new_password=new_password)
+    return ApiResponse(
+        message="Đặt lại mật khẩu thành công."
+    )

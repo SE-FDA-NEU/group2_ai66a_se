@@ -1,29 +1,77 @@
-from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.user_crud import user_crud
-from app.schemas.user_schema import UserCreate, UserErrors
+from app.schemas.user_schema import UserCreate, UserErrors, UserUpdate, PasswordUpdate
 from app.models.user_model import User
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 
 class UserService:
-    async def get_all_users(self, page: int, limit: int, current_user: User, db: AsyncSession) -> List[User]:
-        """Nghiệp vụ lấy toàn bộ người dùng"""
-        return await user_crud.get_all_users(page=page, limit=limit, current_user_id=current_user.id, db=db)
-
-
-    async def register_new_user(self, db: AsyncSession, user_in: UserCreate) -> User:
-        """Nghiệp vụ đăng ký tài khoản mới"""
-        # 1. Kiểm tra Email trùng lặp qua tầng CRUD
+    async def register_by_email(self, db: AsyncSession, user_in: UserCreate) -> User:
+        """Nghiệp vụ đăng ký tài khoản mới bằng email"""
         existing_user = await user_crud.get_by_email(db, email=user_in.email)
-        if existing_user:
+        if existing_user and existing_user.auth_provider != "google":
             raise UserErrors.EMAIL_ALREADY_EXISTS.throw()
 
-        # 2. Mã hóa mật khẩu bất đồng bộ (Giải phóng Event Loop)
         hashed_pwd = await hash_password(user_in.password)
 
-        # 3. Ra lệnh cho CRUD lưu xuống Database
-        return await user_crud.create(db, obj_in=user_in, hashed_password=hashed_pwd)
+        if existing_user and existing_user.auth_provider == "google":
+            updated_user = await user_crud.update(
+                db,
+                db_obj=existing_user,
+                obj_in={
+                    "password_hashed": hashed_pwd,
+                    "auth_provider": "both",
+                }
+            )
+            return updated_user
 
-# Khởi tạo thực thể dùng chung
+        new_user = await user_crud.create(
+            db,
+            email=user_in.email,
+            nickname=user_in.nickname,
+            hashed_password=hashed_pwd,
+        )
+        return new_user
+
+    async def update_user_info(self, db: AsyncSession, user: User, user_in: UserUpdate) -> User:
+        """Nghiệp vụ cập nhật thông tin người dùng"""
+        updated_user = await user_crud.update(
+            db,
+            db_obj=user,
+            obj_in=user_in.model_dump(exclude_unset=True),
+        )
+        return updated_user
+
+    async def update_user_password(self, db: AsyncSession, user: User, password_in: PasswordUpdate) -> User:
+        """Nghiệp vụ cập nhật mật khẩu người dùng"""
+        if not user.password_hashed or not await verify_password(password_in.old_password, user.password_hashed):
+            raise UserErrors.INVALID_OLD_PASSWORD.throw()
+
+        hashed_new_password = await hash_password(password_in.new_password)
+        updated_user = await user_crud.update(
+            db,
+            db_obj=user,
+            obj_in={
+                "password_hashed": hashed_new_password
+            }
+        )
+        return updated_user
+
+    async def reset_user_password(self, db: AsyncSession, email: str, new_password: str) -> User:
+        """Nghiệp vụ đặt lại mật khẩu người dùng"""
+        user = await user_crud.get_by_email(db, email=email)
+        if not user:
+            raise UserErrors.USER_NOT_FOUND.throw()
+
+        hashed_new_password = await hash_password(new_password)
+        updated_user = await user_crud.update(
+            db,
+            db_obj=user,
+            obj_in={
+                "password_hashed": hashed_new_password
+            }
+        )
+        return updated_user
+
+
 user_service = UserService()

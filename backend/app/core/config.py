@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: Optional[str] = None
     REDIS_URL: Optional[str] = None
 
+    # 5. Cấu hình Google Auth
+    GOOGLE_CLIENT_ID: str
+
     @property
     def get_redis_url(self) -> str:
         if self.REDIS_URL:
