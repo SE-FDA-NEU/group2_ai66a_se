@@ -1,5 +1,4 @@
 from sqlalchemy import Column, CheckConstraint, Integer, String, Boolean, DateTime, func
-from sqlalchemy.orm import synonym
 from app.core.database import Base
 
 

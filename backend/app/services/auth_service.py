@@ -32,7 +32,8 @@ class AuthService:
 
         if reason == OTPReason.VERIFY_EMAIL:
             if existed_user:
-                raise UserErrors.EMAIL_ALREADY_EXISTS.throw()
+                if existed_user.auth_provider != "google":
+                    raise UserErrors.EMAIL_ALREADY_EXISTS.throw()
         elif reason == OTPReason.CHANGE_PASSWORD:
             if not existed_user:
                 raise UserErrors.USER_NOT_FOUND.throw()
