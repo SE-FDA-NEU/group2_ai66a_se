@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from typing import Optional
 from app.core.exceptions import ErrorDetail
 
@@ -8,6 +8,15 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     nickname: str
     password: str
+
+
+class UserUpdate(BaseModel):
+    nickname: str = Field(min_length=1)
+
+
+class PasswordUpdate(BaseModel):
+    old_password: str = Field(min_length=8)
+    new_password: str = Field(min_length=8)
 
 class UserResponse(UserBase):
     id: int
@@ -20,3 +29,4 @@ class UserResponse(UserBase):
 class UserErrors:
     EMAIL_ALREADY_EXISTS = ErrorDetail("EMAIL_ALREADY_EXISTS", 400, "Email này đã tồn tại.")
     USER_NOT_FOUND = ErrorDetail("USER_NOT_FOUND", 404, "Không tìm thấy người dùng này.")
+    INVALID_OLD_PASSWORD = ErrorDetail("INVALID_OLD_PASSWORD", 400, "Mật khẩu cũ không chính xác.")

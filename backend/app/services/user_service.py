@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.user_crud import user_crud
-from app.schemas.user_schema import UserCreate, UserErrors
+from app.schemas.user_schema import UserCreate, UserErrors, UserUpdate, PasswordUpdate
 from app.models.user_model import User
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 
 class UserService:
     async def register_by_email(self, db: AsyncSession, user_in: UserCreate) -> User:
@@ -32,5 +32,30 @@ class UserService:
             hashed_password=hashed_pwd,
         )
         return new_user
+
+    async def update_user_info(self, db: AsyncSession, user: User, user_in: UserUpdate) -> User:
+        """Nghiệp vụ cập nhật thông tin người dùng"""
+        updated_user = await user_crud.update(
+            db,
+            db_obj=user,
+            obj_in=user_in.model_dump(exclude_unset=True),
+        )
+        return updated_user
+
+    async def update_user_password(self, db: AsyncSession, user: User, password_in: PasswordUpdate) -> User:
+        """Nghiệp vụ cập nhật mật khẩu người dùng"""
+        if not user.password_hashed or not await verify_password(password_in.old_password, user.password_hashed):
+            raise UserErrors.INVALID_OLD_PASSWORD.throw()
+
+        hashed_new_password = await hash_password(password_in.new_password)
+        updated_user = await user_crud.update(
+            db,
+            db_obj=user,
+            obj_in={
+                "password_hashed": hashed_new_password
+            }
+        )
+        return updated_user
+
 
 user_service = UserService()
