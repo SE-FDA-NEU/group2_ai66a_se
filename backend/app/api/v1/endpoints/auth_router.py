@@ -55,6 +55,6 @@ async def register_user_email(
 
     user = await user_service.register_by_email(db, user_in=user_in)
     return ApiResponse(
-        message="Đăng ký tài khoản thành công. Vui lòng kiểm tra email để xác nhận.",
+        message="Đăng ký tài khoản thành công.",
         data=user
     )
