@@ -14,7 +14,7 @@ from app.schemas.user_schema import UserErrors
 from app.schemas.otp_schema import OTPReason, OTPErrors
 from app.schemas.google_schema import GoogleTokenRequest
 
-from app.helper.google import verify_google_id_token
+from backend.app.helper.google_auth import verify_google_id_token
 from app.helper.otp import send_email
 
 class AuthService:
