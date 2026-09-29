@@ -1,5 +1,3 @@
-"""Extract and validate a single Amazon product link from pasted text."""
-
 import re
 from dataclasses import dataclass
 from urllib.parse import urlsplit
@@ -52,16 +50,7 @@ def _is_amazon_domain(hostname: str) -> bool:
     return hostname == "amzn.to" or hostname == "amazon.com" or hostname.endswith(".amazon.com")
 
 
-def parse_amazon_link(text: str) -> AmazonLink:
-    """Validate pasted text and return its sole Amazon link and optional ASIN.
-
-    Amazon short links (``amzn.to``) are accepted, but have no ASIN unless the
-    identifier is present in the pasted URL itself.
-
-    Raises:
-        CustomAppException: if the text contains multiple links, a non-Amazon
-            domain, or no URL.
-    """
+async def parse_amazon_link(text: str) -> AmazonLink:
     urls = _extract_urls(text or "")
     if len(urls) >= 2:
         raise MULTIPLE_LINKS_ERROR.throw()
