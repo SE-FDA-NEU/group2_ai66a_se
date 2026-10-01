@@ -25,3 +25,17 @@ async def add_to_watchlist(
 ):
     product = await watchlist_service.add_product(db, current_user, request)
     return ApiResponse(message="Product added to watchlist.", data=product)
+
+
+@router.get(
+    "",
+    response_model=ApiResponse[list[WatchlistProduct]],
+    status_code=status.HTTP_200_OK,
+    summary="List products tracked by the current user",
+)
+async def list_watchlist(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    products = await watchlist_service.list_products(db, current_user)
+    return ApiResponse(message="Watchlist loaded successfully.", data=products)
