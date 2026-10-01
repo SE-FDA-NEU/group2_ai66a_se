@@ -25,6 +25,9 @@ class WatchlistProduct(BaseModel):
     price_high: Decimal
     target_price: Decimal | None = None
     buy_when_good: bool
+    price_label: str | None = None
+    fake_discount: bool = False
+    fake_discount_percent: Decimal | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
