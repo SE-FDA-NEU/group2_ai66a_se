@@ -1,13 +1,22 @@
-// App.tsx là component gốc của ứng dụng.
-// Tại đây bạn có thể cấu hình React Router để điều hướng giữa các Pages.
-// Ví dụ: <BrowserRouter><Routes><Route path="/" element={<HomePage />} /></Routes></BrowserRouter>
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Layout } from './components/Layout';
+import { WatchlistPage } from './pages/WatchlistPage';
 
 function App() {
   return (
-    <div style={{ textAlign: 'center', padding: '50px' }}>
-      <h1>Welcome to Figma to React Template</h1>
-      <p>Hãy thay thế nội dung này bằng các Components của bạn xuất ra từ Figma.</p>
-    </div>
+    <BrowserRouter>
+      <Layout>
+        <Routes>
+          {/* Default route redirect to watchlist */}
+          <Route path="/" element={<Navigate to="/watchlist" replace />} />
+          <Route path="/watchlist" element={<WatchlistPage />} />
+          {/* Placeholder cho trang chi tiết */}
+          <Route path="/detail/:id" element={<div style={{ padding: 40 }}>Trang chi tiết sản phẩm</div>} />
+          {/* Các trang khác có thể thêm sau */}
+          <Route path="*" element={<Navigate to="/watchlist" replace />} />
+        </Routes>
+      </Layout>
+    </BrowserRouter>
   );
 }
 
