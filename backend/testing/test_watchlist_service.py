@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.core.exceptions import CustomAppException
-from app.schemas.watchlist_schema import MarketplaceProduct, WatchlistCreate
+from app.schemas.watchlist_schema import ProductMarketplace, ProductCreate
 from app.services import watchlist_service as service_module
 
 
@@ -35,7 +35,7 @@ def _product(*, tracked_by_count=1, price="12.00", untracked_since=None):
 
 
 def _marketplace_product(price="12.00"):
-    return MarketplaceProduct(
+    return ProductMarketplace(
         external_id="B012345678",
         url="https://www.amazon.com/dp/B012345678",
         name="Sample product",
@@ -99,7 +99,7 @@ def test_cached_product_adds_tracking_without_marketplace_request(monkeypatch):
         session = FakeSession()
 
         result = await service_module.watchlist_service.add_product(
-            session, SimpleNamespace(id=7), WatchlistCreate(url="https://amazon.com/dp/B012345678", target_price=9)
+            session, SimpleNamespace(id=7), ProductCreate(url="https://amazon.com/dp/B012345678", target_price=9)
         )
 
         marketplace.fetch_product.assert_not_awaited()
@@ -123,7 +123,7 @@ def test_new_product_is_fetched_and_created_with_initial_price(monkeypatch):
         session = FakeSession()
 
         result = await service_module.watchlist_service.add_product(
-            session, SimpleNamespace(id=7), WatchlistCreate(url="https://amazon.com/dp/B012345678")
+            session, SimpleNamespace(id=7), ProductCreate(url="https://amazon.com/dp/B012345678")
         )
 
         marketplace.fetch_product.assert_awaited_once_with("B012345678", country="US")
@@ -146,7 +146,7 @@ def test_untracked_product_is_refreshed_before_tracking(monkeypatch):
         )
 
         await service_module.watchlist_service.add_product(
-            FakeSession(), SimpleNamespace(id=7), WatchlistCreate(url="https://amazon.com/dp/B012345678")
+            FakeSession(), SimpleNamespace(id=7), ProductCreate(url="https://amazon.com/dp/B012345678")
         )
 
         marketplace.fetch_product.assert_awaited_once_with("B012345678", country="US")
@@ -162,7 +162,7 @@ def test_tracking_limit_is_enforced_by_backend(monkeypatch):
 
         with pytest.raises(CustomAppException) as error:
             await service_module.watchlist_service.add_product(
-                session, SimpleNamespace(id=7), WatchlistCreate(url="https://amazon.com/dp/B012345678")
+                session, SimpleNamespace(id=7), ProductCreate(url="https://amazon.com/dp/B012345678")
             )
 
         assert error.value.code == "WATCHLIST_LIMIT_REACHED"
@@ -182,7 +182,7 @@ def test_already_tracked_product_is_idempotent(monkeypatch):
         session = FakeSession()
 
         result = await service_module.watchlist_service.add_product(
-            session, SimpleNamespace(id=7), WatchlistCreate(url="https://amazon.com/dp/B012345678")
+            session, SimpleNamespace(id=7), ProductCreate(url="https://amazon.com/dp/B012345678")
         )
 
         marketplace.fetch_product.assert_not_awaited()

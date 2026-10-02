@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.product_model import PriceHistory, Product
-from app.schemas.watchlist_schema import MarketplaceProduct
+from app.schemas.watchlist_schema import ProductMarketplace
 
 
 class CRUDProduct:
@@ -21,7 +21,7 @@ class CRUDProduct:
         return result.scalar_one_or_none()
 
     async def create_with_first_price(
-        self, db: AsyncSession, marketplace: str, item: MarketplaceProduct
+        self, db: AsyncSession, marketplace: str, item: ProductMarketplace
     ) -> Product:
         product = Product(
             marketplace=marketplace,
@@ -50,7 +50,7 @@ class CRUDProduct:
         return product
 
     async def refresh_untracked(
-        self, db: AsyncSession, product: Product, item: MarketplaceProduct
+        self, db: AsyncSession, product: Product, item: ProductMarketplace
     ) -> Product:
         product.url = item.url
         product.name = item.name
