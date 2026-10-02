@@ -40,11 +40,12 @@ def test_list_products_returns_not_enough_data_before_seven_days(monkeypatch):
             service_rows,
         )
 
-        products = await WatchlistService().list_products(db, SimpleNamespace(id=7))
+        product_list = await WatchlistService().list_products(db, SimpleNamespace(id=7))
 
-        assert products[0].price_label == "Not enough data to assess"
-        assert products[0].fake_discount is False
-        assert products[0].fake_discount_percent is None
+        assert product_list.total == 1
+        assert product_list.products[0].price_label == "Not enough data to assess"
+        assert product_list.products[0].fake_discount is False
+        assert product_list.products[0].fake_discount_percent is None
         service_rows.assert_awaited_once_with(db, 7)
 
     asyncio.run(scenario())
@@ -76,11 +77,11 @@ def test_list_products_computes_price_label(current_price, expected_label, monke
             ),
         )
 
-        products = await WatchlistService().list_products(
+        product_list = await WatchlistService().list_products(
             SimpleNamespace(), SimpleNamespace(id=7)
         )
 
-        assert products[0].price_label == expected_label
+        assert product_list.products[0].price_label == expected_label
 
     asyncio.run(scenario())
 
@@ -103,11 +104,11 @@ def test_list_products_marks_fake_discount_and_percentage(monkeypatch):
             ),
         )
 
-        products = await WatchlistService().list_products(
+        product_list = await WatchlistService().list_products(
             SimpleNamespace(), SimpleNamespace(id=7)
         )
 
-        assert products[0].fake_discount is True
-        assert products[0].fake_discount_percent == Decimal("22.56")
+        assert product_list.products[0].fake_discount is True
+        assert product_list.products[0].fake_discount_percent == Decimal("22.56")
 
     asyncio.run(scenario())
