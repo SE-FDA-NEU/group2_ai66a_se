@@ -11,13 +11,16 @@ class CRUDTrackedProduct:
         )
         return int(result.scalar_one())
 
-    async def get(self, db: AsyncSession, user_id: int, product_id: int) -> TrackedProduct | None:
-        result = await db.execute(
-            select(TrackedProduct).where(
-                TrackedProduct.user_id == user_id,
-                TrackedProduct.product_id == product_id,
-            )
+    async def get(
+        self, db: AsyncSession, user_id: int, product_id: int, *, for_update: bool = False
+    ) -> TrackedProduct | None:
+        statement = select(TrackedProduct).where(
+            TrackedProduct.user_id == user_id,
+            TrackedProduct.product_id == product_id,
         )
+        if for_update:
+            statement = statement.with_for_update()
+        result = await db.execute(statement)
         return result.scalar_one_or_none()
 
     async def list_with_product_statistics(
