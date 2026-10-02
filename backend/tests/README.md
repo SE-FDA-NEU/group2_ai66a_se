@@ -21,13 +21,14 @@ Run from the repository root:
 
 ```powershell
 docker compose up -d --build backend
-docker compose exec backend python -m pytest tests -q                              # all
-docker compose exec backend python -m pytest tests/unit -q                         # unit only
-docker compose exec backend python -m pytest tests/integration -q                  # integration only
-docker compose exec backend python -m pytest tests/unit/test_rapidapi_client.py -q # one file
+docker ps                                                                             # check whether the docker start up successfully
+docker compose exec backend python -m pytest tests -v -s                              # all, show each test and print output
+docker compose exec backend python -m pytest tests/unit -v -s                         # unit only
+docker compose exec backend python -m pytest tests/integration -v -s                  # integration only
+docker compose exec backend python -m pytest tests/unit/test_rapidapi_client.py -v -s # one file
 ```
 
-`template_test.py` reports **2 skipped**. This is expected.
+`-v` shows each test name and result. `-s` lets `print()` output through; without it, Pytest captures output from passing tests. The current unit tests print the data they assert, and `template_test.py` reports **2 skipped**, as expected. Its examples also print the endpoint response or mocked unit result after assertions pass when copied into a real test. Avoid printing tokens, passwords, or other secrets.
 
 ## Add a test
 
@@ -35,7 +36,7 @@ docker compose exec backend python -m pytest tests/unit/test_rapidapi_client.py 
 2. Copy the matching function from `template_test.py` (Template 1 = integration, Template 2 = unit), but **not** the `pytestmark` line.
 3. Rename it (`test_<action>_<condition>_<expected_result>`), replace the placeholders, and run the file.
 
-Each test follows **Arrange** (prepare data), **Act** (call the code or endpoint), **Assert** (check the result). Cover at least one happy path and one error case per feature. In unit tests, patch a dependency where the module under test imports it. For async code, use `async def`, `await` and `AsyncMock` (needs `pytest-asyncio`).
+Each test follows **Arrange** (prepare data), **Act** (call the code or endpoint), **Assert** (check the result). Cover at least one happy path and one error case per feature. In unit tests, patch a dependency where the module under test imports it. For async code, use `async def`, `await` and `AsyncMock`; `pytest-asyncio` is installed from `backend/requirements.txt` when the backend image is built.
 
 ## Existing tests
 

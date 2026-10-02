@@ -9,8 +9,10 @@ file reports "2 skipped"). Name tests: test_<action>_<condition>_<expected_resul
 For async code use `async def`, `await` and AsyncMock (needs pytest-asyncio).
 """
 
-import pytest
+import json
 from unittest.mock import patch
+
+import pytest
 # Import the models, schemas, or functions under test here.
 
 # this line skips the examples below, which is why this file reports "2 skipped"
@@ -43,6 +45,11 @@ def test_feature_name_integration(client, db_session):
     # saved_record = db_session.get(FeatureModel, data["id"])
     # assert saved_record.field1 == payload["field1"]
 
+    # Print only after assertions pass; run pytest with -s to display this.
+    print(f"Request payload: {json.dumps(payload, ensure_ascii=False)}")
+    print(f"HTTP status: {response.status_code}")
+    print(f"Response JSON:\n{json.dumps(data, indent=2, ensure_ascii=False)}")
+
 
 # ==========================================
 # TEMPLATE 2: UNIT TEST (logic/service with mocks)
@@ -64,3 +71,7 @@ def test_feature_name_unit(mock_api_call):
     # 3. Assert: check the result and the mock call
     assert result is True
     # mock_api_call.assert_called_once_with(input_data)
+
+    # Print only after assertions pass; run pytest with -s to display this.
+    print(f"Unit result: {result!r}")
+    print(f"Mock calls: {mock_api_call.mock_calls!r}")
