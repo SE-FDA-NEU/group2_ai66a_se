@@ -28,7 +28,14 @@ docker compose exec backend python -m pytest tests/integration -v -s            
 docker compose exec backend python -m pytest tests/unit/test_rapidapi_client.py -v -s # one file
 ```
 
-`-v` shows each test name and result. `-s` lets `print()` output through; without it, Pytest captures output from passing tests. The current unit tests print the data they assert, and `template_test.py` reports **2 skipped**, as expected. Its examples also print the endpoint response or mocked unit result after assertions pass when copied into a real test. Avoid printing tokens, passwords, or other secrets.
+### Pytest output flags
+
+- `-q` (quiet) shows a compact progress line and final summary, such as `18 passed, 2 skipped`.
+- `-v` (verbose) lists each test name and its result.
+- `-s` disables output capture so `print()` and other stdout/stderr from passing tests appear in the terminal. Without `-s`, Pytest captures output from passing tests and normally displays it when a test fails.
+- Combine `-v -s` to see each test result and its printed data. These flags change output only; they do not change which tests run or what they assert.
+
+The current unit tests print the data they assert when run with `-s`. `template_test.py` reports **2 skipped**, as expected; its examples print the endpoint response or mocked unit result after assertions pass when copied into a real test. Avoid printing tokens, passwords, or other secrets.
 
 ## Add a test
 
