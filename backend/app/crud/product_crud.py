@@ -8,6 +8,15 @@ from app.schemas.watchlist_schema import ProductMarketplace
 
 
 class CRUDProduct:
+    async def get_by_id(
+        self, db: AsyncSession, product_id: int, *, for_update: bool = False
+    ) -> Product | None:
+        statement = select(Product).where(Product.id == product_id)
+        if for_update:
+            statement = statement.with_for_update()
+        result = await db.execute(statement)
+        return result.scalar_one_or_none()
+
     async def get_by_marketplace_id(
         self, db: AsyncSession, marketplace: str, external_id: str, *, for_update: bool = False
     ) -> Product | None:
