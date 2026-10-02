@@ -10,7 +10,7 @@ class WatchlistCreate(BaseModel):
     buy_when_good: bool = False
 
 
-class WatchlistProduct(BaseModel):
+class Product(BaseModel):
     id: int
     name: str
     image_url: str
@@ -30,6 +30,11 @@ class WatchlistProduct(BaseModel):
     fake_discount_percent: Decimal | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ListProduct(BaseModel):
+    total: int
+    products: list[Product]
 
 
 class MarketplaceProduct(BaseModel):
