@@ -10,7 +10,7 @@ from app.helper.amazon_link_parser import parse_amazon_link
 from app.helper.rapidapi_client import rapidapi_client
 from app.models.product_model import Product as ProductModel
 from app.models.user_model import User
-from app.schemas.watchlist_schema import ListProduct, Product, WatchlistCreate
+from app.schemas.watchlist_schema import ProductList, Product, ProductCreate
 
 
 WATCHLIST_LIMIT_REACHED = ErrorDetail(
@@ -27,7 +27,7 @@ MARKETPLACE_PRODUCT_MISMATCH = ErrorDetail(
 class WatchlistService:
     MIN_DAYS_FOR_ASSESSMENT = 7
 
-    async def list_products(self, db: AsyncSession, user: User) -> ListProduct:
+    async def list_products(self, db: AsyncSession, user: User) -> ProductList:
         rows = await tracked_product_crud.list_with_product_statistics(db, user.id)
         products = [
             self._to_summary_response(
@@ -39,10 +39,10 @@ class WatchlistService:
             )
             for row in rows
         ]
-        return ListProduct(total=len(products), products=products)
+        return ProductList(total=len(products), products=products)
 
     async def add_product(
-        self, db: AsyncSession, user: User, request: WatchlistCreate
+        self, db: AsyncSession, user: User, request: ProductCreate
     ) -> Product:
         """Add one product to a user's watchlist, keeping product writes atomic."""
         try:

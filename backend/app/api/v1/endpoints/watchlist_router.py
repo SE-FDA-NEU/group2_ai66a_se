@@ -5,7 +5,7 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.user_model import User
 from app.schemas.common import ApiResponse
-from app.schemas.watchlist_schema import ListProduct, Product, WatchlistCreate
+from app.schemas.watchlist_schema import ProductList, Product, ProductCreate
 from app.services.watchlist_service import watchlist_service
 
 
@@ -19,7 +19,7 @@ router = APIRouter()
     summary="Add a product to the current user's watchlist",
 )
 async def add_to_watchlist(
-    request: WatchlistCreate,
+    request: ProductCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -29,7 +29,7 @@ async def add_to_watchlist(
 
 @router.get(
     "",
-    response_model=ApiResponse[ListProduct],
+    response_model=ApiResponse[ProductList],
     status_code=status.HTTP_200_OK,
     summary="List products tracked by the current user",
 )

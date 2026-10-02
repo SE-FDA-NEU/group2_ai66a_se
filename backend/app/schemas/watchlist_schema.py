@@ -4,7 +4,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class WatchlistCreate(BaseModel):
+class ProductCreate(BaseModel):
     url: str = Field(min_length=1, max_length=2048)
     target_price: Decimal | None = Field(default=None, gt=0)
     buy_when_good: bool = False
@@ -32,12 +32,12 @@ class Product(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ListProduct(BaseModel):
+class ProductList(BaseModel):
     total: int
     products: list[Product]
 
 
-class MarketplaceProduct(BaseModel):
+class ProductMarketplace(BaseModel):
     """Normalized product payload expected from a marketplace provider."""
 
     external_id: str = Field(min_length=1, max_length=64)

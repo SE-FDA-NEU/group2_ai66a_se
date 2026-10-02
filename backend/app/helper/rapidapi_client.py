@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from app.core.config import settings
 from app.core.exceptions import ErrorDetail
-from app.schemas.watchlist_schema import MarketplaceProduct
+from app.schemas.watchlist_schema import ProductMarketplace
 
 
 MARKETPLACE_UNAVAILABLE = ErrorDetail(
@@ -50,7 +50,7 @@ def _unescape_review(value: Any) -> Any:
     return value
 
 
-def _normalize_product(payload: dict[str, Any]) -> MarketplaceProduct:
+def _normalize_product(payload: dict[str, Any]) -> ProductMarketplace:
     """Map Real-Time Amazon Data's response.data fields to the app schema."""
     details = payload.get("product_details") or {}
     information = payload.get("product_information") or {}
@@ -68,7 +68,7 @@ def _normalize_product(payload: dict[str, Any]) -> MarketplaceProduct:
     raw_review_count = payload.get("product_num_ratings", 0)
     review_digits = re.sub(r"\D", "", str(raw_review_count))
 
-    return MarketplaceProduct.model_validate(
+    return ProductMarketplace.model_validate(
         {
             "external_id": payload.get("asin"),
             "url": payload.get("product_url"),
@@ -90,7 +90,7 @@ def _normalize_product(payload: dict[str, Any]) -> MarketplaceProduct:
 class RapidAPIClient:
     """Fetches a product by ASIN through the Real-Time Amazon Data API."""
 
-    async def fetch_product(self, asin: str, country: str = "US") -> MarketplaceProduct:
+    async def fetch_product(self, asin: str, country: str = "US") -> ProductMarketplace:
         if not settings.RAPIDAPI_KEY:
             raise MARKETPLACE_UNAVAILABLE.throw()
 
