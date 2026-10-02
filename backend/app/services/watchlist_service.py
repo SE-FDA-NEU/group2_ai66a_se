@@ -8,9 +8,9 @@ from app.crud.product_crud import product_crud
 from app.crud.tracked_product_crud import tracked_product_crud
 from app.helper.amazon_link_parser import parse_amazon_link
 from app.helper.rapidapi_client import rapidapi_client
-from app.models.product_model import Product
+from app.models.product_model import Product as ProductModel
 from app.models.user_model import User
-from app.schemas.watchlist_schema import WatchlistCreate, WatchlistProduct
+from app.schemas.watchlist_schema import ListProduct, Product, WatchlistCreate
 
 
 WATCHLIST_LIMIT_REACHED = ErrorDetail(
@@ -27,9 +27,9 @@ MARKETPLACE_PRODUCT_MISMATCH = ErrorDetail(
 class WatchlistService:
     MIN_DAYS_FOR_ASSESSMENT = 7
 
-    async def list_products(self, db: AsyncSession, user: User) -> list[WatchlistProduct]:
+    async def list_products(self, db: AsyncSession, user: User) -> ListProduct:
         rows = await tracked_product_crud.list_with_product_statistics(db, user.id)
-        return [
+        products = [
             self._to_summary_response(
                 product=row[0],
                 target_price=row[1],
@@ -39,10 +39,11 @@ class WatchlistService:
             )
             for row in rows
         ]
+        return ListProduct(total=len(products), products=products)
 
     async def add_product(
         self, db: AsyncSession, user: User, request: WatchlistCreate
-    ) -> WatchlistProduct:
+    ) -> Product:
         """Add one product to a user's watchlist, keeping product writes atomic."""
         try:
             # Serialize additions for this user so concurrent requests cannot pass BR8 together.
@@ -95,8 +96,8 @@ class WatchlistService:
             raise
 
     @staticmethod
-    def _to_response(product: Product, tracking) -> WatchlistProduct:
-        return WatchlistProduct(
+    def _to_response(product: ProductModel, tracking) -> Product:
+        return Product(
             id=product.id,
             name=product.name,
             image_url=product.image_url,
@@ -116,12 +117,12 @@ class WatchlistService:
     @classmethod
     def _to_summary_response(
         cls,
-        product: Product,
+        product: ProductModel,
         target_price,
         buy_when_good: bool,
         distinct_days: int,
         median_price: Decimal | None,
-    ) -> WatchlistProduct:
+    ) -> Product:
         enough_data = distinct_days >= cls.MIN_DAYS_FOR_ASSESSMENT
         price_label = None
         fake_discount = False
@@ -152,7 +153,7 @@ class WatchlistService:
         if not enough_data:
             price_label = "Not enough data to assess"
 
-        return WatchlistProduct(
+        return Product(
             id=product.id,
             name=product.name,
             image_url=product.image_url,
