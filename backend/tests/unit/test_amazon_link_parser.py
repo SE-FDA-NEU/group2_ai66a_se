@@ -1,7 +1,7 @@
 import pytest
 
 from app.core.exceptions import CustomAppException
-from app.services.amazon_link_parser import parse_amazon_link
+from app.helper.amazon_link_parser import parse_amazon_link
 
 pytestmark = pytest.mark.asyncio
 
