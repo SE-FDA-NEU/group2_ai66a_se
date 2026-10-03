@@ -100,14 +100,14 @@ class WatchlistService:
 
     async def remove_product(self, db: AsyncSession, user: User, product_id: int) -> None:
         try:
+            product = await product_crud.get_by_id(db, product_id, for_update=True)
+            if product is None:
+                raise TRACKING_NOT_FOUND.throw()
+
             tracking = await tracked_product_crud.get(
                 db, user.id, product_id, for_update=True
             )
             if tracking is None:
-                raise TRACKING_NOT_FOUND.throw()
-
-            product = await product_crud.get_by_id(db, product_id, for_update=True)
-            if product is None:
                 raise TRACKING_NOT_FOUND.throw()
 
             await db.delete(tracking)
