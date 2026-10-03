@@ -1,4 +1,3 @@
-import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -33,59 +32,66 @@ def _product(tracked_by_count):
     return SimpleNamespace(tracked_by_count=tracked_by_count, untracked_since=None)
 
 
-def test_remove_product_marks_last_tracker_time(monkeypatch):
-    async def scenario():
-        product = _product(1)
-        monkeypatch.setattr(
-            service_module.tracked_product_crud, "get", AsyncMock(return_value=SimpleNamespace())
-        )
-        monkeypatch.setattr(
-            service_module.product_crud, "get_by_id", AsyncMock(return_value=product)
-        )
-        db = FakeSession()
+@pytest.mark.asyncio
+async def test_remove_product_sets_untracked_since_when_last_tracker_is_removed(monkeypatch):
+    # Arrange
+    product = _product(1)
+    tracking = SimpleNamespace()
+    tracking_get = AsyncMock(return_value=tracking)
+    product_get = AsyncMock(return_value=product)
+    monkeypatch.setattr(service_module.tracked_product_crud, "get", tracking_get)
+    monkeypatch.setattr(service_module.product_crud, "get_by_id", product_get)
+    db = FakeSession()
 
-        await service_module.watchlist_service.remove_product(db, SimpleNamespace(id=7), 31)
+    # Act
+    await service_module.watchlist_service.remove_product(db, SimpleNamespace(id=7), 31)
 
-        assert product.tracked_by_count == 0
-        assert product.untracked_since is not None
-        assert db.commits == 1
+    # Assert
+    assert product.tracked_by_count == 0
+    assert product.untracked_since is not None
+    assert db.commits == 1
+    tracking_get.assert_awaited_once_with(db, 7, 31, for_update=True)
+    product_get.assert_awaited_once_with(db, 31, for_update=True)
+    print(
+        "Last tracker removed:",
+        {"tracked_by_count": product.tracked_by_count, "untracked_since": product.untracked_since},
+    )
 
-    asyncio.run(scenario())
+
+@pytest.mark.asyncio
+async def test_remove_product_keeps_untracked_since_null_when_other_trackers_remain(monkeypatch):
+    # Arrange
+    product = _product(2)
+    monkeypatch.setattr(
+        service_module.tracked_product_crud, "get", AsyncMock(return_value=SimpleNamespace())
+    )
+    monkeypatch.setattr(service_module.product_crud, "get_by_id", AsyncMock(return_value=product))
+    db = FakeSession()
+
+    # Act
+    await service_module.watchlist_service.remove_product(db, SimpleNamespace(id=7), 31)
+
+    # Assert
+    assert product.tracked_by_count == 1
+    assert product.untracked_since is None
+    assert db.commits == 1
+    print("Tracker remains:", {"tracked_by_count": product.tracked_by_count})
 
 
-def test_remove_product_keeps_untracked_since_null_when_other_trackers_remain(monkeypatch):
-    async def scenario():
-        product = _product(2)
-        monkeypatch.setattr(
-            service_module.tracked_product_crud, "get", AsyncMock(return_value=SimpleNamespace())
-        )
-        monkeypatch.setattr(
-            service_module.product_crud, "get_by_id", AsyncMock(return_value=product)
-        )
+@pytest.mark.asyncio
+async def test_remove_product_returns_not_found_when_tracking_does_not_exist(monkeypatch):
+    # Arrange
+    tracking_get = AsyncMock(return_value=None)
+    monkeypatch.setattr(service_module.tracked_product_crud, "get", tracking_get)
+    db = FakeSession()
 
+    # Act and assert
+    with pytest.raises(CustomAppException) as error:
         await service_module.watchlist_service.remove_product(
-            FakeSession(), SimpleNamespace(id=7), 31
+            db, SimpleNamespace(id=7), 31
         )
 
-        assert product.tracked_by_count == 1
-        assert product.untracked_since is None
-
-    asyncio.run(scenario())
-
-
-def test_remove_product_returns_not_found_for_missing_tracking(monkeypatch):
-    async def scenario():
-        monkeypatch.setattr(
-            service_module.tracked_product_crud, "get", AsyncMock(return_value=None)
-        )
-        db = FakeSession()
-
-        with pytest.raises(CustomAppException) as error:
-            await service_module.watchlist_service.remove_product(
-                db, SimpleNamespace(id=7), 31
-            )
-
-        assert error.value.status_code == 404
-        assert db.rollbacks == 1
-
-    asyncio.run(scenario())
+    assert error.value.status_code == 404
+    assert db.rollbacks == 1
+    tracking_get.assert_awaited_once_with(db, 7, 31, for_update=True)
+    print("Missing tracking response:", {"status_code": error.value.status_code})
