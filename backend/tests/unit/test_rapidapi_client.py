@@ -84,6 +84,7 @@ def test_product_details_request_and_data_mapping(monkeypatch):
                 "X-RapidAPI-Host": "real-time-amazon-data.p.rapidapi.com",
             },
         }
+        print("Mapped product:", result.model_dump(mode="json"))
 
     asyncio.run(scenario())
 
@@ -112,5 +113,6 @@ def test_product_details_http_timeout_is_reported_as_upstream_error(monkeypatch)
 
         assert error.value.status_code == 502
         assert error.value.code == "MARKETPLACE_UPSTREAM_ERROR"
+        print("Timeout handling:", {"status_code": error.value.status_code, "code": error.value.code})
 
     asyncio.run(scenario())
