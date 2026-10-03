@@ -107,6 +107,7 @@ def test_cached_product_adds_tracking_without_marketplace_request(monkeypatch):
         assert product.tracked_by_count == 2
         assert result.id == product.id
         assert session.commits == 1
+        print("Cached product added to watchlist:", result.model_dump(mode="json"))
 
     asyncio.run(scenario())
 
@@ -131,6 +132,7 @@ def test_new_product_is_fetched_and_created_with_initial_price(monkeypatch):
         assert product.tracked_by_count == 1
         assert result.current_price == Decimal("12.00")
         assert session.commits == 1
+        print("New product added to watchlist:", result.model_dump(mode="json"))
 
     asyncio.run(scenario())
 
@@ -145,12 +147,13 @@ def test_untracked_product_is_refreshed_before_tracking(monkeypatch):
             service_module.product_crud, "refresh_untracked", AsyncMock(return_value=product)
         )
 
-        await service_module.watchlist_service.add_product(
+        result = await service_module.watchlist_service.add_product(
             FakeSession(), SimpleNamespace(id=7), ProductCreate(url="https://amazon.com/dp/B012345678")
         )
 
         marketplace.fetch_product.assert_awaited_once_with("B012345678", country="US")
         service_module.product_crud.refresh_untracked.assert_awaited_once()
+        print("Untracked product resumed:", result.model_dump(mode="json"))
 
     asyncio.run(scenario())
 
@@ -168,6 +171,7 @@ def test_tracking_limit_is_enforced_by_backend(monkeypatch):
         assert error.value.code == "WATCHLIST_LIMIT_REACHED"
         assert session.commits == 0
         assert session.rollbacks == 1
+        print("Tracking limit response:", {"code": error.value.code, "status_code": error.value.status_code})
 
     asyncio.run(scenario())
 
@@ -190,5 +194,6 @@ def test_already_tracked_product_is_idempotent(monkeypatch):
         assert result.target_price == Decimal("8.00")
         assert result.buy_when_good is True
         assert session.commits == 1
+        print("Existing watchlist item returned:", result.model_dump(mode="json"))
 
     asyncio.run(scenario())

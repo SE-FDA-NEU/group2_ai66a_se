@@ -76,7 +76,7 @@ Trong Docker Compose, frontend gọi backend qua hostname `backend`. Backend g�
 | `backend/app/models/` | Các model SQLAlchemy ánh xạ với bảng database. |
 | `backend/app/schemas/` | Các schema Pydantic cho request, response, token và lỗi nghiệp vụ. |
 | `backend/app/services/` | Tầng nghiệp vụ, nằm giữa endpoint và CRUD/helper. |
-| `backend/tests/` | Vị trí dành cho test backend; hiện cần tiếp tục bổ sung test nghiệp vụ và API. |
+| `backend/tests/` | Test backend được chia thành `unit/` và `integration/`, kèm template và hướng dẫn chạy. |
 
 ### 3.3. Backend API và dependency
 

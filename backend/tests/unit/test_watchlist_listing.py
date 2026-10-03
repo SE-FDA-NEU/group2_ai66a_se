@@ -47,6 +47,7 @@ def test_list_products_returns_not_enough_data_before_seven_days(monkeypatch):
         assert product_list.products[0].fake_discount is False
         assert product_list.products[0].fake_discount_percent is None
         service_rows.assert_awaited_once_with(db, 7)
+        print("Watchlist with insufficient history:", product_list.model_dump(mode="json"))
 
     asyncio.run(scenario())
 
@@ -82,6 +83,10 @@ def test_list_products_computes_price_label(current_price, expected_label, monke
         )
 
         assert product_list.products[0].price_label == expected_label
+        print(
+            "Watchlist price assessment:",
+            {"current_price": current_price, "price_label": product_list.products[0].price_label},
+        )
 
     asyncio.run(scenario())
 
@@ -110,5 +115,6 @@ def test_list_products_marks_fake_discount_and_percentage(monkeypatch):
 
         assert product_list.products[0].fake_discount is True
         assert product_list.products[0].fake_discount_percent == Decimal("22.56")
+        print("Watchlist discount assessment:", product_list.model_dump(mode="json"))
 
     asyncio.run(scenario())

@@ -1,7 +1,7 @@
 import pytest
 
 from app.core.exceptions import CustomAppException
-from app.services.amazon_link_parser import parse_amazon_link
+from app.helper.amazon_link_parser import parse_amazon_link
 
 pytestmark = pytest.mark.asyncio
 
@@ -11,6 +11,7 @@ async def test_parses_asin_from_amazon_product_url():
 
     assert result.url == "https://www.amazon.com/dp/B012345678?tag=example"
     assert result.asin == "B012345678"
+    print(f"Parsed product link: {result}")
 
 
 async def test_extracts_link_from_pasted_text():
@@ -18,6 +19,7 @@ async def test_extracts_link_from_pasted_text():
 
     assert result.url == "amazon.com/gp/product/B012345678"
     assert result.asin == "B012345678"
+    print(f"Parsed pasted link: {result}")
 
 
 async def test_accepts_amazon_short_link_without_asin():
@@ -25,6 +27,7 @@ async def test_accepts_amazon_short_link_without_asin():
 
     assert result.url == "https://amzn.to/3Example"
     assert result.asin is None
+    print(f"Parsed short link: {result}")
 
 
 async def test_rejects_two_links():
@@ -33,6 +36,7 @@ async def test_rejects_two_links():
 
     assert exc_info.value.detail == "Paste one link at a time"
     assert exc_info.value.code == "MULTIPLE_LINKS"
+    print(f"Rejected multiple links: {exc_info.value.code} - {exc_info.value.detail}")
 
 
 async def test_rejects_non_amazon_domain():
@@ -41,6 +45,7 @@ async def test_rejects_non_amazon_domain():
 
     assert exc_info.value.detail == "Amazon only"
     assert exc_info.value.code == "AMAZON_ONLY"
+    print(f"Rejected unsupported domain: {exc_info.value.code} - {exc_info.value.detail}")
 
 
 async def test_rejects_text_without_a_link():
@@ -49,3 +54,4 @@ async def test_rejects_text_without_a_link():
 
     assert exc_info.value.detail == "A valid Amazon product link is required"
     assert exc_info.value.code == "INVALID_AMAZON_LINK"
+    print(f"Rejected invalid input: {exc_info.value.code} - {exc_info.value.detail}")
