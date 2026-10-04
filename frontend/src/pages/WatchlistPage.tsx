@@ -8,6 +8,7 @@ import {
   WatchlistProduct,
 } from '../api/watchlistApi';
 import styles from './WatchlistPage.module.css';
+import { convertFromVnd, USD_TO_VND_RATE } from '../utils/currency';
 
 export const WatchlistPage: React.FC = () => {
   const navigate = useNavigate();
@@ -79,7 +80,9 @@ export const WatchlistPage: React.FC = () => {
       setAddError(null);
       const newProd = await addProductToWatchlist({
         url: url.trim(),
-        target_price: targetPrice ? Number(targetPrice) : null,
+        target_price: targetPrice
+          ? convertFromVnd(Number(targetPrice), 'USD')
+          : null,
         buy_when_good: buyWhenGood,
       });
 
@@ -201,6 +204,7 @@ export const WatchlistPage: React.FC = () => {
                 name={product.name}
                 image={product.image_url}
                 currentPrice={Number(product.current_price)}
+                currency={product.currency}
                 priceLow={product.price_low ? Number(product.price_low) : undefined}
                 priceHigh={product.price_high ? Number(product.price_high) : undefined}
                 starRating={product.product_rating ? Number(product.product_rating) : undefined}
@@ -255,7 +259,9 @@ export const WatchlistPage: React.FC = () => {
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Giá mục tiêu cảnh báo (tùy chọn)</label>
+                <label className={styles.formLabel}>
+                  Giá mục tiêu cảnh báo (VND, tùy chọn; 1 USD ≈ {USD_TO_VND_RATE.toLocaleString('vi-VN')} VND)
+                </label>
                 <input
                   type="number"
                   placeholder="Ví dụ: 1500000"
