@@ -100,7 +100,7 @@ async def test_full_email_registration_and_login_flow(client: AsyncClient):
     password_test = "password123"
 
     # 1. Send OTP
-    response = await client.post(f"/api/v1/otp/send?email={email}&reason={OTPReason.VERIFY_EMAIL.value}")
+    response = await client.post("/api/v1/otp/send", json={"email": email, "reason": OTPReason.VERIFY_EMAIL.value})
     assert response.status_code == 200, response.text
     
     # 2. Get OTP from fake redis
@@ -109,7 +109,7 @@ async def test_full_email_registration_and_login_flow(client: AsyncClient):
     code = otp_data["code"]
 
     # 3. Verify OTP
-    response = await client.post(f"/api/v1/otp/verify?email={email}&otp={code}&reason={OTPReason.VERIFY_EMAIL.value}")
+    response = await client.post("/api/v1/otp/verify", json={"email": email, "otp": code, "reason": OTPReason.VERIFY_EMAIL.value})
     assert response.status_code == 200
     verify_token = response.json()["data"]["verified_token"]
 
@@ -119,7 +119,7 @@ async def test_full_email_registration_and_login_flow(client: AsyncClient):
         "nickname": "TestUser",
         "password": password_test
     }
-    response = await client.post(f"/api/v1/auth/register?verify_token={verify_token}", json=payload)
+    response = await client.post("/api/v1/auth/register", json={**payload, "verify_token": verify_token})
     assert response.status_code == 201
     
     # 5. Login
@@ -174,7 +174,7 @@ async def test_google_then_email_register(client: AsyncClient):
         "nickname": "Google User Updated",
         "password": "new_password_123"
     }
-    response = await client.post(f"/api/v1/auth/register?verify_token=fake_verify_token", json=payload)
+    response = await client.post("/api/v1/auth/register", json={**payload, "verify_token": "fake_verify_token"})
     assert response.status_code == 201
 
     assert FAKE_USERS_DB[0].auth_provider == "both"
@@ -191,7 +191,7 @@ async def test_forgot_password_flow(client: AsyncClient):
     await fake_crud.create(None, email, "Forgot User", hashed_pwd, "email")
 
     # 1. Send OTP for forgot password
-    response = await client.post(f"/api/v1/otp/send?email={email}&reason={OTPReason.RESET_PASSWORD.value}")
+    response = await client.post("/api/v1/otp/send", json={"email": email, "reason": OTPReason.RESET_PASSWORD.value})
     assert response.status_code == 200
     
     # 2. Get OTP from fake redis
@@ -200,13 +200,13 @@ async def test_forgot_password_flow(client: AsyncClient):
     code = otp_data["code"]
 
     # 3. Verify OTP
-    response = await client.post(f"/api/v1/otp/verify?email={email}&otp={code}&reason={OTPReason.RESET_PASSWORD.value}")
+    response = await client.post("/api/v1/otp/verify", json={"email": email, "otp": code, "reason": OTPReason.RESET_PASSWORD.value})
     assert response.status_code == 200
     verify_token = response.json()["data"]["verified_token"]
 
     # 4. Reset Password
     new_password_test = "new_secure_password"
-    response = await client.post(f"/api/v1/auth/reset-password?email={email}&new_password={new_password_test}&verify_token={verify_token}")
+    response = await client.post("/api/v1/auth/reset-password", json={"email": email, "new_password": new_password_test, "verify_token": verify_token})
     assert response.status_code == 200
 
     # 5. Verify Login with new password
@@ -220,16 +220,16 @@ async def test_otp_invalid_and_limit_exceeded(client: AsyncClient):
     """Test nhập sai mã OTP nhiều lần"""
     email = "otp@test.com"
     # Send OTP
-    await client.post(f"/api/v1/otp/send?email={email}&reason={OTPReason.VERIFY_EMAIL.value}")
+    await client.post("/api/v1/otp/send", json={"email": email, "reason": OTPReason.VERIFY_EMAIL.value})
     
     # Verify with wrong OTP 5 times
     for i in range(5):
-        response = await client.post(f"/api/v1/otp/verify?email={email}&otp=000000&reason={OTPReason.VERIFY_EMAIL.value}")
+        response = await client.post("/api/v1/otp/verify", json={"email": email, "otp": "000000", "reason": OTPReason.VERIFY_EMAIL.value})
         assert response.status_code == 400
         
     # The 6th time should return limit exceeded regardless of code (wait, it deletes the key on 5th attempt)
     # So 6th attempt will return OTP expired/not exist
-    response = await client.post(f"/api/v1/otp/verify?email={email}&otp=000000&reason={OTPReason.VERIFY_EMAIL.value}")
+    response = await client.post("/api/v1/otp/verify", json={"email": email, "otp": "000000", "reason": OTPReason.VERIFY_EMAIL.value})
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "OTP_LIMIT_EXCEEDED"
 
