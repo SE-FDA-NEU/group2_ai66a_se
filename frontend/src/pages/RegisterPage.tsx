@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { sendOTP, loginWithGoogle } from '../api/authApi';
+import { getUserProfile } from '../api/userApi';
+import { useAuth } from '../context/AuthContext';
+import { GoogleAuthButton } from '../components/GoogleAuthButton';
 import styles from './RegisterPage.module.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -97,6 +101,7 @@ const PasswordStrengthBar: React.FC<PasswordStrengthBarProps> = ({ strength }) =
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const { saveToken } = useAuth();
 
   const [values, setValues] = useState<FormValues>({
     fullName: '',
@@ -106,7 +111,33 @@ const RegisterPage: React.FC = () => {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | undefined>();
+
+  const handleGoogleSuccess = async (idToken: string) => {
+    setIsGoogleLoading(true);
+    setApiError(undefined);
+    try {
+      const res = await loginWithGoogle(idToken);
+      saveToken(res.access_token);
+      localStorage.setItem("access_token", res.access_token);
+      const user = await getUserProfile();
+      if (user.data) {
+        localStorage.setItem("user_email", user.data.email);
+      }
+      navigate('/watchlist', { replace: true });
+    } catch (err: any) {
+      const detail = err?.detail ?? err?.message ?? '';
+      setApiError(detail || 'Đăng ký bằng Google thất bại. Vui lòng thử lại.');
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = (errMsg?: string) => {
+    setApiError(errMsg || 'Đăng ký Google thất bại. Vui lòng thử lại.');
+  };
 
   const passwordStrength = getPasswordStrength(values.password);
 
@@ -139,7 +170,7 @@ const RegisterPage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validate all fields
@@ -155,38 +186,32 @@ const RegisterPage: React.FC = () => {
     const hasErrors = Object.values(allErrors).some(Boolean);
     if (hasErrors) return;
 
-    setIsSubmitted(true);
-    // TODO: wire to API
-    console.log('Registration data:', values);
+    setIsLoading(true);
+    setApiError(undefined);
+    try {
+      await sendOTP(values.email, 'verify-email');
+      navigate('/otp', {
+        state: {
+          email: values.email,
+          nickname: values.fullName,   // fullName maps to backend "nickname" field
+          password: values.password,
+          reason: 'verify-email',
+        },
+      });
+    } catch (err: any) {
+      const detail = err?.detail ?? err?.message ?? '';
+      if (detail.toLowerCase().includes('already') || detail.toLowerCase().includes('registered')) {
+        setApiError('Email này đã được đăng ký. Vui lòng đăng nhập.');
+      } else {
+        setApiError(detail || 'Không thể gửi OTP. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getInputClass = (field: keyof FormValues) =>
     [styles.input, touched[field] && errors[field] ? styles.inputError : ''].filter(Boolean).join(' ');
-
-  // ─── Success state ──────────────────────────────────────────────────────────
-  if (isSubmitted) {
-    return (
-      <div className={styles.pageContainer}>
-        <nav className={styles.navbar}>
-          <div className={styles.navLeft}>
-            <div className={styles.logo} onClick={() => navigate('/')} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && navigate('/')}>
-              Trakora
-            </div>
-          </div>
-        </nav>
-        <div className={styles.successContainer}>
-          <div className={styles.successCard}>
-            <div className={styles.successIcon}>✓</div>
-            <h2>Đăng ký thành công!</h2>
-            <p>Chào mừng <strong>{values.fullName}</strong> đến với Trakora! Bắt đầu theo dõi giá sản phẩm yêu thích của bạn ngay.</p>
-            <button className={styles.submitBtn} onClick={() => navigate('/')}>
-              Về trang chủ
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ─── Main render ────────────────────────────────────────────────────────────
   return (
@@ -303,10 +328,39 @@ const RegisterPage: React.FC = () => {
                 )}
               </div>
 
-              <button type="submit" className={styles.submitBtn}>
-                Đăng ký
+              {/* API error banner */}
+              {apiError && (
+                <div className={styles.apiErrorBanner} role="alert">
+                  ⚠️ {apiError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className={styles.submitBtn}
+                disabled={isLoading || isGoogleLoading}
+              >
+                {isLoading && <span className={styles.spinner} aria-hidden="true" />}
+                {isLoading ? 'Đang gửi OTP...' : 'Đăng ký'}
               </button>
             </form>
+
+            {/* Divider */}
+            <div className={styles.divider}>
+              <span className={styles.dividerLine} />
+              <span className={styles.dividerText}>hoặc</span>
+              <span className={styles.dividerLine} />
+            </div>
+
+            {/* Google Register */}
+            <div className={styles.socialAuthContainer}>
+              <GoogleAuthButton
+                mode="register"
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                isLoading={isGoogleLoading}
+              />
+            </div>
 
             <p className={styles.loginRedirect}>
               Đã có tài khoản?{' '}

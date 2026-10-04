@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { login, loginWithGoogle } from '../api/authApi';
+import { getUserProfile } from '../api/userApi';
+import { useAuth } from '../context/AuthContext';
+import { GoogleAuthButton } from '../components/GoogleAuthButton';
 import styles from './LoginPage.module.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -39,11 +43,44 @@ function validateField(
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { saveToken } = useAuth();
 
   const [values, setValues] = useState<FormValues>({ email: '', password: '' });
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | undefined>();
+
+  const handleGoogleSuccess = async (idToken: string) => {
+    setIsGoogleLoading(true);
+    setApiError(undefined);
+    try {
+      const res = await loginWithGoogle(idToken);
+      saveToken(res.access_token);
+      localStorage.setItem('access_token', res.access_token);
+      try {
+        const user = await getUserProfile();
+        if (user?.data?.email) {
+          localStorage.setItem('user_email', user.data.email);
+        }
+      } catch (e) {
+        console.error('Failed to get user profile', e);
+      }
+      navigate('/watchlist', { replace: true });
+    } catch (err: any) {
+      const detail = err?.detail ?? err?.message ?? '';
+      setApiError(detail || 'Đăng nhập bằng Google thất bại. Vui lòng thử lại.');
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = (errMsg?: string) => {
+    setApiError(errMsg || 'Đăng nhập Google thất bại. Vui lòng thử lại.');
+  };
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -61,7 +98,7 @@ const LoginPage: React.FC = () => {
     setErrors((prev) => ({ ...prev, [key]: validateField(key, value) }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const allErrors: FormErrors = {
@@ -73,8 +110,36 @@ const LoginPage: React.FC = () => {
 
     if (Object.values(allErrors).some(Boolean)) return;
 
-    // TODO: wire to POST /api/v1/auth/login (OAuth2 form — field name is "username", value is email)
-    console.log('Login payload:', { username: values.email, password: values.password });
+    setIsLoading(true);
+    setApiError(undefined);
+    try {
+      const res = await login(values.email, values.password);
+      saveToken(res.access_token);
+      localStorage.setItem('access_token', res.access_token);
+      try {
+        const user = await getUserProfile();
+        if (user?.data?.email) {
+          localStorage.setItem('user_email', user.data.email);
+        } else {
+          localStorage.setItem('user_email', values.email);
+        }
+      } catch {
+        localStorage.setItem('user_email', values.email);
+      }
+      navigate('/watchlist', { replace: true });
+    } catch (err: any) {
+      console.error('Login error:', err);
+      const detail = err?.detail ?? err?.message ?? '';
+      if (typeof detail === 'string' && (detail.toLowerCase().includes('incorrect') || detail.toLowerCase().includes('password'))) {
+        setApiError('Email hoặc mật khẩu không đúng.');
+      } else if (typeof detail === 'string' && (detail.toLowerCase().includes('activate') || detail.toLowerCase().includes('verify'))) {
+        setApiError('Tài khoản chưa được xác minh. Vui lòng kiểm tra email.');
+      } else {
+        setApiError(typeof detail === 'string' && detail ? detail : 'Không thể kết nối máy chủ. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getInputClass = (field: keyof FormValues) =>
@@ -177,7 +242,7 @@ const LoginPage: React.FC = () => {
                   <button
                     type="button"
                     className={styles.forgotLink}
-                    onClick={() => {/* TODO: forgot password flow */}}
+                    onClick={() => navigate('/forgot-password')}
                   >
                     Quên mật khẩu?
                   </button>
@@ -209,10 +274,39 @@ const LoginPage: React.FC = () => {
                 )}
               </div>
 
-              <button type="submit" className={styles.submitBtn}>
-                Đăng nhập
+              {/* API error banner */}
+              {apiError && (
+                <div className={styles.apiErrorBanner} role="alert">
+                  ⚠️ {apiError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className={styles.submitBtn}
+                disabled={isLoading || isGoogleLoading}
+              >
+                {isLoading && <span className={styles.spinner} aria-hidden="true" />}
+                {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </button>
             </form>
+
+            {/* Divider */}
+            <div className={styles.divider}>
+              <span className={styles.dividerLine} />
+              <span className={styles.dividerText}>hoặc</span>
+              <span className={styles.dividerLine} />
+            </div>
+
+            {/* Google Sign-In */}
+            <div className={styles.socialAuthContainer}>
+              <GoogleAuthButton
+                mode="login"
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                isLoading={isGoogleLoading}
+              />
+            </div>
 
             <p className={styles.registerRedirect}>
               Chưa có tài khoản?{' '}

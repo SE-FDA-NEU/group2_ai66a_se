@@ -126,7 +126,10 @@ class WatchlistService:
         return Product(
             id=product.id,
             name=product.name,
+            url=product.url,
             image_url=product.image_url,
+            marketplace=product.marketplace,
+            brand=product.brand,
             shop_name=product.shop_name,
             product_rating=product.product_rating,
             review_count=product.review_count,
@@ -182,7 +185,10 @@ class WatchlistService:
         return Product(
             id=product.id,
             name=product.name,
+            url=product.url,
             image_url=product.image_url,
+            marketplace=product.marketplace,
+            brand=product.brand,
             shop_name=product.shop_name,
             product_rating=product.product_rating,
             review_count=product.review_count,

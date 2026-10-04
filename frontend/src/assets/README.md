@@ -1,5 +1,6 @@
 /*
-Thư mục src/assets/:
-- Lưu trữ các tệp tĩnh như hình ảnh (PNG, JPG, SVG), font chữ, hoặc icons xuất ra từ Figma.
-- Khi import ảnh trong React component, bạn có thể import trực tiếp từ thư mục này.
+src/components/: Nơi chứa các component React.
+- ProductRow.tsx: Component hiển thị thông tin một dòng sản phẩm.
+- ProductRow.module.css: File CSS module định dạng cho ProductRow.
+- App.tsx: Component chính để demo việc sử dụng ProductRow.
 */
