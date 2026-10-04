@@ -1,15 +1,39 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { removeProductFromWatchlist, WatchlistProduct } from '../api/watchlistApi';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { removeProductFromWatchlist, getWatchlist, WatchlistProduct } from '../api/watchlistApi';
 import styles from './ProductDetailPage.module.css';
 import { formatVnd } from '../utils/currency';
 
 export const ProductDetailPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { id } = useParams();
 
-  const product = location.state?.product as WatchlistProduct | undefined;
+  const [product, setProduct] = useState<WatchlistProduct | undefined>(location.state?.product);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [isLoading, setIsLoading] = useState(!location.state?.product);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (product || !id) return;
+      try {
+        const res = await getWatchlist();
+        const found = res.products?.find((p) => String(p.id) === id);
+        if (found) {
+          setProduct(found);
+        }
+      } catch (err) {
+        console.error('Failed to fetch watchlist', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [id, product]);
+
+  if (isLoading) {
+    return <div className={styles.pageContainer}>Đang tải thông tin sản phẩm...</div>;
+  }
 
   if (!product) {
     return (
@@ -47,7 +71,7 @@ export const ProductDetailPage: React.FC = () => {
         </div>
         
         <div className={styles.productInfo}>
-          <div className={styles.brand}>{product.shop_name || 'Amazon'}</div>
+          <div className={styles.brand}>{product.brand || product.marketplace || 'Amazon'}</div>
           <h1 className={styles.title}>{product.name}</h1>
           
           <div className={styles.priceSection}>
@@ -85,12 +109,14 @@ export const ProductDetailPage: React.FC = () => {
             >
               {isRemoving ? 'Đang ngừng theo dõi...' : 'Ngừng theo dõi (Unfollow)'}
             </button>
-            <button 
-              onClick={() => alert("Đang chuyển hướng tới Amazon...")}
+            <a 
+              href={product.url}
+              target="_blank"
+              rel="noreferrer"
               className={styles.btnPrimary}
             >
-              Xem trên cửa hàng
-            </button>
+              Xem trên {product.marketplace || 'cửa hàng'}
+            </a>
           </div>
         </div>
       </div>
