@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { removeFromWatchlist, Product } from '../api/watchlistApi';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { removeProductFromWatchlist, WatchlistProduct } from '../api/watchlistApi';
 import styles from './ProductDetailPage.module.css';
-
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('vi-VN').format(price);
-};
+import { formatVnd } from '../utils/currency';
 
 export const ProductDetailPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { id } = useParams();
 
-  const product = location.state?.product as Product | undefined;
+  const product = location.state?.product as WatchlistProduct | undefined;
   const [isRemoving, setIsRemoving] = useState(false);
 
   if (!product) {
@@ -30,7 +26,7 @@ export const ProductDetailPage: React.FC = () => {
     if (window.confirm('Bạn có chắc chắn muốn ngừng theo dõi sản phẩm này?')) {
       setIsRemoving(true);
       try {
-        await removeFromWatchlist(product.id);
+        await removeProductFromWatchlist(product.id);
         navigate('/watchlist', { replace: true });
       } catch (err: any) {
         alert('Lỗi khi ngừng theo dõi: ' + (err?.detail || err?.message || 'Vui lòng thử lại'));
@@ -51,12 +47,11 @@ export const ProductDetailPage: React.FC = () => {
         </div>
         
         <div className={styles.productInfo}>
-          <div className={styles.brand}>{product.brand || product.marketplace || 'Mock Market'}</div>
+          <div className={styles.brand}>{product.shop_name || 'Amazon'}</div>
           <h1 className={styles.title}>{product.name}</h1>
           
           <div className={styles.priceSection}>
-            <span className={styles.currentPrice}>{formatPrice(product.current_price)}</span>
-            <span className={styles.currency}>{product.currency === 'VND' ? '₫' : product.currency}</span>
+            <span className={styles.currentPrice}>{formatVnd(product.current_price, product.currency)}</span>
           </div>
 
           <div className={styles.metaGrid}>
@@ -73,7 +68,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Giá thấp nhất (lịch sử)</span>
               <span className={styles.metaValue}>
-                {product.price_low ? `${formatPrice(product.price_low)} ${product.currency}` : 'Chưa có dữ liệu'}
+                {product.price_low ? `${formatVnd(product.price_low, product.currency)}` : 'Chưa có dữ liệu'}
               </span>
             </div>
             <div className={styles.metaItem}>
@@ -90,9 +85,12 @@ export const ProductDetailPage: React.FC = () => {
             >
               {isRemoving ? 'Đang ngừng theo dõi...' : 'Ngừng theo dõi (Unfollow)'}
             </button>
-            <a href={product.url} target="_blank" rel="noreferrer" className={styles.btnPrimary}>
-              Xem trên {product.marketplace || 'cửa hàng'}
-            </a>
+            <button 
+              onClick={() => alert("Đang chuyển hướng tới Amazon...")}
+              className={styles.btnPrimary}
+            >
+              Xem trên cửa hàng
+            </button>
           </div>
         </div>
       </div>
