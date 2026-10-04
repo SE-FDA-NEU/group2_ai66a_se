@@ -24,7 +24,7 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
         <div className="nav-buttons">
-          <button className="btn-login">Đăng nhập</button>
+          <button className="btn-login" onClick={() => navigate('/login')}>Đăng nhập</button>
           <button className="btn-signup" onClick={() => navigate('/register')}>Đăng ký</button>
         </div>
       </nav>
