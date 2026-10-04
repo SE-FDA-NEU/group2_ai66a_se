@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, loginWithGoogle } from '../api/authApi';
+import { getUserProfile } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
 import { GoogleAuthButton } from '../components/GoogleAuthButton';
 import styles from './LoginPage.module.css';
@@ -58,7 +59,12 @@ const LoginPage: React.FC = () => {
     try {
       const res = await loginWithGoogle(idToken);
       saveToken(res.access_token);
-      navigate('/dashboard', { replace: true });
+      localStorage.setItem('access_token', res.access_token); // Set immediately for API calls
+      const user = await getUserProfile();
+      if (user.data) {
+        localStorage.setItem('user_email', user.data.email);
+      }
+      navigate('/watchlist', { replace: true });
     } catch (err: any) {
       const detail = err?.detail ?? err?.message ?? '';
       setApiError(detail || 'Đăng nhập bằng Google thất bại. Vui lòng thử lại.');
@@ -104,7 +110,12 @@ const LoginPage: React.FC = () => {
     try {
       const res = await login(values.email, values.password);
       saveToken(res.access_token);
-      navigate('/dashboard', { replace: true });
+      localStorage.setItem('access_token', res.access_token); // Set immediately for API calls
+      const user = await getUserProfile();
+      if (user.data) {
+        localStorage.setItem('user_email', user.data.email);
+      }
+      navigate('/watchlist', { replace: true });
     } catch (err: any) {
       const detail = err?.detail ?? err?.message ?? '';
       if (detail.toLowerCase().includes('incorrect') || detail.toLowerCase().includes('password')) {

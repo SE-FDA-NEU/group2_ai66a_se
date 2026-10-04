@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sendOTP, loginWithGoogle } from '../api/authApi';
+import { getUserProfile } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
 import { GoogleAuthButton } from '../components/GoogleAuthButton';
 import styles from './RegisterPage.module.css';
@@ -120,7 +121,12 @@ const RegisterPage: React.FC = () => {
     try {
       const res = await loginWithGoogle(idToken);
       saveToken(res.access_token);
-      navigate('/dashboard', { replace: true });
+      localStorage.setItem("access_token", res.access_token);
+      const user = await getUserProfile();
+      if (user.data) {
+        localStorage.setItem("user_email", user.data.email);
+      }
+      navigate('/watchlist', { replace: true });
     } catch (err: any) {
       const detail = err?.detail ?? err?.message ?? '';
       setApiError(detail || 'Đăng ký bằng Google thất bại. Vui lòng thử lại.');

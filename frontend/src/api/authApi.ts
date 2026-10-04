@@ -65,9 +65,10 @@ export const loginWithGoogle = async (idToken: string): Promise<LoginResponse> =
  * Gửi mã OTP đến email
  */
 export const sendOTP = async (email: string, reason: OTPReason): Promise<ApiResponse<null>> => {
-  return await apiClient.post<any, ApiResponse<null>>(
-    `/otp/send?email=${encodeURIComponent(email)}&reason=${reason}`
-  );
+  return await apiClient.post<any, ApiResponse<null>>('/otp/send', {
+    email,
+    reason,
+  });
 };
 
 /**
@@ -79,9 +80,11 @@ export const verifyOTP = async (
   otp: string, 
   reason: OTPReason
 ): Promise<ApiResponse<OTPVerifyData>> => {
-  return await apiClient.post<any, ApiResponse<OTPVerifyData>>(
-    `/otp/verify?email=${encodeURIComponent(email)}&otp=${otp}&reason=${reason}`
-  );
+  return await apiClient.post<any, ApiResponse<OTPVerifyData>>('/otp/verify', {
+    email,
+    otp,
+    reason,
+  });
 };
 
 // -------------------------------------------------------------
@@ -95,10 +98,10 @@ export const registerUser = async (
   userData: { email: string; nickname: string; password: string },
   verifyToken: string
 ): Promise<ApiResponse<UserResponse>> => {
-  return await apiClient.post<any, ApiResponse<UserResponse>>(
-    `/auth/register?verify_token=${encodeURIComponent(verifyToken)}`, 
-    userData
-  );
+  return await apiClient.post<any, ApiResponse<UserResponse>>('/auth/register', {
+    ...userData,
+    verify_token: verifyToken,
+  });
 };
 
 /**
@@ -109,7 +112,9 @@ export const resetPassword = async (
   newPassword: string,
   verifyToken: string
 ): Promise<ApiResponse<null>> => {
-  return await apiClient.post<any, ApiResponse<null>>(
-    `/auth/reset-password?email=${encodeURIComponent(email)}&new_password=${encodeURIComponent(newPassword)}&verify_token=${encodeURIComponent(verifyToken)}`
-  );
+  return await apiClient.post<any, ApiResponse<null>>('/auth/reset-password', {
+    email,
+    new_password: newPassword,
+    verify_token: verifyToken,
+  });
 };
