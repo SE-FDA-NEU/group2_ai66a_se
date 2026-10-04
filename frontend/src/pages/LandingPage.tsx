@@ -1,7 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/LandingPage.css';
 
 const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -21,8 +24,8 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
         <div className="nav-buttons">
-          <button className="btn-login">Đăng nhập</button>
-          <button className="btn-signup">Đăng ký</button>
+          <button className="btn-login" onClick={() => navigate('/login')}>Đăng nhập</button>
+          <button className="btn-signup" onClick={() => navigate('/register')}>Đăng ký</button>
         </div>
       </nav>
       
@@ -35,7 +38,7 @@ const LandingPage: React.FC = () => {
             Giúp bạn sắp xếp, theo dõi và hoàn thành mục tiêu một cách thông minh và dễ dàng nhất.
           </p>
           <div className="cta-buttons centered-cta">
-            <button className="btn-primary" onClick={() => scrollToSection('introduction')}>Bắt đầu ngay</button>
+            <button className="btn-primary" onClick={() => navigate('/register')}>Bắt đầu ngay</button>
             <button className="btn-secondary" onClick={() => scrollToSection('introduction')}>Tìm hiểu thêm</button>
           </div>
         </div>

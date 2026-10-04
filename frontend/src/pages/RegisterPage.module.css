@@ -1,0 +1,591 @@
+/* RegisterPage.module.css
+   Uses CSS variables from LandingPage.css (:root) — no hardcoded hex values.
+   Matches the LandingPage visual system: Outfit/Inter font, indigo palette, glass elements.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;600&display=swap');
+
+/* ─── Page Shell ──────────────────────────────────────────────────────────── */
+
+.pageContainer {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
+  font-family: 'Outfit', 'Inter', sans-serif;
+  color: #0f172a;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Navbar ──────────────────────────────────────────────────────────────── */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 5%;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary-color, #6366f1);
+  letter-spacing: -0.5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.navLinks {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.navLink {
+  background: transparent;
+  border: none;
+  color: #0f172a;
+  font-weight: 500;
+  font-size: 1rem;
+  font-family: inherit;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.navLink:hover {
+  color: var(--primary-color, #6366f1);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.navButtons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.btnLogin {
+  background: transparent;
+  border: none;
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.btnLogin:hover {
+  color: var(--primary-color, #6366f1);
+}
+
+.btnSignup {
+  background: var(--primary-color, #6366f1);
+  border: none;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0.5rem 1.5rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btnSignup:hover {
+  background: var(--primary-hover, #4f46e5);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+}
+
+/* ─── Split Layout ────────────────────────────────────────────────────────── */
+
+.splitLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex: 1;
+  margin-top: 72px; /* navbar height */
+  min-height: calc(100vh - 72px);
+}
+
+/* ─── Form Panel (Left) ───────────────────────────────────────────────────── */
+
+.formPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2.5rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
+}
+
+.formCard {
+  width: 100%;
+  max-width: 440px;
+  animation: slideUp 0.6s ease-out forwards;
+}
+
+.formHeader {
+  margin-bottom: 2rem;
+}
+
+.formTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.5px;
+}
+
+.formSubtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ─── Form Fields ─────────────────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+  font-family: 'Inter', sans-serif;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.input::placeholder {
+  color: #94a3b8;
+}
+
+.input:focus {
+  border-color: var(--primary-color, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  background: #ffffff;
+}
+
+.inputError {
+  border-color: #ef4444;
+}
+
+.inputError:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.errorMsg {
+  font-size: 0.8rem;
+  color: #ef4444;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.errorMsg::before {
+  content: '⚠';
+  font-size: 0.75rem;
+}
+
+/* ─── Password Strength Bar ───────────────────────────────────────────────── */
+
+.strengthWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+}
+
+.strengthBar {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+}
+
+.strengthSegment {
+  flex: 1;
+  height: 4px;
+  border-radius: 3px;
+  background: #e2e8f0;
+  transition: background 0.3s ease;
+}
+
+/* Weak — red (1 segment) */
+.seg_weak {
+  background: #ef4444;
+}
+
+/* Medium — yellow (2 segments) */
+.seg_medium {
+  background: #f59e0b;
+}
+
+/* Strong — green (3 segments) */
+.seg_strong {
+  background: #10b981;
+}
+
+.strengthLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+
+.label_weak   { color: #ef4444; }
+.label_medium { color: #f59e0b; }
+.label_strong { color: #10b981; }
+
+/* ─── Submit Button ───────────────────────────────────────────────────────── */
+
+.submitBtn {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  color: white;
+  background: var(--primary-color, #6366f1);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.submitBtn:hover {
+  background: var(--primary-hover, #4f46e5);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+}
+
+.submitBtn:active {
+  transform: translateY(0);
+}
+
+/* ─── Login Redirect ──────────────────────────────────────────────────────── */
+
+.loginRedirect {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #64748b;
+  font-family: 'Inter', sans-serif;
+}
+
+.loginLink {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--primary-color, #6366f1);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.loginLink:hover {
+  color: var(--primary-hover, #4f46e5);
+}
+
+/* ─── Visual Panel (Right) ────────────────────────────────────────────────── */
+
+.visualPanel {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
+/* Decorative floating blobs */
+.visualShape1 {
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  background: rgba(99, 102, 241, 0.35);
+  border-radius: 50%;
+  filter: blur(70px);
+  top: -10%;
+  right: -10%;
+  animation: float 7s ease-in-out infinite;
+}
+
+.visualShape2 {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: rgba(168, 85, 247, 0.3);
+  border-radius: 50%;
+  filter: blur(60px);
+  bottom: -5%;
+  left: -5%;
+  animation: float 9s ease-in-out infinite reverse;
+}
+
+.visualShape3 {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: rgba(236, 72, 153, 0.2);
+  border-radius: 50%;
+  filter: blur(50px);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: float 11s ease-in-out infinite;
+}
+
+/* Brand content */
+.brandContent {
+  position: relative;
+  z-index: 1;
+  color: white;
+  max-width: 400px;
+  animation: fadeIn 0.9s ease-out forwards;
+}
+
+.brandLogo {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.brandHeading {
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 0 0 1rem;
+  letter-spacing: -0.5px;
+}
+
+.brandDesc {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.65;
+  margin: 0 0 2rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.featurePills {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 2rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  backdrop-filter: blur(4px);
+  width: fit-content;
+  transition: background 0.2s ease;
+}
+
+.pill:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Decorative mock card (matching LandingPage glass-card) */
+.mockCard {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 1.25rem 1.5rem;
+  transform: perspective(800px) rotateX(8deg);
+  transition: transform 0.4s ease;
+}
+
+.mockCard:hover {
+  transform: perspective(800px) rotateX(0deg);
+}
+
+.mockCardHeader {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.dotRed    { background: #ff5f56; }
+.dotYellow { background: #ffbd2e; }
+.dotGreen  { background: #27c93f; }
+
+.mockCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mockLine {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+}
+.line80  { width: 80%; }
+.line100 { width: 100%; }
+.line60  { width: 60%; }
+
+/* ─── Success Screen ──────────────────────────────────────────────────────── */
+
+.successContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  margin-top: 72px;
+}
+
+.successCard {
+  text-align: center;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 24px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+.successIcon {
+  width: 64px;
+  height: 64px;
+  background: #10b981;
+  color: white;
+  font-size: 2rem;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.successCard h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.75rem;
+}
+
+.successCard p {
+  color: #64748b;
+  font-family: 'Inter', sans-serif;
+  margin: 0 0 2rem;
+  line-height: 1.6;
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes float {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-18px); }
+  100% { transform: translateY(0px); }
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .splitLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .visualPanel {
+    display: none; /* hide on mobile, form takes full width */
+  }
+
+  .formPanel {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .navLinks {
+    display: none;
+  }
+
+  .formTitle {
+    font-size: 1.6rem;
+  }
+}
