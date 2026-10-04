@@ -55,9 +55,10 @@ def test_list_products_returns_not_enough_data_before_seven_days(monkeypatch):
 @pytest.mark.parametrize(
     ("current_price", "expected_label"),
     [
-        ("195.00", "Good price"),
-        ("205.00", "Normal"),
-        ("239.00", "Expensive - wait"),
+        ("198.45", "Good price"),
+        ("198.46", "Normal"),
+        ("214.50", "Normal"),
+        ("214.51", "Expensive - wait"),
     ],
 )
 def test_list_products_computes_price_label(current_price, expected_label, monkeypatch):
@@ -86,6 +87,46 @@ def test_list_products_computes_price_label(current_price, expected_label, monke
         print(
             "Watchlist price assessment:",
             {"current_price": current_price, "price_label": product_list.products[0].price_label},
+        )
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    ("distinct_days", "expected_label"),
+    [
+        (6, "Not enough data to assess"),
+        (7, "Good price"),
+    ],
+)
+def test_list_products_requires_seven_distinct_days(
+    distinct_days, expected_label, monkeypatch
+):
+    async def scenario():
+        monkeypatch.setattr(
+            service_module.tracked_product_crud,
+            "list_with_product_statistics",
+            AsyncMock(
+                return_value=[
+                    (
+                        _product(current_price="195.00"),
+                        None,
+                        False,
+                        distinct_days,
+                        Decimal("195.00"),
+                    )
+                ]
+            ),
+        )
+
+        product_list = await WatchlistService().list_products(
+            SimpleNamespace(), SimpleNamespace(id=7)
+        )
+
+        assert product_list.products[0].price_label == expected_label
+        print(
+            "Đánh giá theo số ngày có dữ liệu:",
+            {"distinct_days": distinct_days, "price_label": expected_label},
         )
 
     asyncio.run(scenario())
