@@ -1,3 +1,5 @@
+Những gì đã thay đổi
+
 1. Đăng ký/đăng nhập (US04, /login, /register mới, /forgot-password mới)
 
 - M1: chỉ có "Sign in with Google" (không có Email, không có đăng ký, không quên mật khẩu).

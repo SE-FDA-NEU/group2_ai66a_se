@@ -7,7 +7,7 @@ Members:        Nguyen Trong Dai (11247268), Mai Huy Dang (11247269)
                 Pham Huu Gia An (11247254), Mai Tuan Manh (11247318),
                 Le Ba Phong (11247339)
 Product Owner:  @Dai-nguyen1506
-Scrum Master:   @happyhusky3303  (Sprint 2)
+Scrum Master:   @CaMapCon26  (Sprint 1)
 
 Repository:     https://github.com/SE-FDA-NEU/group2_ai66a_se.git;
 Project board:  https://github.com/orgs/SE-FDA-NEU/projects/19/views/1;
