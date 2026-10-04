@@ -3,20 +3,34 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import styles from './Sidebar.module.css';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { logout, isLoggedIn } = useAuth();
   const navigate = useNavigate();
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
       <div className={styles.logoContainer}>
-        <div className={styles.logoIcon}>T</div>
-        <h1 className={styles.logoText}>Trakora</h1>
+        <div className={styles.logoWrapper}>
+          <div className={styles.logoIcon}>T</div>
+          <h1 className={styles.logoText}>Trakora</h1>
+        </div>
+        {/* Nút đóng cho mobile */}
+        {isOpen && (
+          <button className={styles.closeBtn} onClick={onClose}>
+            ✕
+          </button>
+        )}
       </div>
 
       <nav className={styles.nav}>
         <NavLink
           to="/"
+          onClick={onClose}
           className={({ isActive }) => `${styles.navItem} ${isActive && window.location.pathname === '/' ? styles.active : ''}`}
         >
           <span className={styles.icon}>[]</span>
@@ -25,6 +39,7 @@ export const Sidebar: React.FC = () => {
 
         <NavLink
           to="/watchlist"
+          onClick={onClose}
           className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
         >
           <span className={styles.icon}>[]</span>
@@ -33,6 +48,7 @@ export const Sidebar: React.FC = () => {
 
         <NavLink
           to="/settings"
+          onClick={onClose}
           className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
         >
           <span className={styles.icon}>[]</span>
@@ -55,14 +71,7 @@ export const Sidebar: React.FC = () => {
                 localStorage.removeItem('user_email');
                 navigate('/login');
               }}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '14px',
-                marginLeft: 'auto',
-                color: '#ef4444',
-              }}
+              className={styles.logoutBtn}
             >
               ⎋
             </button>

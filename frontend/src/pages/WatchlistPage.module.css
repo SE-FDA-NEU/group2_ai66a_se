@@ -170,6 +170,12 @@
   .pageContainer {
     padding: 24px 16px;
   }
+  
+  .pageHeader {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
 
   .toolbar {
     flex-direction: column;
@@ -177,8 +183,15 @@
     gap: 12px;
   }
 
+  .toolbarLeft,
   .toolbarRight {
     width: 100%;
+    display: flex;
+  }
+
+  .toolbarBtn {
+    width: 100%;
+    justify-content: center;
   }
 
   .searchContainer {
