@@ -1,5 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from app.core.exceptions import ErrorDetail
+
+class DevSetAdminRequest(BaseModel):
+    email: EmailStr
 
 class SystemInfoData(BaseModel):
     app_name: str

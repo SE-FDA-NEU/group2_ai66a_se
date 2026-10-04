@@ -5,7 +5,7 @@ from pydantic import EmailStr
 
 from app.models.user_model import User
 from app.schemas.common import ApiResponse
-from app.schemas.dev_schema import SystemInfoData
+from app.schemas.dev_schema import SystemInfoData, DevSetAdminRequest
 from app.core.database import get_db
 from app.core.redis import get_redis
 from app.api.deps import get_current_developer
@@ -43,10 +43,10 @@ async def check_connect_db(
 
 @router.patch("/set-admin", response_model=ApiResponse[None])
 async def set_admin(
-    email: EmailStr,
+    request: DevSetAdminRequest,
     dev: User = Depends(get_current_developer),
     db: AsyncSession = Depends(get_db)
 ):
     """API Dev cấp quyền admin cho User"""
-    await dev_service.set_admin(email=email, db=db)
-    return ApiResponse(message=f"Đã cập nhật admin cho email {email}")
+    await dev_service.set_admin(email=request.email, db=db)
+    return ApiResponse(message=f"Đã cập nhật admin cho email {request.email}")
