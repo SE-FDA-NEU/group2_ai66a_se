@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from app.core.exceptions import ErrorDetail
 
 
@@ -8,6 +8,14 @@ class OTPReason(str, Enum):
     VERIFY_EMAIL = "verify-email"
     RESET_PASSWORD = "reset-password"
 
+class OTPSendRequest(BaseModel):
+    email: EmailStr
+    reason: OTPReason = OTPReason.VERIFY_EMAIL
+
+class OTPVerifyRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    reason: OTPReason = OTPReason.VERIFY_EMAIL
 
 class OTPVerifyData(BaseModel):
     verified_token: str

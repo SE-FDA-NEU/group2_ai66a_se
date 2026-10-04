@@ -9,14 +9,20 @@ class UserCreate(UserBase):
     nickname: str
     password: str
 
+class UserRegisterRequest(UserCreate):
+    verify_token: str
 
 class UserUpdate(BaseModel):
     nickname: str = Field(min_length=1)
 
-
 class PasswordUpdate(BaseModel):
     old_password: str = Field(min_length=8)
     new_password: str = Field(min_length=8)
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    new_password: str = Field(min_length=8)
+    verify_token: str
 
 class UserResponse(UserBase):
     id: int
