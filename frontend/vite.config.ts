@@ -8,9 +8,14 @@ const backendTarget = process.env.VITE_BACKEND_URL || process.env.BACKEND_URL ||
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  envDir: '../',
+  envPrefix: ['VITE_', 'GOOGLE_'],
   server: {
     host: true, // Listen on all local IPs (needed for Docker)
     port: 3000,
+    watch: {
+      usePolling: true,
+    },
     proxy: {
       '/api': {
         target: backendTarget,
