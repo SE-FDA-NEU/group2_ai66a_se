@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     # 5. Cấu hình Google Auth
     GOOGLE_CLIENT_ID: str
 
+    # RapidAPI product lookup adapter (optional in local/test environments)
+    RAPIDAPI_KEY: Optional[str] = None
+    RAPIDAPI_HOST: str = "real-time-amazon-data.p.rapidapi.com"
+    RAPIDAPI_PRODUCT_ENDPOINT: str = "https://real-time-amazon-data.p.rapidapi.com/product-details"
+
     @property
     def get_redis_url(self) -> str:
         if self.REDIS_URL:
