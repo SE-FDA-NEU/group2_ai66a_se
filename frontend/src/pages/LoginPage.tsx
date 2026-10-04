@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { login } from '../api/authApi';
 import styles from './LoginPage.module.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -45,6 +46,9 @@ const LoginPage: React.FC = () => {
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
   const [showPassword, setShowPassword] = useState(false);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const key = name as keyof FormValues;
@@ -61,7 +65,7 @@ const LoginPage: React.FC = () => {
     setErrors((prev) => ({ ...prev, [key]: validateField(key, value) }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const allErrors: FormErrors = {
@@ -73,8 +77,29 @@ const LoginPage: React.FC = () => {
 
     if (Object.values(allErrors).some(Boolean)) return;
 
-    // TODO: wire to POST /api/v1/auth/login (OAuth2 form — field name is "username", value is email)
-    console.log('Login payload:', { username: values.email, password: values.password });
+    try {
+      setIsSubmitting(true);
+      setSubmitError(null);
+      const res = await login(values.email, values.password);
+      if (res && res.access_token) {
+        localStorage.setItem('access_token', res.access_token);
+        localStorage.setItem('user_email', values.email);
+        navigate('/watchlist');
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      let msg = 'Email hoặc mật khẩu không chính xác.';
+      if (typeof err === 'string') {
+        msg = err;
+      } else if (err?.detail) {
+        msg = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+      } else if (err?.message) {
+        msg = err.message;
+      }
+      setSubmitError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getInputClass = (field: keyof FormValues) =>
@@ -209,8 +234,14 @@ const LoginPage: React.FC = () => {
                 )}
               </div>
 
-              <button type="submit" className={styles.submitBtn}>
-                Đăng nhập
+              {submitError && (
+                <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '14px', textAlign: 'center' }}>
+                  {submitError}
+                </div>
+              )}
+
+              <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+                {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </button>
             </form>
 

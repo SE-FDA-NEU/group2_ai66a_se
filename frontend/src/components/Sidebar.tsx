@@ -40,9 +40,29 @@ export const Sidebar: React.FC = () => {
         <div className={styles.userProfile}>
           <div className={styles.avatar}></div>
           <div className={styles.userInfo}>
-            <span className={styles.userName}>Người dùng</span>
-            <span className={styles.userEmail}>user@example.com</span>
+            <span className={styles.userName}>{localStorage.getItem('user_email') ? 'Đã đăng nhập' : 'Khách'}</span>
+            <span className={styles.userEmail}>{localStorage.getItem('user_email') || 'Chưa đăng nhập'}</span>
           </div>
+          {localStorage.getItem('access_token') && (
+            <button
+              title="Đăng xuất"
+              onClick={() => {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user_email');
+                window.location.href = '/login';
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                marginLeft: 'auto',
+                color: '#ef4444',
+              }}
+            >
+              ⎋
+            </button>
+          )}
         </div>
       </div>
     </aside>
