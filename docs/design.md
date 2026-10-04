@@ -17,43 +17,46 @@ Merge commit:   ...
 Submitted by:   Nguyen Trong Dai
 ```
 
+![Start](./images/sprint-02/Start.png)
+
+![End](./images/sprint-02/End.png)
+
 ## 1. Architecture
 
-Describe a 4-component architecture:
-- **Browser (React 18 SPA)**: Vite dev server on port 3000, proxies `/api` to backend:8000. Pages: Landing `/`, Login `/login`, Register `/register`. Uses Axios with JWT Bearer token interceptor.
-- **Web Application (FastAPI)**: Python 3.11 + FastAPI 0.141 + Uvicorn. Async REST API at `/api/v1`. Handles auth (JWT HS256, bcrypt, Google OAuth2), watchlist CRUD, OTP email verification via Redis + aiosmtplib. External: RapidAPI Real-Time Amazon Data for product lookup.
-- **PostgreSQL 15**: 4 tables (users, products, price_history, tracked_products). Managed by Alembic async migrations. Connection pool via asyncpg (pool_size=20, max_overflow=10).
-- **Redis 7**: Session store for OTP codes (TTL 300s), verified action tokens. Used for rate limiting OTP attempts.
-
-All 4 services run in Docker Compose on a shared default network.
-
-Include a text-based architecture diagram like:
+```text
+        ┌──────────────────────────────────┐
+        │            Web Browser           │
+        │       [Container: React SPA]     │
+        └────────────────┬─────────────────┘
+            HTTP Request │ ^
+      (GET/POST /api/v1) │ │ JSON Response
+                         v │
+        ┌──────────────────────────────────┐
+        │          Web Application         │
+        │        [Container: FastAPI]      │
+        └───────┬─────────┬─────────┬──────┘
+      SQL Query │^        │^ Redis  │^ HTTP Request
+      (asyncpg) ││Table   ││ Cmd    ││ (httpx)
+                ││Data    ││ / Data ││ JSON Resp
+                v│        v│        v│
+     ┌──────────┴┴─┐  ┌───┴┴───┐ ┌──┴┴────────────┐
+     │ PostgreSQL  │  │ Redis 7│ │ RapidAPI Amazon│
+     │  [Database] │  │ [Store]│ │   [External]   │
+     └─────────────┘  └────────┘ └────────────────┘
 ```
-┌─────────────┐       HTTP        ┌──────────────────┐      asyncpg     ┌──────────────┐
-│   Browser   │  ── /api/v1 ──>  │  FastAPI (py311) │  ────────────>  │ PostgreSQL 15│
-│  React 18   │  <── JSON ────   │  Uvicorn :8000   │  <────────────  │   :5432      │
-│  Vite :3000 │                  │                  │                 └──────────────┘
-└─────────────┘                  │                  │      redis-py    ┌──────────────┐
-                                 │                  │  ────────────>  │   Redis 7    │
-                                 │                  │  <────────────  │   :6379      │
-                                 └──────────────────┘                 └──────────────┘
-                                         │
-                                         │ httpx (async)
-                                         v
-                                 ┌──────────────────┐
-                                 │   RapidAPI       │
-                                 │ Real-Time Amazon │
-                                 └──────────────────┘
-```
-
-> Note: Include a placeholder for the architecture diagram image: `> 📷 See [architecture-diagram.png](images/architecture-diagram.png) for the visual version.`
 
 ## 2. Data Model
 
-For EACH of the 4 tables, provide:
-- Purpose
-- A markdown table with columns: Column, Type, Nullable, Default/Constraint, Description
-- Business rules it enforces
+![ERD](./images/erd.jpg)
+
+### Schema Summary & Rules Mapping
+
+| Table | Columns | Constraint · which M1 rule |
+|-------|---------|----------------------------|
+| **users** | `id` PK · `email` UNIQUE · `nickname` · `password_hashed` NULL · `auth_provider` · `google_sub` UNIQUE NULL · `is_activate` BOOL · `is_developer` BOOL · `created_at` DATE NULL · `updated_at` DATE NULL | CHECK `password_hashed` or `google_sub` required<br>`nickname` NOT NULL, editable in `/profile` · **BR14**<br>OTP not stored here · **BR13** |
+| **products** | `id` PK · `marketplace` · `external_id` · `url` · `name` · `image_url` · `brand` NULL · `shop_name` NULL · `product_rating` NULL · `review_count` · `current_price` · `original_price` NULL · `currency` · `in_stock` BOOL · `tracked_by_count` · `price_low` · `price_high` · `untracked_since` DATE NULL · `top_reviews` JSONB · `last_refreshed_at` DATE | UNIQUE (`marketplace`, `external_id`) · **BR3**<br>`marketplace`: shopee/tiktok_shop (amazon=dev only) · **BR9**<br>`price_low` / `price_high`: whole tracked history · **BR6**, **BR7**<br>`untracked_since`: 7-day cleanup · **BR15** |
+| **price_history** | `id` PK · `product_id` FK · `price` · `recorded_at` DATE | Append-only, no backfill · **BR3**<br>Distinct days → 7-day rule · **BR5**<br>Source of median/lowest · **BR6**, **BR7**<br>Gap = large interval between rows. CASCADE from `products` · **BR15** |
+| **tracked_products**| `user_id` PK FK · `product_id` PK FK · `target_price` NULL · `buy_when_good` BOOL · `created_at` DATE | Composite PK: no duplicate tracking<br>Max 10 tracked products per user · **BR8**<br>Remove → 7-day grace period. CASCADE from `users`, `products` · **BR15** |
 
 ### Table: `users`
 | Column | Type | Nullable | Default / Constraint | Description |
@@ -120,11 +123,7 @@ User-to-product watchlist association.
 
 Composite PK `(user_id, product_id)` prevents duplicate tracking.
 
-Add an ERD placeholder: `> 📷 See [erd.png](images/erd.png) for the Entity-Relationship Diagram.`
-
 ## 3. API Design
-
-List the following endpoints in a table format for EACH group. For each endpoint provide: Method, Path, Auth, Request Body/Params, Success Response, Error Codes.
 
 ### 3.1 Authentication (`/api/v1/auth`)
 
@@ -132,15 +131,15 @@ List the following endpoints in a table format for EACH group. For each endpoint
 |---|--------|------|------|-------|---------|--------|
 | 1 | POST | `/api/v1/auth/login` | None | Form: `username`, `password` | `200 {access_token, token_type}` | `401 INVALID_LOGIN` |
 | 2 | POST | `/api/v1/auth/google` | None | JSON: `{id_token}` | `200 {access_token, token_type}` | `401 GOOGLE_AUTH_FAILED`, `401 INVALID_LOGIN` |
-| 3 | POST | `/api/v1/auth/register` | None | Query: `verify_token`; JSON: `{email, nickname, password}` | `201 ApiResponse<UserResponse>` | `400 OTP_EXPIRED`, `400 EMAIL_ALREADY_EXISTS` |
-| 4 | POST | `/api/v1/auth/reset-password` | None | Query: `email, new_password, verify_token` | `200 ApiResponse<null>` | `400 OTP_EXPIRED`, `404 USER_NOT_FOUND` |
+| 3 | POST | `/api/v1/auth/register` | None | JSON: `{email, nickname, password, verify_token}` | `201 ApiResponse<UserResponse>` | `400 OTP_EXPIRED`, `400 EMAIL_ALREADY_EXISTS` |
+| 4 | POST | `/api/v1/auth/reset-password` | None | JSON: `{email, new_password, verify_token}` | `200 ApiResponse<null>` | `400 OTP_EXPIRED`, `404 USER_NOT_FOUND` |
 
 ### 3.2 OTP (`/api/v1/otp`)
 
 | # | Method | Path | Auth | Input | Success | Errors |
 |---|--------|------|------|-------|---------|--------|
-| 5 | POST | `/api/v1/otp/send` | None | Query: `email, reason` | `200 ApiResponse<null>` | `400 EMAIL_ALREADY_EXISTS`, `404 USER_NOT_FOUND`, `500 EMAIL_SEND_FAILED` |
-| 6 | POST | `/api/v1/otp/verify` | None | Query: `email, otp, reason` | `200 ApiResponse<{verified_token}>` | `400 OTP_EXPIRED`, `400 OTP_INVALID`, `400 OTP_LIMIT_EXCEEDED` |
+| 5 | POST | `/api/v1/otp/send` | None | JSON: `{email, reason?}` | `200 ApiResponse<null>` | `400 EMAIL_ALREADY_EXISTS`, `404 USER_NOT_FOUND`, `500 EMAIL_SEND_FAILED` |
+| 6 | POST | `/api/v1/otp/verify` | None | JSON: `{email, otp, reason?}` | `200 ApiResponse<{verified_token}>` | `400 OTP_EXPIRED`, `400 OTP_INVALID`, `400 OTP_LIMIT_EXCEEDED` |
 
 ### 3.3 User Profile (`/api/v1/user`)
 
@@ -154,7 +153,7 @@ List the following endpoints in a table format for EACH group. For each endpoint
 
 | # | Method | Path | Auth | Input | Success | Errors |
 |---|--------|------|------|-------|---------|--------|
-| 10 | POST | `/api/v1/watchlist` | Bearer | JSON: `{url, target_price?, buy_when_good}` | `201 ApiResponse<Product>` | `400 AMAZON_ONLY`, `400 INVALID_PRODUCT_LINK`, `400 WATCHLIST_LIMIT_REACHED`, `502 MARKETPLACE_UPSTREAM_ERROR`, `503 MARKETPLACE_UNAVAILABLE` |
+| 10 | POST | `/api/v1/watchlist` | Bearer | JSON: `{url, target_price?, buy_when_good?}` | `201 ApiResponse<Product>` | `400 AMAZON_ONLY`, `400 INVALID_PRODUCT_LINK`, `400 WATCHLIST_LIMIT_REACHED`, `404 USER_NOT_FOUND`, `502 MARKETPLACE_PRODUCT_MISMATCH`, `502 MARKETPLACE_UPSTREAM_ERROR`, `503 MARKETPLACE_UNAVAILABLE` |
 | 11 | GET | `/api/v1/watchlist` | Bearer | — | `200 ApiResponse<ProductList>` | `401 UNAUTHORIZED` |
 | 12 | DELETE | `/api/v1/watchlist/{product_id}` | Bearer | Path: `product_id` | `204 No Content` | `404 TRACKING_NOT_FOUND` |
 
@@ -164,9 +163,9 @@ List the following endpoints in a table format for EACH group. For each endpoint
 |---|--------|------|------|-------|---------|--------|
 | 13 | GET | `/api/v1/dev/system-info` | Bearer+Dev | — | `200 ApiResponse<SystemInfoData>` | `403 NOT_DEVELOPER` |
 | 14 | GET | `/api/v1/dev/health` | Bearer+Dev | — | `200 ApiResponse<null>` | `503 DATABASE_ERROR`, `503 REDIS_ERROR` |
-| 15 | PATCH | `/api/v1/dev/set-admin` | Bearer+Dev | Query: `email` | `200 ApiResponse<null>` | `503 USER_NOT_FOUND` |
+| 15 | PATCH | `/api/v1/dev/set-admin` | Bearer+Dev | JSON: `{email}` | `200 ApiResponse<null>` | `503 USER_NOT_FOUND` |
 
-## 4. Walking Skeleton
+## 4. <mark>Walking Skeleton</mark>
 
 Describe the walking skeleton route: **`GET /api/v1/watchlist`** — it reads real data from a real PostgreSQL database and returns it to the browser.
 
@@ -224,15 +223,35 @@ ORDER BY products.id
 
 | Aspect | Detail |
 |--------|--------|
-| **Context** | The backend needs to serve a REST API with async database access (asyncpg), integrate with external APIs (RapidAPI) using async HTTP, and handle real-time OTP flows through Redis. |
-| **Options considered** | (A) Django + DRF — mature ecosystem, built-in ORM and admin. (B) FastAPI — async-first, Pydantic validation, automatic OpenAPI docs. (C) Flask — lightweight but sync by default. |
+| **Context** | The backend needs to serve a REST API with async database access (asyncpg), integrate with external APIs using async HTTP, and handle real-time OTP flows through Redis. |
+| **Options considered** | (A) Django + DRF — mature ecosystem, built-in ORM and admin. (B) FastAPI — async-first, Pydantic validation, automatic OpenAPI docs. |
 | **Decision** | FastAPI |
-| **Rationale** | FastAPI's native async support allows non-blocking database queries (asyncpg), Redis operations, and external API calls (httpx). Pydantic v2 integration provides request/response validation with zero boilerplate. Auto-generated Swagger UI at `/docs` accelerates frontend development. Django's ORM is sync-first and would require workarounds. |
-| **What would change this** | If the project needed a built-in admin panel or content management, Django's batteries-included approach would be more productive. |
+| **Rationale** | FastAPI's native async support allows non-blocking database queries (asyncpg), Redis operations, and external API calls (httpx). Django's ORM is sync-first and would require workarounds. Pydantic v2 integration provides request/response validation with zero boilerplate. |
+| **What would change this** | If the project needed a built-in admin panel or content management out of the box, Django's batteries-included approach would be more productive. |
+
+### ADR-3: React over Vue or plain HTML/JS for the frontend
+
+| Aspect | Detail |
+|--------|--------|
+| **Context** | The team needs a robust frontend framework to handle the interactive watchlist and dynamic price charts. |
+| **Options considered** | (A) React (with Vite) — component-based, large ecosystem. (B) Vue 3 — progressive, easy to integrate. (C) Plain HTML/JS — zero overhead, no build step. |
+| **Decision** | React (with Vite) |
+| **Rationale** | React's component-based architecture and large community ecosystem (like React Router and Axios) make development faster and more maintainable than plain HTML/JS. The team also has more prior experience with React than Vue 3. |
+| **What would change this** | If the frontend only consisted of static pages with minimal interactivity, we would use plain HTML/JS to avoid the overhead of a framework. |
+
+### ADR-4: Redis over PostgreSQL for OTP management
+
+| Aspect | Detail |
+|--------|--------|
+| **Context** | The system needs to store temporary OTP codes with expiration times (TTL) and enforce rate limiting (max 5 attempts) across multiple worker processes. |
+| **Options considered** | (A) PostgreSQL table — requires manual cleanup jobs. (B) In-memory Python dict — doesn't scale across multiple Uvicorn workers. (C) Redis — native TTL and atomic operations. |
+| **Decision** | Redis 7 |
+| **Rationale** | Using a PostgreSQL table would require manual cleanup jobs for expired codes and increase database load for simple key-value lookups. An in-memory dict wouldn't work well if the backend scales to multiple worker processes. Redis natively supports TTL and atomic operations, making it perfect for OTPs. |
+| **What would change this** | If the hosting budget was strictly limited to a single database container and we couldn't afford to run Redis, we would fall back to storing OTPs in a PostgreSQL table with an `expires_at` column. |
 
 ## 6. What Changed Since Milestone 1
 
-### Change 1: Authentication scope expanded from Google-only to multi-provider
+### Change 1: Authentication scope expanded from Google-only to multi-provider (US04)
 
 | Aspect | Detail |
 |--------|--------|
@@ -241,7 +260,25 @@ ORDER BY products.id
 | **Reason** | Sprint 1 feedback: relying solely on Google excludes users who prefer email accounts. Also needed for the course requirement of demonstrating a complete auth walking skeleton. |
 | **Impact** | `users` table gained `auth_provider`, `google_sub`, `nickname` columns. `password_hashed` changed from NOT NULL to nullable. 2 new API groups added (`/otp`, `/auth/register`, `/auth/reset-password`). Redis introduced for OTP session management. US04 story points increased from 3 → 8. |
 
-### Change 2: Marketplace support changed from Shopee/TikTok Shop to Amazon
+### Change 2: Nickname added to user profile (US04, BR14)
+
+| Aspect | Detail |
+|--------|--------|
+| **M1 design** | No concept of user nickname. |
+| **Current design** | Google login automatically fetches the nickname. Email registration asks for it. Nickname can be updated later in the profile page. |
+| **Reason** | Necessary for personalizing the user experience and displaying a friendly name on the UI instead of an email address. |
+| **Impact** | Added `nickname` column to `users` table. Added `/api/v1/user/me` endpoint to edit profile. |
+
+### Change 3: Stricter enforcement of 10-product limit (BR8, US05)
+
+| Aspect | Detail |
+|--------|--------|
+| **M1 design** | Users are blocked *after* attempting to add the 11th product. |
+| **Current design** | Blocked immediately on tapping the "+" button if 10 products are already tracked. The form does not open. |
+| **Reason** | Better user experience by preventing users from wasting time pasting a link when they can't add it anyway. |
+| **Impact** | Validation moved to a pre-check before opening the UI modal. |
+
+### Change 4: Marketplace support changed from Shopee/TikTok Shop to Amazon (BR9)
 
 | Aspect | Detail |
 |--------|--------|
@@ -249,3 +286,30 @@ ORDER BY products.id
 | **Current design** | Amazon is used as the primary marketplace for Sprint 2 development and testing, via RapidAPI Real-Time Amazon Data API. Shopee/TikTok Shop adapters are deferred to Sprint 3+. |
 | **Reason** | No reliable public API exists for Shopee/TikTok Shop product data (scraping violates ToS and is unstable). RapidAPI provides a clean REST endpoint for Amazon with structured JSON responses, enabling the team to build and test the full price-tracking pipeline end-to-end without scraping concerns. |
 | **Impact** | `amazon_link_parser.py` replaces the planned Shopee parser. `rapidapi_client.py` added as the marketplace adapter. BR9 updated with a dev/test note. `products.marketplace` stores `'amazon'` instead of `'shopee'`. The adapter interface remains the same (`ProductMarketplace` schema), so Shopee/TikTok adapters can be plugged in later. |
+
+### Change 5: OTP verification for security (BR13)
+
+| Aspect | Detail |
+|--------|--------|
+| **M1 design** | OTP was not included in the scope. |
+| **Current design** | 6-digit OTP code, expires in 5 minutes, maximum 5 failed attempts before a new code is required. |
+| **Reason** | Required to verify email ownership during registration and to securely reset passwords. |
+| **Impact** | Redis introduced for OTP session management and rate limiting. New endpoints `/api/v1/otp/send` and `/api/v1/otp/verify`. |
+
+### Change 6: Price history metrics replace mini charts (US03, US05-07)
+
+| Aspect | Detail |
+|--------|--------|
+| **M1 design** | Watchlist rows display a mini "price chart" showing the last "30-day" history. |
+| **Current design** | Displays "current price", "lowest price", and "highest price". The timeframe evaluates the "full price history" instead of just 30 days. |
+| **Reason** | Text-based metrics (low/high) are more actionable at a glance than a mini chart. Using full history provides better context for "Good price" labels. |
+| **Impact** | Backend logic changed to calculate min/max over the entire `price_history` dataset instead of truncating at 30 days. |
+
+### Change 7: 7-day retention grace period for untracked products (BR15)
+
+| Aspect | Detail |
+|--------|--------|
+| **M1 design** | Not explicitly defined what happens when trackers drop to 0. |
+| **Current design** | Products with 0 trackers are kept for a 7-day grace period. Tracking resumes if added again within 7 days. Permanently deleted after 7 days. |
+| **Reason** | Saves database space by removing dead products, while preventing accidental data loss if a user immediately re-tracks a product. |
+| **Impact** | Added `untracked_since` column to `products` table and a background cleanup mechanism. |
