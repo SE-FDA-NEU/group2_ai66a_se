@@ -165,9 +165,46 @@ Composite PK `(user_id, product_id)` prevents duplicate tracking.
 | 14 | GET | `/api/v1/dev/health` | Bearer+Dev | — | `200 ApiResponse<null>` | `503 DATABASE_ERROR`, `503 REDIS_ERROR` |
 | 15 | PATCH | `/api/v1/dev/set-admin` | Bearer+Dev | JSON: `{email}` | `200 ApiResponse<null>` | `503 USER_NOT_FOUND` |
 
-## 4. <mark>Walking Skeleton</mark>
+## 4. Walking Skeleton
 
-Describe the walking skeleton route: **`GET /api/v1/watchlist`** — it reads real data from a real PostgreSQL database and returns it to the browser.
+**Route:** `GET /api/v1/watchlist` · **Table:** `products`, `tracked_products`, `price_history` (Seeded > 10 rows automatically via RapidAPI fetches)
+
+**From `docs/SETUP.md` — the commands section:**
+
+```bash
+git clone https://github.com/SE-FDA-NEU/group2_ai66a_se.git
+cd group2_ai66a_se
+cp .env.example .env
+# Edit .env to add your keys (ADMIN_EMAIL, RAPIDAPI_KEY, etc.)
+docker compose up -d --build
+```
+
+**How to know it worked:** `http://localhost:3000/watchlist` shows a table of products tracked by the user.
+
+**Troubleshooting (excerpt):** 
+`MARKETPLACE_UNAVAILABLE` → Missing RapidAPI key in `.env`.
+`Connection refused` on backend → Wait 30s for PostgreSQL to finish initializing and restart backend.
+
+**Tested by:** @dainguyen1506 (Team 2) on a fresh Linux machine, 05 Oct — 5 minutes.
+
+**The query behind the page (in `tracked_product_crud.py`):**
+
+```sql
+SELECT products.*, tracked_products.target_price, tracked_products.buy_when_good,
+       COALESCE(stats.distinct_days, 0) AS distinct_days,
+       stats.median_price
+FROM tracked_products
+JOIN products ON products.id = tracked_products.product_id
+LEFT OUTER JOIN (
+    SELECT product_id,
+           COUNT(DISTINCT CAST(recorded_at AS DATE)) AS distinct_days,
+           PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS median_price
+    FROM price_history
+    GROUP BY product_id
+) AS stats ON stats.product_id = products.id
+WHERE tracked_products.user_id = :user_id
+ORDER BY products.id
+```
 
 ### 4.1 End-to-end trace
 
@@ -205,7 +242,7 @@ ORDER BY products.id
 
 ### 4.2 Proof
 
-> 📷 See [walking-skeleton.png](images/walking-skeleton.png) — browser screenshot showing the watchlist page with the address bar visible.
+![walking-skeleton.gif](./images/skeleton.gif)
 
 ## 5. Design Decisions (ADR)
 
