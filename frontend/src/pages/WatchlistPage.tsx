@@ -1,88 +1,102 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ProductRow } from '../components/ProductRow';
+import {
+  getWatchlist,
+  addProductToWatchlist,
+  removeProductFromWatchlist,
+  WatchlistProduct,
+} from '../api/watchlistApi';
 import styles from './WatchlistPage.module.css';
 
-// Mock data (có thể được thay thế bằng dữ liệu lấy từ API sau này)
-const mockProducts = [
-  {
-    id: "1",
-    name: "Nikon D3200",
-    image: "https://picsum.photos/seed/nikon/200/200",
-    currentPrice: 8500000,
-    priceLow: 8000000,
-    priceHigh: 9000000,
-    starRating: 4.8,
-    priceLabel: "Giá tốt",
-  },
-  {
-    id: "2",
-    name: "Macbook Pro 14\" (2023)",
-    image: "https://picsum.photos/seed/macbook/200/200",
-    currentPrice: 45000000,
-    priceLow: 44000000,
-    priceHigh: 48000000,
-    starRating: 4.9,
-    priceLabel: "Trung bình",
-  },
-  {
-    id: "3",
-    name: "Tascam DR-40X",
-    image: "https://picsum.photos/seed/tascam/200/200",
-    currentPrice: 4200000,
-    priceLow: 4000000,
-    priceHigh: 4500000,
-    starRating: 4.5,
-    isFakeDiscount: true,
-  },
-  {
-    id: "4",
-    name: "Dell UltraSharp U2720Q",
-    image: "https://picsum.photos/seed/dell/200/200",
-    currentPrice: 12500000,
-    priceLow: 12000000,
-    priceHigh: 13000000,
-    starRating: 4.7,
-    priceLabel: "Giá tốt",
-  },
-  {
-    id: "5",
-    name: "RED Digital Cinema KOMODO",
-    image: "https://picsum.photos/seed/red/200/200",
-    currentPrice: 150000000,
-    notEnoughData: true,
-  },
-];
-
 export const WatchlistPage: React.FC = () => {
-  const [products, setProducts] = useState<any[]>([]);
+  const navigate = useNavigate();
+
+  const [products, setProducts] = useState<WatchlistProduct[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUnauthorized, setIsUnauthorized] = useState(false);
 
-  useEffect(() => {
-    // Giả lập gọi API
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        // Tạm thời dùng mockProducts
-        setTimeout(() => {
-          setProducts(mockProducts);
-          setIsLoading(false);
-        }, 500);
-      } catch (err) {
-        setError('Đã xảy ra lỗi. Vui lòng thử lại.');
-        setIsLoading(false);
+  // State cho Modal thêm sản phẩm
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [url, setUrl] = useState('');
+  const [targetPrice, setTargetPrice] = useState('');
+  const [buyWhenGood, setBuyWhenGood] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+
+  const fetchProducts = useCallback(async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setIsUnauthorized(true);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setIsUnauthorized(false);
+
+    try {
+      const data = await getWatchlist();
+      setProducts(data.products || []);
+    } catch (err: any) {
+      console.error('Fetch watchlist error:', err);
+      if (err.status === 401 || err.detail === 'Could not validate credentials') {
+        setIsUnauthorized(true);
+      } else {
+        setError(err.message || err.detail || 'Không thể tải danh sách theo dõi từ máy chủ.');
       }
-    };
-    fetchProducts();
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const handleRemove = (id: string) => {
-    // Gọi API DELETE /watchlist/{product_id} ở đây
-    setProducts(products.filter(p => p.id !== id));
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const handleRemove = async (id: string) => {
+    try {
+      await removeProductFromWatchlist(Number(id));
+      setProducts((prev) => prev.filter((p) => String(p.id) !== id));
+    } catch (err: any) {
+      console.error('Remove product error:', err);
+      alert(err.message || 'Không thể xóa sản phẩm. Vui lòng thử lại.');
+    }
   };
 
-  const filteredProducts = products.filter(p =>
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!url.trim()) {
+      setAddError('Vui lòng nhập đường dẫn (URL) sản phẩm.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setAddError(null);
+      const newProd = await addProductToWatchlist({
+        url: url.trim(),
+        target_price: targetPrice ? Number(targetPrice) : null,
+        buy_when_good: buyWhenGood,
+      });
+
+      setProducts((prev) => [newProd, ...prev]);
+      setIsAddModalOpen(false);
+      setUrl('');
+      setTargetPrice('');
+      setBuyWhenGood(false);
+    } catch (err: any) {
+      console.error('Add product error:', err);
+      setAddError(err.message || err.detail || 'Không thể thêm sản phẩm. Vui lòng kiểm tra đường dẫn.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -91,25 +105,45 @@ export const WatchlistPage: React.FC = () => {
       <header className={styles.pageHeader}>
         <div>
           <h1 className={styles.headerTitle}>Danh sách theo dõi</h1>
-          <p className={styles.headerDescription}>Theo dõi biến động giá và tìm thời điểm mua phù hợp.</p>
+          <p className={styles.headerDescription}>
+            Theo dõi biến động giá và nhận thông báo khi có mức giá ưu đãi.
+          </p>
         </div>
-        <button className={styles.addButton}>
+        <button
+          className={styles.addButton}
+          onClick={() => {
+            if (isUnauthorized) {
+              navigate('/login');
+            } else {
+              setIsAddModalOpen(true);
+            }
+          }}
+        >
           <span>+</span> Thêm sản phẩm
         </button>
       </header>
 
+      {/* Thông báo nếu chưa đăng nhập */}
+      {isUnauthorized && (
+        <div className={styles.authNotice}>
+          <span>
+            ⚠️ Bạn chưa đăng nhập. Vui lòng đăng nhập để đồng bộ và quản lý danh sách sản phẩm thực tế từ hệ thống.
+          </span>
+          <button className={styles.authNoticeLink} onClick={() => navigate('/login')}>
+            Đăng nhập ngay →
+          </button>
+        </div>
+      )}
+
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <button className={styles.toolbarBtn}>
-            <span className="icon">≡</span> Lọc
-          </button>
-          <button className={styles.toolbarBtn}>
-            <span className="icon">⇅</span> Sắp xếp
+          <button className={styles.toolbarBtn} onClick={fetchProducts}>
+            <span className="icon">↻</span> Làm mới
           </button>
         </div>
         <div className={styles.toolbarRight}>
           <div className={styles.searchContainer}>
-            <span className={styles.searchIcon}>[]</span>
+            <span className={styles.searchIcon}>🔍</span>
             <input
               type="text"
               className={styles.searchInput}
@@ -134,7 +168,7 @@ export const WatchlistPage: React.FC = () => {
         <div className={styles.tableBody}>
           {isLoading ? (
             <div className={styles.emptyState}>
-              <div className={styles.emptyStateTitle}>Đang tải dữ liệu...</div>
+              <div className={styles.emptyStateTitle}>Đang tải dữ liệu từ máy chủ...</div>
             </div>
           ) : error ? (
             <div className={styles.emptyState}>
@@ -142,37 +176,124 @@ export const WatchlistPage: React.FC = () => {
               <button
                 className={styles.toolbarBtn}
                 style={{ margin: '12px auto' }}
-                onClick={() => window.location.reload()}
+                onClick={fetchProducts}
               >
                 Thử lại
               </button>
             </div>
+          ) : isUnauthorized ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyStateTitle}>Yêu cầu đăng nhập</div>
+              <p>Hãy đăng nhập vào tài khoản của bạn để xem và quản lý danh sách theo dõi giá.</p>
+              <button
+                className={styles.addButton}
+                style={{ margin: '16px auto' }}
+                onClick={() => navigate('/login')}
+              >
+                Đăng nhập tài khoản
+              </button>
+            </div>
           ) : filteredProducts.length > 0 ? (
-            filteredProducts.map(product => (
+            filteredProducts.map((product) => (
               <ProductRow
                 key={product.id}
-                {...product}
+                id={String(product.id)}
+                name={product.name}
+                image={product.image_url}
+                currentPrice={Number(product.current_price)}
+                priceLow={product.price_low ? Number(product.price_low) : undefined}
+                priceHigh={product.price_high ? Number(product.price_high) : undefined}
+                starRating={product.product_rating ? Number(product.product_rating) : undefined}
+                priceLabel={product.price_label || undefined}
+                isFakeDiscount={product.fake_discount}
+                notEnoughData={!product.price_low || product.price_low === product.price_high}
                 onRemove={handleRemove}
               />
             ))
           ) : (
             <div className={styles.emptyState}>
               <div className={styles.emptyStateTitle}>
-                {searchQuery ? 'Không tìm thấy sản phẩm' : 'Bạn chưa có sản phẩm nào trong danh sách theo dõi.'}
+                {searchQuery
+                  ? 'Không tìm thấy sản phẩm'
+                  : 'Bạn chưa có sản phẩm nào trong danh sách theo dõi.'}
               </div>
               <p>
-                {searchQuery ? 'Vui lòng thử từ khóa khác hoặc xóa bộ lọc.' : 'Thêm sản phẩm để bắt đầu theo dõi biến động giá.'}
+                {searchQuery
+                  ? 'Vui lòng thử từ khóa khác hoặc xóa bộ lọc tìm kiếm.'
+                  : 'Bấm nút "+ Thêm sản phẩm" phía trên để bắt đầu theo dõi biến động giá.'}
               </p>
             </div>
           )}
         </div>
 
-        {!isLoading && !error && filteredProducts.length > 0 && (
+        {!isLoading && !error && !isUnauthorized && filteredProducts.length > 0 && (
           <div className={styles.itemCount}>
             Tổng cộng {filteredProducts.length} sản phẩm
           </div>
         )}
       </div>
+
+      {/* Modal thêm sản phẩm mới */}
+      {isAddModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsAddModalOpen(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <h2 className={styles.modalTitle}>Thêm sản phẩm cần theo dõi</h2>
+
+            {addError && <div className={styles.errorMessage}>{addError}</div>}
+
+            <form onSubmit={handleAddSubmit}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Đường dẫn sản phẩm (Amazon URL) *</label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://www.amazon.com/dp/..."
+                  className={styles.formInput}
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Giá mục tiêu cảnh báo (tùy chọn)</label>
+                <input
+                  type="number"
+                  placeholder="Ví dụ: 1500000"
+                  className={styles.formInput}
+                  value={targetPrice}
+                  onChange={(e) => setTargetPrice(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  id="buyWhenGood"
+                  checked={buyWhenGood}
+                  onChange={(e) => setBuyWhenGood(e.target.checked)}
+                />
+                <label htmlFor="buyWhenGood" className={styles.formLabel} style={{ margin: 0, cursor: 'pointer' }}>
+                  Cảnh báo khi giá ở mức tốt
+                </label>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  className={styles.btnCancel}
+                  onClick={() => setIsAddModalOpen(false)}
+                  disabled={isSubmitting}
+                >
+                  Hủy
+                </button>
+                <button type="submit" className={styles.btnSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? 'Đang thêm...' : 'Thêm vào danh sách'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
