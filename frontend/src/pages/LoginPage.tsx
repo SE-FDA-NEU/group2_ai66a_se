@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, loginWithGoogle } from '../api/authApi';
+import { getUserProfile } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
 import { GoogleAuthButton } from '../components/GoogleAuthButton';
 import styles from './LoginPage.module.css';
@@ -58,6 +59,15 @@ const LoginPage: React.FC = () => {
     try {
       const res = await loginWithGoogle(idToken);
       saveToken(res.access_token);
+      localStorage.setItem('access_token', res.access_token);
+      try {
+        const user = await getUserProfile();
+        if (user?.data?.email) {
+          localStorage.setItem('user_email', user.data.email);
+        }
+      } catch (e) {
+        console.error('Failed to get user profile', e);
+      }
       navigate('/watchlist', { replace: true });
     } catch (err: any) {
       const detail = err?.detail ?? err?.message ?? '';
@@ -105,7 +115,17 @@ const LoginPage: React.FC = () => {
     try {
       const res = await login(values.email, values.password);
       saveToken(res.access_token);
-      localStorage.setItem('user_email', values.email);
+      localStorage.setItem('access_token', res.access_token);
+      try {
+        const user = await getUserProfile();
+        if (user?.data?.email) {
+          localStorage.setItem('user_email', user.data.email);
+        } else {
+          localStorage.setItem('user_email', values.email);
+        }
+      } catch {
+        localStorage.setItem('user_email', values.email);
+      }
       navigate('/watchlist', { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);

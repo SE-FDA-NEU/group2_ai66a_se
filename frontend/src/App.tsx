@@ -7,6 +7,7 @@ import OTPPage from './pages/OTPPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import { Layout } from './components/Layout';
 import { WatchlistPage } from './pages/WatchlistPage';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   return (
@@ -26,6 +27,14 @@ function App() {
             element={
               <Layout>
                 <WatchlistPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <Layout>
+                <ProfilePage />
               </Layout>
             }
           />

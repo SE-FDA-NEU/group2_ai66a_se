@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { verifyOTP, registerUser, login, OTPReason } from '../api/authApi';
+import { getUserProfile } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
 import styles from './OTPPage.module.css';
 
@@ -122,8 +123,13 @@ const OTPPage: React.FC = () => {
       // Auto-login after successful registration
       const loginRes = await login(email, password);
       saveToken(loginRes.access_token);
+      localStorage.setItem("access_token", loginRes.access_token);
+      const user = await getUserProfile();
+      if (user.data) {
+        localStorage.setItem("user_email", user.data.email);
+      }
 
-      navigate('/dashboard', { replace: true });
+      navigate('/watchlist', { replace: true });
     } catch (err: any) {
       const detail = err?.detail ?? err?.message ?? '';
       if (detail.toLowerCase().includes('otp')) {
