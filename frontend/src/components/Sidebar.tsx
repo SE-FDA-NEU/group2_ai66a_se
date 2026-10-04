@@ -1,8 +1,12 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import styles from './Sidebar.module.css';
 
 export const Sidebar: React.FC = () => {
+  const { logout, isLoggedIn } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logoContainer}>
@@ -40,16 +44,16 @@ export const Sidebar: React.FC = () => {
         <div className={styles.userProfile}>
           <div className={styles.avatar}></div>
           <div className={styles.userInfo}>
-            <span className={styles.userName}>{localStorage.getItem('user_email') ? 'Đã đăng nhập' : 'Khách'}</span>
+            <span className={styles.userName}>{isLoggedIn ? 'Đã đăng nhập' : 'Khách'}</span>
             <span className={styles.userEmail}>{localStorage.getItem('user_email') || 'Chưa đăng nhập'}</span>
           </div>
-          {localStorage.getItem('access_token') && (
+          {isLoggedIn && (
             <button
               title="Đăng xuất"
               onClick={() => {
-                localStorage.removeItem('access_token');
+                logout();
                 localStorage.removeItem('user_email');
-                window.location.href = '/login';
+                navigate('/login');
               }}
               style={{
                 background: 'none',
