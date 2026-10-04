@@ -1,121 +1,102 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ProductRow } from '../components/ProductRow';
+import {
+  getWatchlist,
+  addProductToWatchlist,
+  removeProductFromWatchlist,
+  WatchlistProduct,
+} from '../api/watchlistApi';
 import styles from './WatchlistPage.module.css';
-
-export interface MockProductItem {
-  id: string;
-  name: string;
-  image: string;
-  currentPrice: number;
-  priceLow?: number;
-  priceHigh?: number;
-  starRating?: number;
-  priceLabel?: string;
-  isFakeDiscount?: boolean;
-  notEnoughData?: boolean;
-}
-
-// Dữ liệu mock tĩnh cho giao diện Watchlist
-const initialMockProducts: MockProductItem[] = [
-  {
-    id: "1",
-    name: "Nikon D3200",
-    image: "https://picsum.photos/seed/nikon/200/200",
-    currentPrice: 8500000,
-    priceLow: 8000000,
-    priceHigh: 9000000,
-    starRating: 4.8,
-    priceLabel: "Giá tốt",
-  },
-  {
-    id: "2",
-    name: "Macbook Pro 14\" (2023)",
-    image: "https://picsum.photos/seed/macbook/200/200",
-    currentPrice: 45000000,
-    priceLow: 44000000,
-    priceHigh: 48000000,
-    starRating: 4.9,
-    priceLabel: "Trung bình",
-  },
-  {
-    id: "3",
-    name: "Tascam DR-40X",
-    image: "https://picsum.photos/seed/tascam/200/200",
-    currentPrice: 4200000,
-    priceLow: 4000000,
-    priceHigh: 4500000,
-    starRating: 4.5,
-    isFakeDiscount: true,
-  },
-  {
-    id: "4",
-    name: "Dell UltraSharp U2720Q",
-    image: "https://picsum.photos/seed/dell/200/200",
-    currentPrice: 12500000,
-    priceLow: 12000000,
-    priceHigh: 13000000,
-    starRating: 4.7,
-    priceLabel: "Giá tốt",
-  },
-  {
-    id: "5",
-    name: "RED Digital Cinema KOMODO",
-    image: "https://picsum.photos/seed/red/200/200",
-    currentPrice: 150000000,
-    notEnoughData: true,
-  },
-];
+import { convertFromVnd, USD_TO_VND_RATE } from '../utils/currency';
 
 export const WatchlistPage: React.FC = () => {
-  const [products, setProducts] = useState(initialMockProducts);
+  const navigate = useNavigate();
+
+  const [products, setProducts] = useState<WatchlistProduct[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // State cho Modal form thêm sản phẩm (Task 79)
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isUnauthorized, setIsUnauthorized] = useState(false);
+
+  // State cho Modal thêm sản phẩm
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [url, setUrl] = useState('');
   const [targetPrice, setTargetPrice] = useState('');
   const [buyWhenGood, setBuyWhenGood] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
-  // Xóa sản phẩm khỏi danh sách (UI state)
-  const handleRemove = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-  };
-
-  // Thêm sản phẩm mới qua Modal form (UI tĩnh)
-  const handleAddSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url.trim()) return;
-
-    // Giả lập tên sản phẩm từ URL hoặc tạo mock item
-    let productName = "Sản phẩm mới theo dõi";
-    try {
-      const parsedUrl = new URL(url);
-      const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
-      if (pathSegments.length > 0 && pathSegments[0] !== 'dp') {
-        productName = decodeURIComponent(pathSegments[0].replace(/-/g, ' '));
-      }
-    } catch {
-      productName = "Sản phẩm mới theo dõi";
+  const fetchProducts = useCallback(async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setIsUnauthorized(true);
+      setIsLoading(false);
+      return;
     }
 
-    const priceValue = targetPrice ? Number(targetPrice) : 2500000;
+    setIsLoading(true);
+    setError(null);
+    setIsUnauthorized(false);
 
-    const newProduct = {
-      id: String(Date.now()),
-      name: productName,
-      image: "https://picsum.photos/seed/" + Date.now() + "/200/200",
-      currentPrice: priceValue,
-      priceLow: priceValue * 0.95,
-      priceHigh: priceValue * 1.1,
-      starRating: 4.8,
-      priceLabel: buyWhenGood ? "Giá tốt" : undefined,
-    };
+    try {
+      const data = await getWatchlist();
+      setProducts(data.products || []);
+    } catch (err: any) {
+      console.error('Fetch watchlist error:', err);
+      if (err.status === 401 || err.detail === 'Could not validate credentials') {
+        setIsUnauthorized(true);
+      } else {
+        setError(err.message || err.detail || 'Không thể tải danh sách theo dõi từ máy chủ.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-    setProducts([newProduct, ...products]);
-    setIsAddModalOpen(false);
-    setUrl('');
-    setTargetPrice('');
-    setBuyWhenGood(false);
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const handleRemove = async (id: string) => {
+    try {
+      await removeProductFromWatchlist(Number(id));
+      setProducts((prev) => prev.filter((p) => String(p.id) !== id));
+    } catch (err: any) {
+      console.error('Remove product error:', err);
+      alert(err.message || 'Không thể xóa sản phẩm. Vui lòng thử lại.');
+    }
+  };
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!url.trim()) {
+      setAddError('Vui lòng nhập đường dẫn (URL) sản phẩm.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setAddError(null);
+      const newProd = await addProductToWatchlist({
+        url: url.trim(),
+        target_price: targetPrice
+          ? convertFromVnd(Number(targetPrice), 'USD')
+          : null,
+        buy_when_good: buyWhenGood,
+      });
+
+      setProducts((prev) => [newProd, ...prev]);
+      setIsAddModalOpen(false);
+      setUrl('');
+      setTargetPrice('');
+      setBuyWhenGood(false);
+    } catch (err: any) {
+      console.error('Add product error:', err);
+      setAddError(err.message || err.detail || 'Không thể thêm sản phẩm. Vui lòng kiểm tra đường dẫn.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filteredProducts = products.filter((p) =>
@@ -128,25 +109,39 @@ export const WatchlistPage: React.FC = () => {
         <div>
           <h1 className={styles.headerTitle}>Danh sách theo dõi</h1>
           <p className={styles.headerDescription}>
-            Theo dõi biến động giá và tìm thời điểm mua phù hợp.
+            Theo dõi biến động giá và nhận thông báo khi có mức giá ưu đãi.
           </p>
         </div>
-        {/* Nút cộng (+) thêm sản phẩm - Task 79 */}
         <button
           className={styles.addButton}
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => {
+            if (isUnauthorized) {
+              navigate('/login');
+            } else {
+              setIsAddModalOpen(true);
+            }
+          }}
         >
           <span>+</span> Thêm sản phẩm
         </button>
       </header>
 
+      {/* Thông báo nếu chưa đăng nhập */}
+      {isUnauthorized && (
+        <div className={styles.authNotice}>
+          <span>
+            ⚠️ Bạn chưa đăng nhập. Vui lòng đăng nhập để đồng bộ và quản lý danh sách sản phẩm thực tế từ hệ thống.
+          </span>
+          <button className={styles.authNoticeLink} onClick={() => navigate('/login')}>
+            Đăng nhập ngay →
+          </button>
+        </div>
+      )}
+
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <button className={styles.toolbarBtn}>
-            <span className="icon">≡</span> Lọc
-          </button>
-          <button className={styles.toolbarBtn}>
-            <span className="icon">⇅</span> Sắp xếp
+          <button className={styles.toolbarBtn} onClick={fetchProducts}>
+            <span className="icon">↻</span> Làm mới
           </button>
         </div>
         <div className={styles.toolbarRight}>
@@ -174,11 +169,48 @@ export const WatchlistPage: React.FC = () => {
         </div>
 
         <div className={styles.tableBody}>
-          {filteredProducts.length > 0 ? (
+          {isLoading ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyStateTitle}>Đang tải dữ liệu từ máy chủ...</div>
+            </div>
+          ) : error ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyStateTitle}>{error}</div>
+              <button
+                className={styles.toolbarBtn}
+                style={{ margin: '12px auto' }}
+                onClick={fetchProducts}
+              >
+                Thử lại
+              </button>
+            </div>
+          ) : isUnauthorized ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyStateTitle}>Yêu cầu đăng nhập</div>
+              <p>Hãy đăng nhập vào tài khoản của bạn để xem và quản lý danh sách theo dõi giá.</p>
+              <button
+                className={styles.addButton}
+                style={{ margin: '16px auto' }}
+                onClick={() => navigate('/login')}
+              >
+                Đăng nhập tài khoản
+              </button>
+            </div>
+          ) : filteredProducts.length > 0 ? (
             filteredProducts.map((product) => (
               <ProductRow
                 key={product.id}
-                {...product}
+                id={String(product.id)}
+                name={product.name}
+                image={product.image_url}
+                currentPrice={Number(product.current_price)}
+                currency={product.currency}
+                priceLow={product.price_low ? Number(product.price_low) : undefined}
+                priceHigh={product.price_high ? Number(product.price_high) : undefined}
+                starRating={product.product_rating ? Number(product.product_rating) : undefined}
+                priceLabel={product.price_label || undefined}
+                isFakeDiscount={product.fake_discount}
+                notEnoughData={!product.price_low || product.price_low === product.price_high}
                 onRemove={handleRemove}
               />
             ))
@@ -191,29 +223,31 @@ export const WatchlistPage: React.FC = () => {
               </div>
               <p>
                 {searchQuery
-                  ? 'Vui lòng thử từ khóa khác hoặc xóa bộ lọc.'
+                  ? 'Vui lòng thử từ khóa khác hoặc xóa bộ lọc tìm kiếm.'
                   : 'Bấm nút "+ Thêm sản phẩm" phía trên để bắt đầu theo dõi biến động giá.'}
               </p>
             </div>
           )}
         </div>
 
-        {filteredProducts.length > 0 && (
+        {!isLoading && !error && !isUnauthorized && filteredProducts.length > 0 && (
           <div className={styles.itemCount}>
             Tổng cộng {filteredProducts.length} sản phẩm
           </div>
         )}
       </div>
 
-      {/* Modal Form Thêm Sản Phẩm - Task 79 */}
+      {/* Modal thêm sản phẩm mới */}
       {isAddModalOpen && (
         <div className={styles.modalOverlay} onClick={() => setIsAddModalOpen(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <h2 className={styles.modalTitle}>Thêm sản phẩm cần theo dõi</h2>
 
+            {addError && <div className={styles.errorMessage}>{addError}</div>}
+
             <form onSubmit={handleAddSubmit}>
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Đường dẫn sản phẩm (URL) *</label>
+                <label className={styles.formLabel}>Đường dẫn sản phẩm (Amazon URL) *</label>
                 <input
                   type="url"
                   required
@@ -225,7 +259,9 @@ export const WatchlistPage: React.FC = () => {
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Giá mục tiêu cảnh báo (tùy chọn)</label>
+                <label className={styles.formLabel}>
+                  Giá mục tiêu cảnh báo (VND, tùy chọn; 1 USD ≈ {USD_TO_VND_RATE.toLocaleString('vi-VN')} VND)
+                </label>
                 <input
                   type="number"
                   placeholder="Ví dụ: 1500000"
@@ -252,11 +288,12 @@ export const WatchlistPage: React.FC = () => {
                   type="button"
                   className={styles.btnCancel}
                   onClick={() => setIsAddModalOpen(false)}
+                  disabled={isSubmitting}
                 >
                   Hủy
                 </button>
-                <button type="submit" className={styles.btnSubmit}>
-                  Thêm vào danh sách
+                <button type="submit" className={styles.btnSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? 'Đang thêm...' : 'Thêm vào danh sách'}
                 </button>
               </div>
             </form>

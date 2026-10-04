@@ -21,7 +21,7 @@ function App() {
           <Route path="/otp" element={<OTPPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-          {/* Dashboard Watchlist route (Task 79) */}
+          {/* Dashboard / App routes (có Sidebar Layout) */}
           <Route
             path="/watchlist"
             element={
@@ -47,7 +47,7 @@ function App() {
             }
           />
 
-          {/* Fallback */}
+          {/* Fallback route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

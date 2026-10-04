@@ -9,7 +9,6 @@ const ProfilePage: React.FC = () => {
   // User state
   const [email, setEmail] = useState('');
   const [nickname, setNickname] = useState('');
-  const [authProvider, setAuthProvider] = useState('');
 
   // Form states
   const [editNickname, setEditNickname] = useState('');

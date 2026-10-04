@@ -1,5 +1,6 @@
 /*
-Thư mục src/components/:
-- Chứa các UI components dùng chung (Ví dụ: Button, Input, Modal, Card...).
-- Các component ở đây nên được thiết kế dựa trên các "Components" hoặc "Variants" trong Figma để dễ tái sử dụng.
-*/
+src/components/: Nơi chứa các component React.
+- ProductRow.tsx: Component hiển thị thông tin một dòng sản phẩm.
+- ProductRow.module.css: File CSS module định dạng cho ProductRow.
+- App.tsx: Component chính để demo việc sử dụng ProductRow.
+*/  

@@ -1,12 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProductRow.module.css';
+import { formatVnd } from '../utils/currency';
 
 export interface ProductRowProps {
   id: string;
   image?: string;
   name: string;
   currentPrice: number;
+  currency: string;
   priceLow?: number;
   priceHigh?: number;
   starRating?: number;
@@ -16,15 +18,12 @@ export interface ProductRowProps {
   onRemove: (id: string) => void;
 }
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-};
-
 export const ProductRow: React.FC<ProductRowProps> = ({
   id,
   image,
   name,
   currentPrice,
+  currency,
   priceLow,
   priceHigh,
   starRating,
@@ -70,14 +69,14 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
       {/* Cột 2: Giá hiện tại */}
       <div className={styles.colCenter}>
-        <span className={styles.currentPrice}>{formatPrice(currentPrice)}</span>
+        <span className={styles.currentPrice}>{formatVnd(currentPrice, currency)}</span>
       </div>
 
       {/* Cột 3: Khoảng giá */}
       <div className={styles.colCenter}>
         {(priceLow !== undefined && priceHigh !== undefined) ? (
           <span className={styles.priceRange}>
-            {formatPrice(priceLow)} - {formatPrice(priceHigh)}
+            {formatVnd(priceLow, currency)} - {formatVnd(priceHigh, currency)}
           </span>
         ) : (
           <span className={styles.emptyDash}>-</span>

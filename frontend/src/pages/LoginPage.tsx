@@ -59,10 +59,14 @@ const LoginPage: React.FC = () => {
     try {
       const res = await loginWithGoogle(idToken);
       saveToken(res.access_token);
-      localStorage.setItem('access_token', res.access_token); // Set immediately for API calls
-      const user = await getUserProfile();
-      if (user.data) {
-        localStorage.setItem('user_email', user.data.email);
+      localStorage.setItem('access_token', res.access_token);
+      try {
+        const user = await getUserProfile();
+        if (user?.data?.email) {
+          localStorage.setItem('user_email', user.data.email);
+        }
+      } catch (e) {
+        console.error('Failed to get user profile', e);
       }
       navigate('/watchlist', { replace: true });
     } catch (err: any) {
@@ -76,6 +80,7 @@ const LoginPage: React.FC = () => {
   const handleGoogleError = (errMsg?: string) => {
     setApiError(errMsg || 'Đăng nhập Google thất bại. Vui lòng thử lại.');
   };
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -110,20 +115,27 @@ const LoginPage: React.FC = () => {
     try {
       const res = await login(values.email, values.password);
       saveToken(res.access_token);
-      localStorage.setItem('access_token', res.access_token); // Set immediately for API calls
-      const user = await getUserProfile();
-      if (user.data) {
-        localStorage.setItem('user_email', user.data.email);
+      localStorage.setItem('access_token', res.access_token);
+      try {
+        const user = await getUserProfile();
+        if (user?.data?.email) {
+          localStorage.setItem('user_email', user.data.email);
+        } else {
+          localStorage.setItem('user_email', values.email);
+        }
+      } catch {
+        localStorage.setItem('user_email', values.email);
       }
       navigate('/watchlist', { replace: true });
     } catch (err: any) {
+      console.error('Login error:', err);
       const detail = err?.detail ?? err?.message ?? '';
-      if (detail.toLowerCase().includes('incorrect') || detail.toLowerCase().includes('password')) {
+      if (typeof detail === 'string' && (detail.toLowerCase().includes('incorrect') || detail.toLowerCase().includes('password'))) {
         setApiError('Email hoặc mật khẩu không đúng.');
-      } else if (detail.toLowerCase().includes('activate') || detail.toLowerCase().includes('verify')) {
+      } else if (typeof detail === 'string' && (detail.toLowerCase().includes('activate') || detail.toLowerCase().includes('verify'))) {
         setApiError('Tài khoản chưa được xác minh. Vui lòng kiểm tra email.');
       } else {
-        setApiError(detail || 'Không thể kết nối. Vui lòng thử lại.');
+        setApiError(typeof detail === 'string' && detail ? detail : 'Không thể kết nối máy chủ. Vui lòng thử lại.');
       }
     } finally {
       setIsLoading(false);
