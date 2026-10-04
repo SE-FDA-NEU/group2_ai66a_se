@@ -39,3 +39,16 @@ async def list_watchlist(
 ):
     product_list = await watchlist_service.list_products(db, current_user)
     return ApiResponse(message="Watchlist loaded successfully.", data=product_list)
+
+
+@router.delete(
+    "/{product_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Xóa sản phẩm khỏi danh sách theo dõi của người dùng hiện tại",
+)
+async def remove_from_watchlist(
+    product_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    await watchlist_service.remove_product(db, current_user, product_id)

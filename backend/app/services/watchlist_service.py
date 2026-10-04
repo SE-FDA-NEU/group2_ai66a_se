@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ErrorDetail
@@ -21,6 +21,9 @@ INVALID_PRODUCT_LINK = ErrorDetail(
 )
 MARKETPLACE_PRODUCT_MISMATCH = ErrorDetail(
     "MARKETPLACE_PRODUCT_MISMATCH", 502, "Marketplace returned a different product than requested."
+)
+TRACKING_NOT_FOUND = ErrorDetail(
+    "TRACKING_NOT_FOUND", 404, "Sản phẩm không nằm trong danh sách theo dõi của người dùng này."
 )
 
 
@@ -91,6 +94,29 @@ class WatchlistService:
             await db.commit()
             await db.refresh(product)
             return self._to_response(product, tracking)
+        except Exception:
+            await db.rollback()
+            raise
+
+    async def remove_product(self, db: AsyncSession, user: User, product_id: int) -> None:
+        try:
+            product = await product_crud.get_by_id(db, product_id, for_update=True)
+            if product is None:
+                raise TRACKING_NOT_FOUND.throw()
+
+            tracking = await tracked_product_crud.get(
+                db, user.id, product_id, for_update=True
+            )
+            if tracking is None:
+                raise TRACKING_NOT_FOUND.throw()
+
+            await db.delete(tracking)
+            await db.flush()
+            product.tracked_by_count -= 1
+            if product.tracked_by_count == 0:
+                product.untracked_since = func.now()
+            db.add(product)
+            await db.commit()
         except Exception:
             await db.rollback()
             raise
