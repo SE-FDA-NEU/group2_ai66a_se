@@ -7,7 +7,7 @@ SM Sprint 2: @happyhusky3303
 
 ## Sprint 2 (weeks 7–8)
 
-Goal: _
+Goal: the team agrees on how to build the project (what framework to use, what architecture to use) and build some basic functional web pages
 Committed _ · Completed _ · Velocity _
 Not finished: - <#-id-issue> - issue. Move to Sprint 3.
 SM Sprint 3: @maimanhbel
