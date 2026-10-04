@@ -3,7 +3,10 @@ import apiClient from './config';
 export interface WatchlistProduct {
   id: number;
   name: string;
+  url: string;
   image_url: string;
+  marketplace: string;
+  brand?: string | null;
   shop_name?: string | null;
   product_rating?: number | null;
   review_count: number;

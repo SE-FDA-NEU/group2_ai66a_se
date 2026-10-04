@@ -8,6 +8,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import { Layout } from './components/Layout';
 import { WatchlistPage } from './pages/WatchlistPage';
 import ProfilePage from './pages/ProfilePage';
+import ProductDetailPage from './pages/ProductDetailPage';
 
 function App() {
   return (
@@ -42,7 +43,7 @@ function App() {
             path="/detail/:id"
             element={
               <Layout>
-                <div style={{ padding: 40 }}>Trang chi tiết sản phẩm</div>
+                <ProductDetailPage />
               </Layout>
             }
           />

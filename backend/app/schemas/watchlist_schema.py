@@ -13,7 +13,10 @@ class ProductCreate(BaseModel):
 class Product(BaseModel):
     id: int
     name: str
+    url: str
     image_url: str
+    marketplace: str
+    brand: str | None = None
     shop_name: str | None = None
     product_rating: Decimal | None = None
     review_count: int
