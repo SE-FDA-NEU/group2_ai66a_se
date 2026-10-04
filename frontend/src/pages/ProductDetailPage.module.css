@@ -161,3 +161,34 @@
 .btnPrimary:hover {
   background: #2563eb;
 }
+
+@media (max-width: 768px) {
+  .pageContainer {
+    padding: 1rem;
+  }
+  .productCard {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  .imageContainer {
+    flex: none;
+    width: 100%;
+    max-width: 100%;
+  }
+  .actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 375px) {
+  .metaGrid {
+    grid-template-columns: 1fr;
+  }
+  .title {
+    font-size: 1.2rem;
+  }
+  .currentPrice {
+    font-size: 1.5rem;
+  }
+}

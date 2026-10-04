@@ -116,26 +116,24 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       </div>
 
       {/* Cột 5: Nhãn giá */}
-      <div className={styles.colCenter}>
-        <div className={styles.labels}>
-          {notEnoughData && (
-            <span className={`${styles.badge} ${styles.badgeWarning}`}>Chưa đủ dữ liệu</span>
-          )}
-          {!notEnoughData && priceLabel && (
-            <span className={`${styles.badge} ${priceLabel === 'Giá tốt' ? styles.badgeSuccess : styles.badgeDefault}`}>
-              {priceLabel}
-            </span>
-          )}
-          {isFakeDiscount && (
-            <span className={`${styles.badge} ${styles.badgeDanger}`}>Khuyến mãi ảo</span>
-          )}
-        </div>
+      <div className={styles.badgesCol}>
+        {notEnoughData && (
+          <span className={`${styles.badge} ${styles.badgeWarning}`}>Chưa đủ dữ liệu</span>
+        )}
+        {!notEnoughData && priceLabel && (
+          <span className={`${styles.badge} ${priceLabel === 'Giá tốt' ? styles.badgePrimary : styles.badgeNeutral}`}>
+            {priceLabel}
+          </span>
+        )}
+        {isFakeDiscount && (
+          <span className={`${styles.badge} ${styles.badgeWarning}`}>Khuyến mãi ảo</span>
+        )}
       </div>
 
       {/* Cột 6: Thao tác */}
-      <div className={styles.colCenter}>
+      <div className={styles.actionCol}>
         <button
-          className={styles.removeBtn}
+          className={styles.removeButton}
           onClick={handleRemoveClick}
           aria-label="Xóa khỏi danh sách"
           title="Xóa khỏi danh sách"

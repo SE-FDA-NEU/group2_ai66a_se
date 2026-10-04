@@ -178,3 +178,12 @@
   font-size: 0.875rem;
   margin-bottom: 1.5rem;
 }
+
+@media (max-width: 768px) {
+  .pageContainer {
+    padding: 1rem;
+  }
+  .section {
+    padding: 1rem;
+  }
+}
