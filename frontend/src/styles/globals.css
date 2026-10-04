@@ -1,17 +1,58 @@
-/* 
-  Globals.css
-  - Chứa các biến CSS toàn cục (Design tokens) lấy từ Figma (Colors, Typography, Spacing...).
-  - Ví dụ về biến CSS:
+:root {
+  /* Colors */
+  --primary-color: #232F3E; /* Amazon Dark Blue */
+  --primary-hover: #131921; /* Amazon Dark Blue (Hover) */
+  --bg-main: #f9fafb;
+  --bg-surface: #ffffff;
+  --bg-sidebar: #ffffff;
   
-  :root {
-    --primary-color: #007bff;
-    --font-family-main: 'Inter', sans-serif;
-  }
-*/
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  
+  --border-color: #e5e7eb;
+  --border-light: #f3f4f6;
+  
+  /* Status Colors */
+  --status-success: #10b981;
+  --status-success-bg: #d1fae5;
+  --status-warning: #f59e0b;
+  --status-warning-bg: #fef3c7;
+  --status-neutral: #6b7280;
+  --status-neutral-bg: #f3f4f6;
+  --status-error: #ef4444;
+  --status-error-bg: #fee2e2;
+
+  /* Typography */
+  --font-family-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 72px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-  font-family: 'Inter', sans-serif; /* Bạn có thể đổi theo font Figma */
+  font-family: var(--font-family-main);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input {
+  font-family: inherit;
 }

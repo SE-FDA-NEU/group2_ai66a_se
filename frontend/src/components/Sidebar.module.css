@@ -1,0 +1,197 @@
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  transition: width 0.3s ease;
+}
+
+.logoContainer {
+  padding: 24px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid transparent;
+  /* matches the spacing but keeps it clean */
+}
+
+.logoIcon {
+  width: 24px;
+  height: 24px;
+  background-color: var(--primary-color);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.logoText {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.navItem:hover {
+  background-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.navItem.active {
+  background-color: #fff7ed;
+  /* Very light orange */
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.icon {
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+}
+
+.footer {
+  padding: 16px 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.userProfile:hover {
+  background-color: var(--border-light);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--border-color);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.userName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.userEmail {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    width: var(--sidebar-collapsed-width);
+  }
+
+  .logoText,
+  .navItem span,
+  .footer {
+    display: none;
+  }
+
+  .logoContainer {
+    padding: 24px;
+    justify-content: center;
+  }
+
+  .navItem {
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .icon {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+
+  /* On very small mobile, maybe hide sidebar entirely or make it a bottom nav, but for now we keep the collapsed version or a hamburger menu. Let's make it a bottom nav. */
+  .sidebar {
+    width: 100%;
+    height: 60px;
+    top: auto;
+    bottom: 0;
+    flex-direction: row;
+    border-right: none;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .logoContainer,
+  .footer {
+    display: none;
+  }
+
+  .nav {
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0;
+    align-items: center;
+  }
+
+  .navItem {
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    border-radius: 0;
+  }
+
+  .navItem.active {
+    background: none;
+    border-top: 2px solid var(--primary-color);
+  }
+
+  .navItem span {
+    display: block;
+    font-size: 10px;
+  }
+}
