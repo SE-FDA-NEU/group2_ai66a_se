@@ -1,0 +1,27 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+}
+
+.mainContent {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  transition: margin-left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: var(--sidebar-collapsed-width);
+  }
+}
+
+@media (max-width: 576px) {
+  .mainContent {
+    margin-left: 0;
+    margin-bottom: 60px;
+    /* Space for bottom nav */
+  }
+}
