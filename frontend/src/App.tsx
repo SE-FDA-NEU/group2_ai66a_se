@@ -9,42 +9,50 @@ import { Layout } from './components/Layout';
 import { WatchlistPage } from './pages/WatchlistPage';
 import ProfilePage from './pages/ProfilePage';
 import ProductDetailPage from './pages/ProductDetailPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public / Auth routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/otp" element={<OTPPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          {/* Public / Auth routes (Only for unauthenticated users) */}
+          <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+          <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+          <Route path="/otp" element={<PublicRoute><OTPPage /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
 
-          {/* Dashboard / App routes (có Sidebar Layout) */}
+          {/* Dashboard / App routes (Only for authenticated users) */}
           <Route
             path="/watchlist"
             element={
-              <Layout>
-                <WatchlistPage />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <WatchlistPage />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/settings"
             element={
-              <Layout>
-                <ProfilePage />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <ProfilePage />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/detail/:id"
             element={
-              <Layout>
-                <ProductDetailPage />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <ProductDetailPage />
+                </Layout>
+              </ProtectedRoute>
             }
           />
 

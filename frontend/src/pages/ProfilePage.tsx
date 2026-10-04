@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUserProfile, updateNickname, changePassword } from '../api/userApi';
+import { useAuth } from '../context/AuthContext';
 import styles from './ProfilePage.module.css';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   // User state
   const [email, setEmail] = useState('');
@@ -106,7 +108,7 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
+    logout();
     localStorage.removeItem('user_email');
     navigate('/login');
   };
