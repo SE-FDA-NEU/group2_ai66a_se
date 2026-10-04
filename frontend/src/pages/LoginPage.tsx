@@ -219,7 +219,7 @@ const LoginPage: React.FC = () => {
                   <button
                     type="button"
                     className={styles.forgotLink}
-                    onClick={() => {/* TODO: forgot password flow */}}
+                    onClick={() => navigate('/forgot-password')}
                   >
                     Quên mật khẩu?
                   </button>
