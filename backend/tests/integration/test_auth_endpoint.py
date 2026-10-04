@@ -97,7 +97,7 @@ async def client():
 async def test_full_email_registration_and_login_flow(client: AsyncClient):
     """Đăng ký qua email -> Xác nhận OTP -> Login"""
     email = "test1@test.com"
-    password = "password123"
+    password_test = "password123"
 
     # 1. Send OTP
     response = await client.post(f"/api/v1/otp/send?email={email}&reason={OTPReason.VERIFY_EMAIL.value}")
@@ -117,13 +117,13 @@ async def test_full_email_registration_and_login_flow(client: AsyncClient):
     payload = {
         "email": email,
         "nickname": "TestUser",
-        "password": password
+        "password": password_test
     }
     response = await client.post(f"/api/v1/auth/register?verify_token={verify_token}", json=payload)
     assert response.status_code == 201
     
     # 5. Login
-    login_data = {"username": email, "password": password}
+    login_data = {"username": email, "password": password_test}
     response = await client.post("/api/v1/auth/login", data=login_data)
     assert response.status_code == 200
     assert "access_token" in response.json()
@@ -205,12 +205,12 @@ async def test_forgot_password_flow(client: AsyncClient):
     verify_token = response.json()["data"]["verified_token"]
 
     # 4. Reset Password
-    new_password = "new_secure_password"
-    response = await client.post(f"/api/v1/auth/reset-password?email={email}&new_password={new_password}&verify_token={verify_token}")
+    new_password_test = "new_secure_password"
+    response = await client.post(f"/api/v1/auth/reset-password?email={email}&new_password={new_password_test}&verify_token={verify_token}")
     assert response.status_code == 200
 
     # 5. Verify Login with new password
-    login_data = {"username": email, "password": new_password}
+    login_data = {"username": email, "password": new_password_test}
     response = await client.post("/api/v1/auth/login", data=login_data)
     assert response.status_code == 200
     assert "access_token" in response.json()
