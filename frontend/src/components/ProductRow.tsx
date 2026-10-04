@@ -16,6 +16,7 @@ export interface ProductRowProps {
   isFakeDiscount?: boolean;
   notEnoughData?: boolean;
   onRemove: (id: string) => void;
+  originalProduct?: any;
 }
 
 export const ProductRow: React.FC<ProductRowProps> = ({
@@ -30,12 +31,32 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   priceLabel,
   isFakeDiscount,
   notEnoughData,
-  onRemove
+  onRemove,
+  originalProduct
 }) => {
   const navigate = useNavigate();
 
   const handleRowClick = () => {
-    navigate(`/detail/${id}`);
+    if (originalProduct) {
+      navigate(`/detail/${id}`, { state: { product: originalProduct } });
+      return;
+    }
+    
+    const productData = {
+      id: Number(id),
+      name,
+      image_url: image || '',
+      current_price: currentPrice,
+      price_low: priceLow,
+      price_high: priceHigh,
+      product_rating: starRating,
+      price_label: priceLabel || '',
+      is_fake_discount: isFakeDiscount || false,
+      currency: 'VND',
+      marketplace: 'Mock Market',
+      url: '#'
+    };
+    navigate(`/detail/${id}`, { state: { product: productData } });
   };
 
   const handleRemoveClick = (e: React.MouseEvent) => {
@@ -74,53 +95,50 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
       {/* Cột 3: Khoảng giá */}
       <div className={styles.colCenter}>
-        {(priceLow !== undefined && priceHigh !== undefined) ? (
+        {priceLow && priceHigh ? (
           <span className={styles.priceRange}>
             {formatVnd(priceLow, currency)} - {formatVnd(priceHigh, currency)}
           </span>
         ) : (
-          <span className={styles.emptyDash}>-</span>
+          <span className={styles.emptyText}>Chưa đủ dữ liệu</span>
         )}
       </div>
 
       {/* Cột 4: Đánh giá */}
       <div className={styles.colCenter}>
-        {starRating !== undefined ? (
+        {starRating ? (
           <div className={styles.rating}>
-            <span className={styles.starIcon}>★</span>
-            <span>{starRating.toFixed(1)}</span>
+            ⭐ <span className={styles.ratingNumber}>{starRating}</span>
           </div>
         ) : (
-          <span className={styles.emptyDash}>-</span>
+          <span className={styles.emptyText}>-</span>
         )}
       </div>
 
-      {/* Cột 5: Nhãn giá & Khuyến mãi */}
-      <div className={styles.badgesCol}>
-        {notEnoughData ? (
-          <span className={`${styles.badge} ${styles.badgeNeutral}`}>
-            Chưa đủ dữ liệu để đánh giá
-          </span>
-        ) : priceLabel ? (
-          <span className={`${styles.badge} ${styles.badgePrimary}`}>
-            {priceLabel}
-          </span>
-        ) : null}
-
-        {isFakeDiscount && (
-          <span className={`${styles.badge} ${styles.badgeWarning}`}>
-            Giảm giá giả
-          </span>
-        )}
+      {/* Cột 5: Nhãn giá */}
+      <div className={styles.colCenter}>
+        <div className={styles.labels}>
+          {notEnoughData && (
+            <span className={`${styles.badge} ${styles.badgeWarning}`}>Chưa đủ dữ liệu</span>
+          )}
+          {!notEnoughData && priceLabel && (
+            <span className={`${styles.badge} ${priceLabel === 'Giá tốt' ? styles.badgeSuccess : styles.badgeDefault}`}>
+              {priceLabel}
+            </span>
+          )}
+          {isFakeDiscount && (
+            <span className={`${styles.badge} ${styles.badgeDanger}`}>Khuyến mãi ảo</span>
+          )}
+        </div>
       </div>
 
       {/* Cột 6: Thao tác */}
-      <div className={styles.actionCol}>
+      <div className={styles.colCenter}>
         <button
-          className={styles.removeButton}
+          className={styles.removeBtn}
           onClick={handleRemoveClick}
           aria-label="Xóa khỏi danh sách"
-          title="Xóa"
+          title="Xóa khỏi danh sách"
         >
           🗑️
         </button>

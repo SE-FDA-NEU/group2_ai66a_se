@@ -212,6 +212,7 @@ export const WatchlistPage: React.FC = () => {
                 isFakeDiscount={product.fake_discount}
                 notEnoughData={!product.price_low || product.price_low === product.price_high}
                 onRemove={handleRemove}
+                originalProduct={product}
               />
             ))
           ) : (
