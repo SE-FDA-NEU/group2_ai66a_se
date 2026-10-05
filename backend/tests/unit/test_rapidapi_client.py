@@ -116,3 +116,37 @@ def test_product_details_http_timeout_is_reported_as_upstream_error(monkeypatch)
         print("Timeout handling:", {"status_code": error.value.status_code, "code": error.value.code})
 
     asyncio.run(scenario())
+
+
+def test_product_details_http_error_is_reported_as_upstream_error(monkeypatch):
+    async def scenario():
+        monkeypatch.setattr(settings, "RAPIDAPI_KEY", "test-key")
+
+        class FakeResponse:
+            def raise_for_status(self):
+                request = httpx.Request("GET", "https://example.test/product-details")
+                response = httpx.Response(429, request=request)
+                raise httpx.HTTPStatusError("rate limited", request=request, response=response)
+
+        class FakeAsyncClient:
+            def __init__(self, timeout):
+                assert timeout == 8.0
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *_args):
+                return None
+
+            async def get(self, *_args, **_kwargs):
+                return FakeResponse()
+
+        monkeypatch.setattr(rapidapi_module.httpx, "AsyncClient", FakeAsyncClient)
+
+        with pytest.raises(CustomAppException) as error:
+            await rapidapi_module.RapidAPIClient().fetch_product("B012345678")
+
+        assert error.value.status_code == 502
+        assert error.value.code == "MARKETPLACE_UPSTREAM_ERROR"
+
+    asyncio.run(scenario())

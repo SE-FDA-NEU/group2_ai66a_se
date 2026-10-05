@@ -12,8 +12,11 @@ from app.services.watchlist_service import WatchlistService
 def _product(*, current_price="195.00", original_price="239.00", price_low="189.00"):
     return SimpleNamespace(
         id=1,
+        url="https://www.amazon.com/dp/B012345678",
+        marketplace="amazon",
         name="Tracked product",
         image_url="https://example.test/product.jpg",
+        brand="Example brand",
         shop_name="Example shop",
         product_rating=Decimal("4.50"),
         review_count=10,

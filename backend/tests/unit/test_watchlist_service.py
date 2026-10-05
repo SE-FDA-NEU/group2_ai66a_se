@@ -1,6 +1,7 @@
 """Focused unit tests for issue 78's watchlist creation service."""
 
 import asyncio
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -20,6 +21,7 @@ def _product(*, tracked_by_count=1, price="12.00", untracked_since=None):
         url="https://www.amazon.com/dp/B012345678",
         name="Sample product",
         image_url="https://example.test/image.jpg",
+        brand="Sample brand",
         shop_name="Sample shop",
         product_rating=Decimal("4.50"),
         review_count=12,
@@ -176,7 +178,7 @@ def test_tracking_limit_is_enforced_by_backend(monkeypatch):
     asyncio.run(scenario())
 
 
-def test_already_tracked_product_is_idempotent(monkeypatch):
+def test_already_tracked_product_returns_conflict_without_mutating_watchlist(monkeypatch):
     async def scenario():
         product = _product()
         tracking = SimpleNamespace(target_price=Decimal("8.00"), buy_when_good=True)
@@ -185,15 +187,55 @@ def test_already_tracked_product_is_idempotent(monkeypatch):
         monkeypatch.setattr(service_module, "rapidapi_client", marketplace)
         session = FakeSession()
 
-        result = await service_module.watchlist_service.add_product(
+        with pytest.raises(CustomAppException) as error:
+            await service_module.watchlist_service.add_product(
+                session, SimpleNamespace(id=7), ProductCreate(url="https://amazon.com/dp/B012345678")
+            )
+
+        marketplace.fetch_product.assert_not_awaited()
+        service_module.tracked_product_crud.create.assert_not_awaited()
+        assert error.value.status_code == 409
+        assert error.value.code == "PRODUCT_ALREADY_TRACKED"
+        assert session.commits == 0
+        assert session.rollbacks == 1
+
+    asyncio.run(scenario())
+
+
+def test_product_untracked_less_than_seven_days_is_reused_without_marketplace_call(monkeypatch):
+    async def scenario():
+        product = _product(tracked_by_count=0, untracked_since=datetime.now(timezone.utc) - timedelta(days=6))
+        _common_mocks(monkeypatch, product=product)
+        marketplace = AsyncMock()
+        monkeypatch.setattr(service_module, "rapidapi_client", marketplace)
+        session = FakeSession()
+
+        await service_module.watchlist_service.add_product(
             session, SimpleNamespace(id=7), ProductCreate(url="https://amazon.com/dp/B012345678")
         )
 
         marketplace.fetch_product.assert_not_awaited()
-        service_module.tracked_product_crud.create.assert_not_awaited()
-        assert result.target_price == Decimal("8.00")
-        assert result.buy_when_good is True
+        assert product.untracked_since is None
+        assert product.tracked_by_count == 1
         assert session.commits == 1
-        print("Existing watchlist item returned:", result.model_dump(mode="json"))
+
+    asyncio.run(scenario())
+
+
+def test_product_untracked_for_seven_days_is_refreshed(monkeypatch):
+    async def scenario():
+        product = _product(tracked_by_count=0, untracked_since=datetime.now(timezone.utc) - timedelta(days=7))
+        _common_mocks(monkeypatch, product=product)
+        marketplace = AsyncMock(fetch_product=AsyncMock(return_value=_marketplace_product("11.00")))
+        monkeypatch.setattr(service_module, "rapidapi_client", marketplace)
+        refresh = AsyncMock(return_value=product)
+        monkeypatch.setattr(service_module.product_crud, "refresh_untracked", refresh)
+
+        await service_module.watchlist_service.add_product(
+            FakeSession(), SimpleNamespace(id=7), ProductCreate(url="https://amazon.com/dp/B012345678")
+        )
+
+        marketplace.fetch_product.assert_awaited_once_with("B012345678", country="US")
+        refresh.assert_awaited_once()
 
     asyncio.run(scenario())

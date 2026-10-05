@@ -4,6 +4,7 @@
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "types": ["node", "vitest/config"],
     "allowSyntheticDefaultImports": true,
     "strict": true
   },

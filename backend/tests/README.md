@@ -13,19 +13,24 @@ tests/
 ## Test types
 
 - **Unit test** (`unit/`): tests one function or service in isolation. The database, Redis and HTTP clients are replaced with mocks, so it is fast and needs no setup.
-- **Integration test** (`integration/`): calls a real API endpoint and runs the router, service and a **test database** together. It needs the `client` and `db_session` fixtures (usually in `tests/integration/conftest.py`), pointing to a test database and cleaned up after each test.
+- **Endpoint test** (`integration/`): calls the FastAPI route through `TestClient`, with database and service dependencies mocked. These tests verify routing, status codes and response formatting; they do not require a test database or live Redis.
 
 ## Run tests
 
-Run from the repository root:
+Run from the repository root. These commands build the service image and override its startup entrypoint, so tests do not run database migrations or start the API server:
 
 ```powershell
-docker compose up -d --build backend
-docker ps                                                                             # check whether the docker start up successfully
-docker compose exec backend python -m pytest tests -v -s                              # all, show each test and print output
-docker compose exec backend python -m pytest tests/unit -v -s                         # unit only
-docker compose exec backend python -m pytest tests/integration -v -s                  # integration only
-docker compose exec backend python -m pytest tests/unit/test_rapidapi_client.py -v -s # one file
+docker compose run --rm --no-deps --build --entrypoint python backend -m pytest tests -v -s
+docker compose run --rm --no-deps --entrypoint python backend -m pytest tests/unit -v -s
+docker compose run --rm --no-deps --entrypoint python backend -m pytest tests/integration -v -s
+docker compose run --rm --no-deps --entrypoint python backend -m pytest tests/unit/test_rapidapi_client.py -v -s
+
+Run frontend tests and the production type/build check:
+
+```powershell
+docker compose run --rm --no-deps --build frontend npm test
+docker compose run --rm --no-deps frontend npm run build
+```
 ```
 
 ### Pytest output flags
@@ -47,11 +52,11 @@ Each test follows **Arrange** (prepare data), **Act** (call the code or endpoint
 
 ## Existing tests
 
-All current tests are unit tests with mocked dependencies; none checks live RapidAPI or database connectivity.
+All current tests use mocked dependencies; none checks live RapidAPI, database, or Redis connectivity.
 
 - `test_amazon_link_parser.py`: accepts one Amazon product or short link, rejects invalid or multiple links.
 - `test_rapidapi_client.py`: request parameters, response mapping and timeout handling with a mocked HTTP client.
-- `test_watchlist_service.py`: cached and new products, refresh/resume, tracking limits and idempotent requests.
+- `test_watchlist_service.py`: cached and new products, seven-day reuse grace, refresh after the grace period, duplicate conflict, and tracking limits.
 - `test_watchlist_listing.py`: price labels, insufficient history, and fake-discount calculations from `WatchlistService.list_products`.
 
-The watchlist tests call service methods directly; they do not call the HTTP routes. The API mounts these routes at `/api/v1/watchlist`: `POST` calls `add_to_watchlist`, and `GET` calls `list_watchlist`. Endpoint-level request/response coverage should live in `integration/` when the `client` and test-database fixtures are available.
+The service tests call service methods directly. The endpoint tests call `/api/v1/watchlist` through `TestClient`; `POST` calls `add_to_watchlist`, and `GET` calls `list_watchlist`.
