@@ -12,8 +12,6 @@ This guide walks you through setting up Trakora on a clean machine. Estimated ti
 
 > **Note:** On Windows/macOS, install [Docker Desktop](https://www.docker.com/products/docker-desktop/) which includes Docker Compose V2. On Linux, install Docker Engine and the Compose plugin.
 
-No local Python, Node.js, PostgreSQL, or Redis installation is needed — everything runs inside Docker containers.
-
 ## Step 1 — Clone the repository
 
 ```bash
@@ -28,20 +26,8 @@ cp .env.example .env
 ```
 
 Open `.env` in a text editor and fill in the required values:
-
-| Variable | Description | Example value |
-|----------|-------------|---------------|
-| `ADMIN_EMAIL` | Gmail address for the admin account (also used as SMTP sender for OTP emails) | `your.email@gmail.com` |
-| `ADMIN_PASSWORD` | Gmail [App Password](https://myaccount.google.com/apppasswords) (16-character, not your login password) | `abcd efgh ijkl mnop` |
-| `ADMIN_USERNAME` | Admin display name | `Admin` |
-| `POSTGRES_PASSWORD` | Password for the PostgreSQL database | `your_db_password` |
-| `POSTGRES_DB` | Database name | `trakora` |
-| `REDIS_PASSWORD` | Password for Redis | `your_redis_password` |
-| `SECRET_KEY` | Random string for JWT signing (use `openssl rand -hex 32`) | `a1b2c3d4...` |
-| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 Client ID (from Google Cloud Console) | `123456789-xxx.apps.googleusercontent.com` |
-| `RAPIDAPI_KEY` | *(Optional)* RapidAPI key for Amazon product lookup. Leave empty if not testing product tracking. | `your_rapidapi_key` |
-
-All other variables have sensible defaults and can be left as-is.
+https://docs.google.com/document/d/1wRsOefCmNf4UwL5TNZUKQH-6ogjleDFa_VwJF7GUqys/edit?tab=t.0
+Go to this link to get the variables values.
 
 ## Step 3 — Build and start all services
 
