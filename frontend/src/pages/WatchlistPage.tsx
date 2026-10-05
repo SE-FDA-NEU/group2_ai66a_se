@@ -114,6 +114,7 @@ export const WatchlistPage: React.FC = () => {
         </div>
         <button
           className={styles.addButton}
+          disabled={!isUnauthorized && products.length >= 10}
           onClick={() => {
             if (isUnauthorized) {
               navigate('/login');
@@ -244,7 +245,7 @@ export const WatchlistPage: React.FC = () => {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <h2 className={styles.modalTitle}>Thêm sản phẩm cần theo dõi</h2>
 
-            {addError && <div className={styles.errorMessage}>{addError}</div>}
+            {addError && <div className={styles.errorMessage} role="alert">{addError}</div>}
 
             <form onSubmit={handleAddSubmit}>
               <div className={styles.formGroup}>
