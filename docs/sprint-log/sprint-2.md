@@ -8,36 +8,36 @@ The goal of Sprint 2 is to be able to log in/sign up via Google, add a product t
 
 | Issue | Story | Points | Owner                        |
 |:-----:|:-----:|:------:|:---------------------------- |
-|  #80  |  N/A  |    5   | @Dai-Nguyen1506              |
-|  #74  |  N/A  |    3   | @Dai-Nguyen1506              |
-|  #73  |  N/A  |    5   | @Dai-Nguyen1506              |
-|  #85  |  N/A  |    2   | @Dai-Nguyen1506              |
+|  #80  |  US01 |    5   | @Dai-Nguyen1506              |
+|  #74  |  US04 |    3   | @Dai-Nguyen1506              |
+|  #73  |  US04 |    5   | @Dai-Nguyen1506              |
+|  #85  |  US05 |    2   | @Dai-Nguyen1506              |
 |  #42  |  US01 |    5   | N/A                          |
-|  #84  |  N/A  |    5   | @mfortunaa                   |
-|  #72  |  N/A  |    3   | @happyhusky3303              |
-|  #86  |  N/A  |    2   | @huydang2006                 |
-|  #77  |  N/A  |    3   | @CaMapCon26                  |
-|  #78  |  N/A  |    5   | @CaMapCon26                  |
+|  #84  |  US05 |    5   | @mfortunaa                   |
+|  #72  |  US04 |    3   | @happyhusky3303              |
+|  #86  |  US05 |    2   | @huydang2006                 |
+|  #77  |  US01 |    3   | @CaMapCon26                  |
+|  #78  |  US01 |    5   | @CaMapCon26                  |
 | #100|  N/A  |    0   | @CaMapCon26                  |
-|  #83  |  N/A  |    2   | @huydang2006                 |
-|  #82  |  N/A  |    3   | @huydang2006                 |
-|  #79  |  N/A  |    3   | @mfortunaa                   |
-|  #66  |  N/A  |    1   | @Dai-Nguyen1506              |
-|  #65  |  N/A  |    1   | @Dai-Nguyen1506              |
-|  #70  |  N/A  |    5   | @happyhusky3303              |
-|  #64  |  N/A  |    5   | @Dai-Nguyen1506              |
+|  #83  |  US05 |    2   | @huydang2006                 |
+|  #82  |  US05 |    3   | @huydang2006                 |
+|  #79  |  US01 |    3   | @mfortunaa                   |
+|  #66  |  US05 |    1   | @Dai-Nguyen1506              |
+|  #65  |  US05 |    1   | @Dai-Nguyen1506              |
+|  #70  |  US04 |    5   | @happyhusky3303              |
+|  #64  |  US05 |    5   | @Dai-Nguyen1506              |
 |  #60  |  N/A  |    0   | @Dai-Nguyen1506              |
 |  #58  |  N/A  |    0   | @Dai-Nguyen1506              |
 |  #46  |  US05 |    5   | N/A                          |
 |  #45  |  US04 |    8   | @CaMapCon26, @happyhusky3303 |
-|  #62  |  N/A  |    2   | @Dai-Nguyen1506              |
-|  #69  |  N/A  |    1   | @Dai-Nguyen1506              |
-|  #76  |  N/A  |    3   | @CaMapCon26                  |
-|  #68  |  N/A  |    3   | @Dai-Nguyen1506              |
-|  #67  |  N/A  |    2   | @Dai-Nguyen1506              |
-|  #81  |  N/A  |    3   | @CaMapCon26                  |
-|  #75  |  N/A  |    3   | @CaMapCon26                  |
-|  #71  |  N/A  |    3   | @happyhusky3303              |
+|  #62  |  US04 |    2   | @Dai-Nguyen1506              |
+|  #69  |  US05 |    1   | @Dai-Nguyen1506              |
+|  #76  |  US01 |    3   | @CaMapCon26                  |
+|  #68  |  US05 |    3   | @Dai-Nguyen1506              |
+|  #67  |  US05 |    2   | @Dai-Nguyen1506              |
+|  #81  |  US01 |    3   | @CaMapCon26                  |
+|  #75  |  US01 |    3   | @CaMapCon26                  |
+|  #71  |  US04 |    3   | @happyhusky3303              |
 
 **Total committed: 91 points**
 
