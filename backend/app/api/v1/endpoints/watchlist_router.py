@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -6,10 +6,27 @@ from app.core.database import get_db
 from app.models.user_model import User
 from app.schemas.common import ApiResponse
 from app.schemas.watchlist_schema import ProductList, Product, ProductCreate
+from app.schemas.watchlist_schema import NotificationList
+from app.services.notification_service import notification_service
 from app.services.watchlist_service import watchlist_service
 
 
 router = APIRouter()
+
+
+@router.get(
+    "/notifications",
+    response_model=ApiResponse[NotificationList],
+    status_code=status.HTTP_200_OK,
+    summary="List new notifications for the current user",
+)
+async def list_notifications(
+    after_id: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await notification_service.list_for_user(db, current_user.id, after_id)
+    return ApiResponse(message="Notifications loaded successfully.", data=result)
 
 
 @router.post(
