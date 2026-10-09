@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProductRow } from '../components/ProductRow';
 import {
@@ -8,14 +8,38 @@ import {
   WatchlistProduct,
 } from '../api/watchlistApi';
 import styles from './WatchlistPage.module.css';
-import { convertFromVnd, USD_TO_VND_RATE } from '../utils/currency';
+import { convertToVnd, convertFromVnd, USD_TO_VND_RATE } from '../utils/currency';
+
+export type SortOption = 'default' | 'price_asc' | 'price_desc';
+
+const WATCHLIST_SORT_KEY = 'watchlist_sort';
 
 export const WatchlistPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState<WatchlistProduct[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>(() => {
+    try {
+      const saved = localStorage.getItem(WATCHLIST_SORT_KEY) as SortOption | null;
+      if (saved === 'price_asc' || saved === 'price_desc' || saved === 'default') {
+        return saved;
+      }
+    } catch {
+      // In case localStorage is disabled
+    }
+    return 'default';
+  });
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleSortChange = (newSort: SortOption) => {
+    setSortBy(newSort);
+    try {
+      localStorage.setItem(WATCHLIST_SORT_KEY, newSort);
+    } catch {
+      // In case localStorage is disabled
+    }
+  };
   const [error, setError] = useState<string | null>(null);
   const [isUnauthorized, setIsUnauthorized] = useState(false);
 
@@ -99,9 +123,27 @@ export const WatchlistPage: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const displayedProducts = useMemo(() => {
+    let result = products.filter((p) =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (sortBy === 'price_asc') {
+      result = [...result].sort((a, b) => {
+        const priceA = convertToVnd(Number(a.current_price) || 0, a.currency || 'VND');
+        const priceB = convertToVnd(Number(b.current_price) || 0, b.currency || 'VND');
+        return priceA - priceB;
+      });
+    } else if (sortBy === 'price_desc') {
+      result = [...result].sort((a, b) => {
+        const priceA = convertToVnd(Number(a.current_price) || 0, a.currency || 'VND');
+        const priceB = convertToVnd(Number(b.current_price) || 0, b.currency || 'VND');
+        return priceB - priceA;
+      });
+    }
+
+    return result;
+  }, [products, searchQuery, sortBy]);
 
   return (
     <div className={styles.pageContainer}>
@@ -146,6 +188,20 @@ export const WatchlistPage: React.FC = () => {
           </button>
         </div>
         <div className={styles.toolbarRight}>
+          <div className={styles.sortContainer}>
+            <span className={styles.sortIcon}>⇅</span>
+            <select
+              className={styles.sortSelect}
+              value={sortBy}
+              onChange={(e) => handleSortChange(e.target.value as SortOption)}
+              aria-label="Sắp xếp sản phẩm"
+              data-testid="sort-select"
+            >
+              <option value="default">Sắp xếp: Mặc định</option>
+              <option value="price_asc">Giá: Thấp đến cao</option>
+              <option value="price_desc">Giá: Cao đến thấp</option>
+            </select>
+          </div>
           <div className={styles.searchContainer}>
             <span className={styles.searchIcon}>🔍</span>
             <input
@@ -197,8 +253,8 @@ export const WatchlistPage: React.FC = () => {
                 Đăng nhập tài khoản
               </button>
             </div>
-          ) : filteredProducts.length > 0 ? (
-            filteredProducts.map((product) => (
+          ) : displayedProducts.length > 0 ? (
+            displayedProducts.map((product) => (
               <ProductRow
                 key={product.id}
                 id={String(product.id)}
@@ -232,9 +288,9 @@ export const WatchlistPage: React.FC = () => {
           )}
         </div>
 
-        {!isLoading && !error && !isUnauthorized && filteredProducts.length > 0 && (
+        {!isLoading && !error && !isUnauthorized && displayedProducts.length > 0 && (
           <div className={styles.itemCount}>
-            Tổng cộng {filteredProducts.length} sản phẩm
+            Tổng cộng {displayedProducts.length} sản phẩm
           </div>
         )}
       </div>
