@@ -34,6 +34,15 @@ export interface AddProductPayload {
   buy_when_good?: boolean;
 }
 
+export interface UserNotification {
+  id: number;
+  product_id?: number | null;
+  kind: 'target_price_set' | 'good_price' | string;
+  title: string;
+  message: string;
+  created_at: string;
+}
+
 /**
  * Lấy danh sách sản phẩm theo dõi của user hiện tại
  */

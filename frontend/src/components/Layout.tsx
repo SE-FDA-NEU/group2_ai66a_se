@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import styles from './Layout.module.css';
+import { NotificationCenter } from './NotificationCenter';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className={styles.layout}>
+      <NotificationCenter />
       {/* Nút Hamburger cho Mobile (hiển thị khi màn hình nhỏ) */}
       <div className={styles.mobileHeader}>
         <button 
