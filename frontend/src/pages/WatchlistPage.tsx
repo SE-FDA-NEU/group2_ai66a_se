@@ -267,7 +267,7 @@ export const WatchlistPage: React.FC = () => {
                 starRating={product.product_rating ? Number(product.product_rating) : undefined}
                 priceLabel={product.price_label || undefined}
                 isFakeDiscount={product.fake_discount}
-                notEnoughData={!product.price_low || product.price_low === product.price_high}
+                notEnoughData={product.price_label === 'Not enough data to assess'}
                 onRemove={handleRemove}
                 originalProduct={product}
               />
@@ -325,6 +325,7 @@ export const WatchlistPage: React.FC = () => {
                   placeholder="Ví dụ: 1500000"
                   className={styles.formInput}
                   value={targetPrice}
+                  disabled={buyWhenGood}
                   onChange={(e) => setTargetPrice(e.target.value)}
                 />
               </div>
@@ -334,10 +335,13 @@ export const WatchlistPage: React.FC = () => {
                   type="checkbox"
                   id="buyWhenGood"
                   checked={buyWhenGood}
-                  onChange={(e) => setBuyWhenGood(e.target.checked)}
+                  onChange={(e) => {
+                    setBuyWhenGood(e.target.checked);
+                    if (e.target.checked) setTargetPrice('');
+                  }}
                 />
                 <label htmlFor="buyWhenGood" className={styles.formLabel} style={{ margin: 0, cursor: 'pointer' }}>
-                  Cảnh báo khi giá ở mức tốt
+                  Mua khi giá tốt (thay cho giá mục tiêu)
                 </label>
               </div>
 

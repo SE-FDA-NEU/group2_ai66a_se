@@ -97,7 +97,9 @@ export const ProductDetailPage: React.FC = () => {
             </div>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Nhãn giá hiện tại</span>
-              <span className={styles.metaValue}>{product.price_label || 'Bình thường'}</span>
+              <span className={styles.metaValue}>
+                {product.price_label || 'Not enough data to assess'}
+              </span>
             </div>
           </div>
 
