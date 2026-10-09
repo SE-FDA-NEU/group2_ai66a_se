@@ -10,11 +10,14 @@ import {
 import styles from './WatchlistPage.module.css';
 import { convertFromVnd, USD_TO_VND_RATE } from '../utils/currency';
 
+export type SortOption = 'default' | 'price_asc' | 'price_desc';
+
 export const WatchlistPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState<WatchlistProduct[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('default');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUnauthorized, setIsUnauthorized] = useState(false);
@@ -146,6 +149,20 @@ export const WatchlistPage: React.FC = () => {
           </button>
         </div>
         <div className={styles.toolbarRight}>
+          <div className={styles.sortContainer}>
+            <span className={styles.sortIcon}>⇅</span>
+            <select
+              className={styles.sortSelect}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              aria-label="Sắp xếp sản phẩm"
+              data-testid="sort-select"
+            >
+              <option value="default">Sắp xếp: Mặc định</option>
+              <option value="price_asc">Giá: Thấp đến cao</option>
+              <option value="price_desc">Giá: Cao đến thấp</option>
+            </select>
+          </div>
           <div className={styles.searchContainer}>
             <span className={styles.searchIcon}>🔍</span>
             <input
