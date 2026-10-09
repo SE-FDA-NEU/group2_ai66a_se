@@ -12,13 +12,34 @@ import { convertToVnd, convertFromVnd, USD_TO_VND_RATE } from '../utils/currency
 
 export type SortOption = 'default' | 'price_asc' | 'price_desc';
 
+const WATCHLIST_SORT_KEY = 'watchlist_sort';
+
 export const WatchlistPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState<WatchlistProduct[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('default');
+  const [sortBy, setSortBy] = useState<SortOption>(() => {
+    try {
+      const saved = localStorage.getItem(WATCHLIST_SORT_KEY) as SortOption | null;
+      if (saved === 'price_asc' || saved === 'price_desc' || saved === 'default') {
+        return saved;
+      }
+    } catch {
+      // In case localStorage is disabled
+    }
+    return 'default';
+  });
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleSortChange = (newSort: SortOption) => {
+    setSortBy(newSort);
+    try {
+      localStorage.setItem(WATCHLIST_SORT_KEY, newSort);
+    } catch {
+      // In case localStorage is disabled
+    }
+  };
   const [error, setError] = useState<string | null>(null);
   const [isUnauthorized, setIsUnauthorized] = useState(false);
 
@@ -172,7 +193,7 @@ export const WatchlistPage: React.FC = () => {
             <select
               className={styles.sortSelect}
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              onChange={(e) => handleSortChange(e.target.value as SortOption)}
               aria-label="Sắp xếp sản phẩm"
               data-testid="sort-select"
             >

@@ -42,6 +42,7 @@ function renderWatchlist(count: number) {
 
 describe('WatchlistPage product tracking', () => {
   beforeEach(() => {
+    localStorage.clear();
     localStorage.setItem('access_token', 'test-token');
     vi.clearAllMocks();
   });
@@ -109,6 +110,7 @@ const customProduct = (
 
 describe('WatchlistPage sorting by price (US08 / Issue #49)', () => {
   beforeEach(() => {
+    localStorage.clear();
     localStorage.setItem('access_token', 'test-token');
     vi.clearAllMocks();
   });
@@ -278,6 +280,48 @@ describe('WatchlistPage sorting by price (US08 / Issue #49)', () => {
       'Đèn ngủ 70k',
       'Đèn ngủ 90k',
     ]);
+  });
+
+  it('persists selected sort order across page navigation/remounts', async () => {
+    const user = userEvent.setup();
+    const products = [
+      customProduct(1, 'Đèn ngủ 70k', 70000),
+      customProduct(2, 'Đèn ngủ 40k', 40000),
+      customProduct(3, 'Đèn ngủ 55k', 55000),
+    ];
+    vi.mocked(getWatchlist).mockResolvedValue({
+      total: 3,
+      products,
+    });
+
+    const { unmount } = render(
+      <MemoryRouter>
+        <WatchlistPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Đèn ngủ 70k')).toBeInTheDocument();
+
+    const sortSelect = screen.getByTestId('sort-select');
+    await user.selectOptions(sortSelect, 'price_desc');
+    expect(localStorage.getItem('watchlist_sort')).toBe('price_desc');
+
+    // Simulate navigating away (unmount) and returning to /watchlist (remount)
+    unmount();
+
+    render(
+      <MemoryRouter>
+        <WatchlistPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Đèn ngủ 70k')).toBeInTheDocument();
+    const remountedSelect = screen.getByTestId('sort-select') as HTMLSelectElement;
+    expect(remountedSelect.value).toBe('price_desc');
+
+    const headings = screen.getAllByRole('heading', { level: 3 });
+    const productNames = headings.map((h) => h.textContent);
+    expect(productNames).toEqual(['Đèn ngủ 70k', 'Đèn ngủ 55k', 'Đèn ngủ 40k']);
   });
 });
 
