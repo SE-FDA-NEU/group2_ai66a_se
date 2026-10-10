@@ -118,10 +118,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       {/* Cột 5: Nhãn giá */}
       <div className={styles.badgesCol}>
         {notEnoughData && (
-          <span className={`${styles.badge} ${styles.badgeWarning}`}>Chưa đủ dữ liệu</span>
+          <span className={`${styles.badge} ${styles.badgeWarning}`}>
+            {priceLabel || 'Not enough data to assess'}
+          </span>
         )}
         {!notEnoughData && priceLabel && (
-          <span className={`${styles.badge} ${priceLabel === 'Giá tốt' ? styles.badgePrimary : styles.badgeNeutral}`}>
+          <span className={`${styles.badge} ${priceLabel === 'Good price' ? styles.badgePrimary : styles.badgeNeutral}`}>
             {priceLabel}
           </span>
         )}

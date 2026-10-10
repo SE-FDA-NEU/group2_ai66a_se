@@ -58,4 +58,20 @@ class TrackedProduct(Base):
     product_id = Column(BigInteger, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True)
     target_price = Column(Numeric(12, 2), nullable=True)
     buy_when_good = Column(Boolean, nullable=False, server_default=text("false"))
+    good_price_notified = Column(Boolean, nullable=False, server_default=text("false"))
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class UserNotification(Base):
+    """Durable in-app notification for a user's tracked products."""
+
+    __tablename__ = "user_notifications"
+    __table_args__ = (Index("idx_user_notifications_user_id_id", "user_id", "id"),)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    product_id = Column(BigInteger, ForeignKey("products.id", ondelete="SET NULL"), nullable=True)
+    kind = Column(String(32), nullable=False)
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())

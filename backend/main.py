@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+import asyncio
 from admin import create_admin_user
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
@@ -17,6 +18,7 @@ from app.core.database import AsyncSessionLocal, engine
 from app.core.redis import redis_client
 
 from app.api.v1.api import api_router
+from app.services.price_monitor_service import price_monitor_service
 
 
 @asynccontextmanager
@@ -32,10 +34,15 @@ async def lifespan(app: FastAPI):
             await create_admin_user(session)
         except Exception as e:
             logger.error(f"không thể tạo tài khoản Admin: {e}")
-            
+    price_monitor_task = asyncio.create_task(price_monitor_service.run_forever())
     try:
         yield
     finally:
+        price_monitor_task.cancel()
+        try:
+            await price_monitor_task
+        except asyncio.CancelledError:
+            pass
         # Đóng các kết nối dùng chung khi ứng dụng shutdown.
         await redis_client.close()
         await engine.dispose()

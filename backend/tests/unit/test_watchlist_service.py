@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+from pydantic import ValidationError
 
 from app.core.exceptions import CustomAppException
 from app.schemas.watchlist_schema import ProductMarketplace, ProductCreate
@@ -52,6 +53,15 @@ def _marketplace_product(price="12.00"):
     )
 
 
+def test_target_price_and_good_price_alert_are_mutually_exclusive():
+    with pytest.raises(ValidationError):
+        ProductCreate(
+            url="https://amazon.com/dp/B012345678",
+            target_price=Decimal("9.00"),
+            buy_when_good=True,
+        )
+
+
 class FakeSession:
     def __init__(self):
         self.added = []
@@ -90,6 +100,11 @@ def _common_mocks(monkeypatch, *, product, tracking=None, count=0):
         "create",
         AsyncMock(return_value=SimpleNamespace(target_price=Decimal("9.00"), buy_when_good=False)),
     )
+    monkeypatch.setattr(
+        service_module.tracked_product_crud,
+        "list_with_product_statistics",
+        AsyncMock(return_value=[]),
+    )
 
 
 def test_cached_product_adds_tracking_without_marketplace_request(monkeypatch):
@@ -114,6 +129,30 @@ def test_cached_product_adds_tracking_without_marketplace_request(monkeypatch):
     asyncio.run(scenario())
 
 
+def test_setting_target_price_creates_confirmation_notification(monkeypatch):
+    async def scenario():
+        product = _product()
+        _common_mocks(monkeypatch, product=product, count=4)
+        monkeypatch.setattr(service_module.notification_crud, "create", AsyncMock())
+        marketplace = AsyncMock()
+        monkeypatch.setattr(service_module, "rapidapi_client", marketplace)
+        session = FakeSession()
+
+        await service_module.watchlist_service.add_product(
+            session,
+            SimpleNamespace(id=7),
+            ProductCreate(url="https://amazon.com/dp/B012345678", target_price=9),
+        )
+
+        service_module.notification_crud.create.assert_awaited_once()
+        kwargs = service_module.notification_crud.create.await_args.kwargs
+        assert kwargs["kind"] == "target_price_set"
+        assert kwargs["user_id"] == 7
+        assert kwargs["product_id"] == product.id
+
+    asyncio.run(scenario())
+
+
 def test_new_product_is_fetched_and_created_with_initial_price(monkeypatch):
     async def scenario():
         _common_mocks(monkeypatch, product=None)
@@ -133,6 +172,7 @@ def test_new_product_is_fetched_and_created_with_initial_price(monkeypatch):
         service_module.product_crud.create_with_first_price.assert_awaited_once()
         assert product.tracked_by_count == 1
         assert result.current_price == Decimal("12.00")
+        assert result.price_label == "Not enough data to assess"
         assert session.commits == 1
         print("New product added to watchlist:", result.model_dump(mode="json"))
 

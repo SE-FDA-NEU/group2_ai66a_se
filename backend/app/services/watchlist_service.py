@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ErrorDetail
 from app.crud.product_crud import product_crud
+from app.crud.notification_crud import notification_crud
 from app.crud.tracked_product_crud import tracked_product_crud
 from app.helper.amazon_link_parser import parse_amazon_link
 from app.helper.rapidapi_client import rapidapi_client
@@ -103,11 +104,39 @@ class WatchlistService:
                 target_price=request.target_price,
                 buy_when_good=request.buy_when_good,
             )
+            if request.target_price is not None:
+                await notification_crud.create(
+                    db,
+                    user_id=user.id,
+                    product_id=product.id,
+                    kind="target_price_set",
+                    title="Đã lưu giá mục tiêu",
+                    message=(
+                        f"Đã đặt giá mục tiêu cho {product.name}: "
+                        f"{request.target_price} {product.currency}."
+                    ),
+                )
             product.tracked_by_count += 1
             db.add(product)
             await db.commit()
             await db.refresh(product)
-            return self._to_response(product, tracking)
+            rows = await tracked_product_crud.list_with_product_statistics(db, user.id)
+            row = next((row for row in rows if row[0].id == product.id), None)
+            if row is None:
+                return self._to_summary_response(
+                    product,
+                    tracking.target_price,
+                    tracking.buy_when_good,
+                    0,
+                    None,
+                )
+            return self._to_summary_response(
+                product=row[0],
+                target_price=row[1],
+                buy_when_good=row[2],
+                distinct_days=row[3],
+                median_price=row[4],
+            )
         except Exception:
             await db.rollback()
             raise
@@ -134,28 +163,6 @@ class WatchlistService:
         except Exception:
             await db.rollback()
             raise
-
-    @staticmethod
-    def _to_response(product: ProductModel, tracking) -> Product:
-        return Product(
-            id=product.id,
-            name=product.name,
-            url=product.url,
-            image_url=product.image_url,
-            marketplace=product.marketplace,
-            brand=product.brand,
-            shop_name=product.shop_name,
-            product_rating=product.product_rating,
-            review_count=product.review_count,
-            current_price=product.current_price,
-            original_price=product.original_price,
-            currency=product.currency,
-            in_stock=product.in_stock,
-            price_low=product.price_low,
-            price_high=product.price_high,
-            target_price=tracking.target_price,
-            buy_when_good=tracking.buy_when_good,
-        )
 
     @classmethod
     def _to_summary_response(

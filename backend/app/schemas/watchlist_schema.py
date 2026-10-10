@@ -1,13 +1,20 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ProductCreate(BaseModel):
     url: str = Field(min_length=1, max_length=2048)
     target_price: Decimal | None = Field(default=None, gt=0)
     buy_when_good: bool = False
+
+    @model_validator(mode="after")
+    def target_price_and_good_price_alert_are_exclusive(self):
+        if self.target_price is not None and self.buy_when_good:
+            raise ValueError("Choose a target price or 'Buy when price is good', not both.")
+        return self
 
 
 class Product(BaseModel):
@@ -38,6 +45,21 @@ class Product(BaseModel):
 class ProductList(BaseModel):
     total: int
     products: list[Product]
+
+
+class NotificationItem(BaseModel):
+    id: int
+    product_id: int | None = None
+    kind: str
+    title: str
+    message: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NotificationList(BaseModel):
+    notifications: list[NotificationItem]
 
 
 class ProductMarketplace(BaseModel):
