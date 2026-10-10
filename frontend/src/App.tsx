@@ -11,11 +11,15 @@ import ProfilePage from './pages/ProfilePage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import { NotificationCenter } from './components/NotificationCenter';
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        {import.meta.env.DEV && new URLSearchParams(window.location.search).has('mockNotification') && (
+          <NotificationCenter mockOnly />
+        )}
         <Routes>
           {/* Public / Auth routes (Only for unauthenticated users) */}
           <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />

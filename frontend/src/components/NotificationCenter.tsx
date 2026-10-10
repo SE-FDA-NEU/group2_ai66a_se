@@ -7,8 +7,30 @@ import styles from './NotificationCenter.module.css';
 const POLL_INTERVAL_MS = 5_000;
 const TOAST_DURATION_MS = 5_000;
 const MAX_VISIBLE = 3;
+const MOCK_NOTIFICATIONS: Record<string, UserNotification> = {
+  target_price_set: {
+    id: 1,
+    product_id: 101,
+    kind: 'target_price_set',
+    title: 'Đã đặt giá mục tiêu',
+    message: 'Notification mẫu: giá mục tiêu cho sản phẩm đã được lưu.',
+    created_at: new Date().toISOString(),
+  },
+  good_price: {
+    id: 1,
+    product_id: 101,
+    kind: 'good_price',
+    title: 'Giá tốt rồi!',
+    message: 'Notification mẫu: sản phẩm hiện có mức giá tốt để mua.',
+    created_at: new Date().toISOString(),
+  },
+};
 
-export const NotificationCenter: React.FC = () => {
+interface NotificationCenterProps {
+  mockOnly?: boolean;
+}
+
+export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly = false }) => {
   const [visible, setVisible] = useState<UserNotification[]>([]);
   const lastSeenIdRef = useRef(0);
   const timersRef = useRef<Map<number, number>>(new Map());
@@ -28,7 +50,13 @@ export const NotificationCenter: React.FC = () => {
 
     const poll = async () => {
       try {
-        const notifications = await getNotifications(lastSeenIdRef.current);
+        const mockKind = (mockOnly || import.meta.env.DEV)
+          ? new URLSearchParams(window.location.search).get('mockNotification')
+          : null;
+        const mockNotification = mockKind ? MOCK_NOTIFICATIONS[mockKind] : undefined;
+        const notifications = mockNotification
+          ? mockNotification.id > lastSeenIdRef.current ? [mockNotification] : []
+          : mockOnly ? [] : await getNotifications(lastSeenIdRef.current);
         if (!active || notifications.length === 0) return;
 
         lastSeenIdRef.current = Math.max(
