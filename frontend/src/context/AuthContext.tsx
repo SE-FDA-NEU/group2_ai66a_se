@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { isTokenValid, clearAuthStorage } from '../utils/auth';
 
 interface AuthState {
   token: string | null;
@@ -10,31 +11,55 @@ interface AuthState {
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem('access_token')
-  );
+  const [token, setToken] = useState<string | null>(() => {
+    const savedToken = localStorage.getItem('access_token');
+    if (isTokenValid(savedToken)) {
+      return savedToken;
+    }
+    clearAuthStorage();
+    return null;
+  });
 
   useEffect(() => {
-    if (token) {
+    if (token && isTokenValid(token)) {
       localStorage.setItem('access_token', token);
     } else {
-      localStorage.removeItem('access_token');
+      clearAuthStorage();
     }
   }, [token]);
 
   const saveToken = useCallback((newToken: string) => {
-    setToken(newToken);
+    if (isTokenValid(newToken)) {
+      setToken(newToken);
+    } else {
+      clearAuthStorage();
+      setToken(null);
+    }
   }, []);
 
   const logout = useCallback(() => {
+    clearAuthStorage();
     setToken(null);
   }, []);
+
+  useEffect(() => {
+    const handleLogoutEvent = () => {
+      logout();
+    };
+
+    window.addEventListener('auth:logout', handleLogoutEvent);
+    return () => {
+      window.removeEventListener('auth:logout', handleLogoutEvent);
+    };
+  }, [logout]);
+
+  const isLoggedIn = Boolean(token && isTokenValid(token));
 
   return (
     <AuthContext.Provider
       value={{
         token,
-        isLoggedIn: !!token,
+        isLoggedIn,
         saveToken,
         logout,
       }}

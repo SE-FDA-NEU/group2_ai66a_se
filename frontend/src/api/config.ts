@@ -1,4 +1,5 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { clearAuthStorage } from '../utils/auth';
 
 // Khởi tạo một đối tượng axios với các cấu hình mặc định
 const apiClient = axios.create({
@@ -36,16 +37,27 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     // Nếu API trả về lỗi 401 (Hết hạn token hoặc chưa đăng nhập)
     if (error.response && error.response.status === 401) {
-      // Bạn có thể xử lý đăng xuất ở đây (ví dụ: xoá token và chuyển về trang chủ)
-      console.warn("Unauthorized! Token hết hạn hoặc không hợp lệ.");
-      localStorage.removeItem('access_token');
-      // window.location.href = "/";
+      console.warn('Unauthorized! Phiên đăng nhập hết hạn hoặc không hợp lệ.');
+      clearAuthStorage();
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:logout'));
+
+        const currentPath = window.location.pathname;
+        const publicPaths = ['/login', '/register', '/otp', '/forgot-password', '/'];
+        if (!publicPaths.includes(currentPath)) {
+          window.location.replace('/login');
+        }
+      }
     }
     
-    // Trả lỗi về để nơi gọi API (ví dụ: form đăng nhập) xử lý tiếp
-    return Promise.reject((error.response?.data as Record<string, unknown>) || error.message);
+    const errorData = (error.response?.data as Record<string, unknown>) || {};
+    return Promise.reject({
+      status: error.response?.status,
+      ...errorData,
+      message: (errorData.detail as string) || (errorData.message as string) || error.message,
+    });
   }
 );
 
 export default apiClient;
-

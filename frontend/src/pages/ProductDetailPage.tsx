@@ -22,8 +22,12 @@ export const ProductDetailPage: React.FC = () => {
         if (found) {
           setProduct(found);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch watchlist', err);
+        if (err?.status === 401 || err?.error_code === 'UNAUTHORIZED' || err === 'Unauthorized') {
+          navigate('/login', { replace: true });
+          return;
+        }
       } finally {
         setIsLoading(false);
       }
