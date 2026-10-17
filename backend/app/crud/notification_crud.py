@@ -1,7 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.product_model import UserNotification
+from app.models.product_model import (
+    NotificationPreference, PendingNotificationEmail, UserNotification,
+)
 
 
 class CRUDNotification:
@@ -43,3 +45,45 @@ class CRUDNotification:
 
 
 notification_crud = CRUDNotification()
+
+
+class CRUDNotificationSettings:
+    async def get_or_create(self, db: AsyncSession, user_id: int) -> NotificationPreference:
+        preference = await db.get(NotificationPreference, user_id)
+        if preference is None:
+            preference = NotificationPreference(user_id=user_id)
+            db.add(preference)
+            await db.flush()
+        return preference
+
+    async def update(self, db: AsyncSession, user_id: int, values: dict) -> NotificationPreference:
+        preference = await self.get_or_create(db, user_id)
+        for key, value in values.items():
+            if key in {"quiet_start", "quiet_end"} and value is not None:
+                value = value.strftime("%H:%M")
+            setattr(preference, key, value)
+        if preference.quiet_hours_enabled and (not preference.quiet_start or not preference.quiet_end):
+            raise ValueError("quiet_start and quiet_end are required when quiet hours are enabled.")
+        await db.flush()
+        return preference
+
+
+class CRUDPendingNotificationEmail:
+    async def create(self, db: AsyncSession, **values) -> PendingNotificationEmail:
+        item = PendingNotificationEmail(**values)
+        db.add(item)
+        await db.flush()
+        return item
+
+    async def pending(self, db: AsyncSession, limit: int = 100) -> list[PendingNotificationEmail]:
+        result = await db.scalars(
+            select(PendingNotificationEmail)
+            .where(PendingNotificationEmail.sent_at.is_(None))
+            .order_by(PendingNotificationEmail.id)
+            .limit(limit)
+        )
+        return list(result.all())
+
+
+notification_settings_crud = CRUDNotificationSettings()
+pending_notification_email_crud = CRUDPendingNotificationEmail()
