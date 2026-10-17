@@ -8,6 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.crud.user_crud import user_crud
 
 from app.core.security import verify_password, create_access_token
+from app.core.logger import logger
 
 from app.schemas.token_schema import AuthErrors
 from app.schemas.user_schema import UserErrors
@@ -34,13 +35,16 @@ class AuthService:
 
     async def authenticate_google(self, db: AsyncSession, google_token: GoogleTokenRequest) -> dict:
         """Nghiệp vụ xác thực thông tin đăng nhập bằng Google và cấp Token"""
+        logger.info("Bắt đầu xử lý đăng nhập Google...")
         google_payload = await verify_google_id_token(google_token.id_token)
         google_sub = google_payload["sub"]
         email = google_payload["email"].lower()
+        logger.info(f"Xác thực Google ID token thành công cho email: {email}, sub: {google_sub}")
 
         user = await user_crud.get_by_email(db, email=email)
 
         if not user:
+            logger.info(f"Tạo người dùng mới từ Google: {email}")
             user = await user_crud.create(
                 db,
                 email=email,
@@ -51,6 +55,7 @@ class AuthService:
             )
 
         if user and user.auth_provider == "email":
+            logger.info(f"Liên kết tài khoản Google cho người dùng email: {email}")
             user = await user_crud.update(
                 db,
                 db_obj=user, 
@@ -59,11 +64,19 @@ class AuthService:
                     "auth_provider": "both"
                     }
                 )
+        elif user and not user.google_sub:
+            user = await user_crud.update(
+                db,
+                db_obj=user,
+                obj_in={"google_sub": google_sub}
+            )
 
         if not user.is_activate:
-            raise AuthErrors.INVALID_LOGIN.throw()
+            logger.warning(f"Tài khoản người dùng chưa kích hoạt: {email}")
+            raise AuthErrors.INVALID_LOGIN.throw(dynamic_message="Tài khoản của bạn đã bị khóa hoặc chưa kích hoạt.")
 
         access_token = create_access_token(subject=user.id, is_developer=user.is_developer)
+        logger.info(f"Đăng nhập Google thành công, đã cấp Access Token cho user ID: {user.id}")
         return {
             "access_token": access_token, 
             "token_type": "bearer"

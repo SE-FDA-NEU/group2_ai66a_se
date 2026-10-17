@@ -52,10 +52,18 @@ apiClient.interceptors.response.use(
     }
     
     const errorData = (error.response?.data as Record<string, unknown>) || {};
+    const backendError = errorData.error as Record<string, unknown> | undefined;
+    const errorMessage =
+      (backendError?.message as string) ||
+      (errorData.detail as string) ||
+      (errorData.message as string) ||
+      error.message;
+
     return Promise.reject({
       status: error.response?.status,
       ...errorData,
-      message: (errorData.detail as string) || (errorData.message as string) || error.message,
+      detail: errorMessage,
+      message: errorMessage,
     });
   }
 );
