@@ -4,7 +4,7 @@ An automated system that tracks and visualizes e-commerce price history over tim
 
 **Team:** 2 · **Members:** @huydang2006 @Dai-Nguyen1506 @CaMapCon26 @mfortunaa @happyhusky3303  
 **Product Owner (fixed for the entire semester):** @Dai-Nguyen1506 
-**Scrum Master (rotates each sprint):** @happyhusky3303 (Sprint 2)  
+**Scrum Master (rotates each sprint):** @mfortunaa (Sprint 3)  
 **Board:** https://github.com/orgs/SE-FDA-NEU/projects/19/views/1
 
 ## Getting Started
