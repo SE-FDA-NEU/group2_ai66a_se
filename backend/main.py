@@ -19,6 +19,7 @@ from app.core.redis import redis_client
 
 from app.api.v1.api import api_router
 from app.services.price_monitor_service import price_monitor_service
+from app.services.notification_service import run_email_delivery_forever
 
 
 @asynccontextmanager
@@ -35,12 +36,18 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"không thể tạo tài khoản Admin: {e}")
     price_monitor_task = asyncio.create_task(price_monitor_service.run_forever())
+    notification_email_task = asyncio.create_task(run_email_delivery_forever())
     try:
         yield
     finally:
         price_monitor_task.cancel()
+        notification_email_task.cancel()
         try:
             await price_monitor_task
+        except asyncio.CancelledError:
+            pass
+        try:
+            await notification_email_task
         except asyncio.CancelledError:
             pass
         # Đóng các kết nối dùng chung khi ứng dụng shutdown.
