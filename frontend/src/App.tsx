@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import LandingPage from './pages/LandingPage';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
@@ -12,6 +12,16 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import { NotificationCenter } from './components/NotificationCenter';
+import { isTokenValid } from './utils/auth';
+
+const FallbackRoute = () => {
+  const { isLoggedIn, token } = useAuth();
+  return isLoggedIn && isTokenValid(token) ? (
+    <Navigate to="/watchlist" replace />
+  ) : (
+    <Navigate to="/login" replace />
+  );
+};
 
 function App() {
   return (
@@ -60,8 +70,8 @@ function App() {
             }
           />
 
-          {/* Fallback route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Fallback route: Chuyển về login nếu chưa đăng nhập, hoặc watchlist nếu đã đăng nhập */}
+          <Route path="*" element={<FallbackRoute />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 # Biến môi trường giúp Python không tạo .pyc và print log ngay lập tức
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 # Cài đặt dependencies hệ thống nếu cần (VD: libpq-dev cho psycopg2)
-RUN apt-get update \
+RUN apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Check-Date=false -o Acquire::Max-FutureTime=86400 update \
     && apt-get -y install libpq-dev gcc \
     && rm -rf /var/lib/apt/lists/*
 

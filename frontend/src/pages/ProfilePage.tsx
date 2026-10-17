@@ -42,9 +42,9 @@ const ProfilePage: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Failed to fetch profile', err);
-      // Assuming 401 Unauthorized if token is invalid
-      if (err === 'Unauthorized' || err?.detail?.includes('Expired')) {
-        navigate('/login');
+      if (err.status === 401 || err?.error_code === 'UNAUTHORIZED' || err === 'Unauthorized') {
+        navigate('/login', { replace: true });
+        return;
       }
     } finally {
       setIsLoading(false);

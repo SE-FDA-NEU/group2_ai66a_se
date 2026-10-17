@@ -122,9 +122,13 @@ const RegisterPage: React.FC = () => {
       const res = await loginWithGoogle(idToken);
       saveToken(res.access_token);
       localStorage.setItem("access_token", res.access_token);
-      const user = await getUserProfile();
-      if (user.data) {
-        localStorage.setItem("user_email", user.data.email);
+      try {
+        const user = await getUserProfile();
+        if (user?.data?.email) {
+          localStorage.setItem("user_email", user.data.email);
+        }
+      } catch (e) {
+        console.error("Failed to get user profile", e);
       }
       navigate('/watchlist', { replace: true });
     } catch (err: any) {

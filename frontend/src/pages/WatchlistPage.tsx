@@ -41,7 +41,6 @@ export const WatchlistPage: React.FC = () => {
     }
   };
   const [error, setError] = useState<string | null>(null);
-  const [isUnauthorized, setIsUnauthorized] = useState(false);
 
   // State cho Modal thêm sản phẩm
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -52,16 +51,8 @@ export const WatchlistPage: React.FC = () => {
   const [addError, setAddError] = useState<string | null>(null);
 
   const fetchProducts = useCallback(async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      setIsUnauthorized(true);
-      setIsLoading(false);
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
-    setIsUnauthorized(false);
 
     try {
       const data = await getWatchlist();
@@ -69,14 +60,14 @@ export const WatchlistPage: React.FC = () => {
     } catch (err: any) {
       console.error('Fetch watchlist error:', err);
       if (err.status === 401 || err.detail === 'Could not validate credentials') {
-        setIsUnauthorized(true);
-      } else {
-        setError(err.message || err.detail || 'Không thể tải danh sách theo dõi từ máy chủ.');
+        navigate('/login', { replace: true });
+        return;
       }
+      setError(err.message || err.detail || 'Không thể tải danh sách theo dõi từ máy chủ.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     fetchProducts();
@@ -156,30 +147,12 @@ export const WatchlistPage: React.FC = () => {
         </div>
         <button
           className={styles.addButton}
-          disabled={!isUnauthorized && products.length >= 10}
-          onClick={() => {
-            if (isUnauthorized) {
-              navigate('/login');
-            } else {
-              setIsAddModalOpen(true);
-            }
-          }}
+          disabled={products.length >= 10}
+          onClick={() => setIsAddModalOpen(true)}
         >
           <span>+</span> Thêm sản phẩm
         </button>
       </header>
-
-      {/* Thông báo nếu chưa đăng nhập */}
-      {isUnauthorized && (
-        <div className={styles.authNotice}>
-          <span>
-            ⚠️ Bạn chưa đăng nhập. Vui lòng đăng nhập để đồng bộ và quản lý danh sách sản phẩm thực tế từ hệ thống.
-          </span>
-          <button className={styles.authNoticeLink} onClick={() => navigate('/login')}>
-            Đăng nhập ngay →
-          </button>
-        </div>
-      )}
 
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
@@ -241,18 +214,6 @@ export const WatchlistPage: React.FC = () => {
                 Thử lại
               </button>
             </div>
-          ) : isUnauthorized ? (
-            <div className={styles.emptyState}>
-              <div className={styles.emptyStateTitle}>Yêu cầu đăng nhập</div>
-              <p>Hãy đăng nhập vào tài khoản của bạn để xem và quản lý danh sách theo dõi giá.</p>
-              <button
-                className={styles.addButton}
-                style={{ margin: '16px auto' }}
-                onClick={() => navigate('/login')}
-              >
-                Đăng nhập tài khoản
-              </button>
-            </div>
           ) : displayedProducts.length > 0 ? (
             displayedProducts.map((product) => (
               <ProductRow
@@ -288,7 +249,7 @@ export const WatchlistPage: React.FC = () => {
           )}
         </div>
 
-        {!isLoading && !error && !isUnauthorized && displayedProducts.length > 0 && (
+        {!isLoading && !error && displayedProducts.length > 0 && (
           <div className={styles.itemCount}>
             Tổng cộng {displayedProducts.length} sản phẩm
           </div>
