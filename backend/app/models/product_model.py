@@ -76,3 +76,34 @@ class UserNotification(Base):
     title = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class NotificationPreference(Base):
+    """Email notification and local quiet-hour settings for a user."""
+
+    __tablename__ = "notification_preferences"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    email_enabled = Column(Boolean, nullable=False, server_default=text("false"))
+    quiet_hours_enabled = Column(Boolean, nullable=False, server_default=text("false"))
+    quiet_start = Column(String(5), nullable=True)
+    quiet_end = Column(String(5), nullable=True)
+    timezone = Column(String(64), nullable=False, server_default=text("'Asia/Ho_Chi_Minh'"))
+
+
+class PendingNotificationEmail(Base):
+    """Durable queue for emails deferred until a user's quiet hours end."""
+
+    __tablename__ = "pending_notification_emails"
+    __table_args__ = (Index("idx_pending_notification_emails_due", "sent_at", "created_at"),)
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    kind = Column(String(32), nullable=False)
+    product_name = Column(Text, nullable=False)
+    current_price = Column(String(40), nullable=False)
+    currency = Column(String(10), nullable=False)
+    product_url = Column(Text, nullable=False)
+    target_price = Column(String(40), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    sent_at = Column(DateTime(timezone=True), nullable=True)
