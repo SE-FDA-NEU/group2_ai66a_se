@@ -6,6 +6,7 @@ from sqlalchemy import Date, func, select
 from app.core.database import AsyncSessionLocal
 from app.core.logger import logger
 from app.crud.notification_crud import notification_crud
+from app.services.notification_service import enqueue_price_email
 from app.helper.rapidapi_client import rapidapi_client
 from app.models.product_model import PriceHistory, Product, TrackedProduct
 
@@ -127,6 +128,16 @@ class PriceMonitorService:
                 )
                 tracker.target_price_notified = True
                 db.add(tracker)
+                await enqueue_price_email(
+                    db,
+                    user_id=tracker.user_id,
+                    kind="target_price_reached",
+                    product_name=product.name,
+                    current_price=product.current_price,
+                    currency=product.currency,
+                    product_url=product.url,
+                    target_price=tracker.target_price,
+                )
 
             await db.commit()
 
