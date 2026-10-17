@@ -34,9 +34,9 @@ class FakeScalars:
 
 
 class FakeSession:
-    def __init__(self, product, trackers=(), distinct_days=7):
+    def __init__(self, product, tracker_batches=(), distinct_days=7):
         self.product = product
-        self.trackers = trackers
+        self.tracker_batches = [list(batch) for batch in tracker_batches]
         self.distinct_days = distinct_days
         self.scalar_calls = 0
         self.added = []
@@ -53,7 +53,7 @@ class FakeSession:
         return self.product if self.scalar_calls == 1 else self.distinct_days
 
     async def scalars(self, _statement):
-        return FakeScalars(self.trackers)
+        return FakeScalars(self.tracker_batches.pop(0) if self.tracker_batches else [])
 
     def add(self, item):
         self.added.append(item)
@@ -90,9 +90,14 @@ def _product_snapshot():
 def test_good_price_transition_creates_one_notification_and_marks_tracker(monkeypatch):
     async def scenario():
         product = _product_snapshot()
-        tracker = SimpleNamespace(user_id=7, good_price_notified=False)
+        tracker = SimpleNamespace(
+            user_id=7,
+            good_price_notified=False,
+            target_price=None,
+            target_price_notified=False,
+        )
         initial_session = FakeSession(product)
-        update_session = FakeSession(product, [tracker])
+        update_session = FakeSession(product, tracker_batches=[[tracker], []])
         sessions = [initial_session, update_session]
         monkeypatch.setattr(monitor_module, "AsyncSessionLocal", lambda: sessions.pop(0))
         monkeypatch.setattr(
@@ -124,6 +129,54 @@ def test_good_price_transition_creates_one_notification_and_marks_tracker(monkey
         notification.assert_awaited_once()
         assert notification.await_args.kwargs["kind"] == "good_price"
         assert tracker.good_price_notified is True
+        assert update_session.committed is True
+
+    asyncio.run(scenario())
+
+
+def test_target_price_hit_creates_one_notification_and_marks_tracker(monkeypatch):
+    async def scenario():
+        product = _product_snapshot()
+        tracker = SimpleNamespace(
+            user_id=7,
+            target_price=Decimal("200.00"),
+            target_price_notified=False,
+        )
+        initial_session = FakeSession(product)
+        update_session = FakeSession(
+            product, tracker_batches=[[tracker]], distinct_days=5
+        )
+        sessions = [initial_session, update_session]
+        monkeypatch.setattr(monitor_module, "AsyncSessionLocal", lambda: sessions.pop(0))
+        monkeypatch.setattr(
+            monitor_module.rapidapi_client,
+            "fetch_product",
+            AsyncMock(
+                return_value=SimpleNamespace(
+                    external_id="B012345678",
+                    url=product.url,
+                    name=product.name,
+                    image_url=product.image_url,
+                    brand=product.brand,
+                    shop_name=product.shop_name,
+                    product_rating=product.product_rating,
+                    review_count=product.review_count,
+                    current_price=Decimal("195.00"),
+                    original_price=None,
+                    currency="USD",
+                    in_stock=True,
+                    top_reviews=[],
+                )
+            ),
+        )
+        notification = AsyncMock()
+        monkeypatch.setattr(monitor_module.notification_crud, "create", notification)
+
+        await PriceMonitorService()._refresh_one(31)
+
+        notification.assert_awaited_once()
+        assert notification.await_args.kwargs["kind"] == "target_price_reached"
+        assert tracker.target_price_notified is True
         assert update_session.committed is True
 
     asyncio.run(scenario())

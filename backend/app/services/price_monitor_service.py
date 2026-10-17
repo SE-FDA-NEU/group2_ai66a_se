@@ -103,6 +103,31 @@ class PriceMonitorService:
                     tracker.good_price_notified = True
                     db.add(tracker)
 
+            target_trackers = await db.scalars(
+                select(TrackedProduct)
+                .where(
+                    TrackedProduct.product_id == product.id,
+                    TrackedProduct.target_price.is_not(None),
+                    TrackedProduct.target_price >= product.current_price,
+                    TrackedProduct.target_price_notified.is_(False),
+                )
+                .with_for_update()
+            )
+            for tracker in target_trackers:
+                await notification_crud.create(
+                    db,
+                    user_id=tracker.user_id,
+                    product_id=product.id,
+                    kind="target_price_reached",
+                    title="Giá mục tiêu đã đạt",
+                    message=(
+                        f"{product.name} hiện có giá {product.current_price} "
+                        f"{product.currency}, đã chạm giá mục tiêu {tracker.target_price}."
+                    ),
+                )
+                tracker.target_price_notified = True
+                db.add(tracker)
+
             await db.commit()
 
     @staticmethod
