@@ -59,6 +59,7 @@ class TrackedProduct(Base):
     target_price = Column(Numeric(12, 2), nullable=True)
     buy_when_good = Column(Boolean, nullable=False, server_default=text("false"))
     good_price_notified = Column(Boolean, nullable=False, server_default=text("false"))
+    target_price_notified = Column(Boolean, nullable=False, server_default=text("false"))
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
 
