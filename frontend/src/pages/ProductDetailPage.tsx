@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Star } from 'lucide-react';
+import { Bell, Settings, Star } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { removeProductFromWatchlist, getWatchlist, WatchlistProduct } from '../api/watchlistApi';
 import styles from './ProductDetailPage.module.css';
 import { formatVnd } from '../utils/currency';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
+import { ProductSettingsModal } from '../components/ProductSettingsModal';
 
 export const ProductDetailPage: React.FC = () => {
   const location = useLocation();
@@ -14,6 +15,7 @@ export const ProductDetailPage: React.FC = () => {
   const [product, setProduct] = useState<WatchlistProduct | undefined>(location.state?.product);
   const [isRemoving, setIsRemoving] = useState(false);
   const [isLoading, setIsLoading] = useState(!location.state?.product);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -89,6 +91,11 @@ export const ProductDetailPage: React.FC = () => {
           
           <div className={styles.priceSection}>
             <span className={styles.currentPrice}>{formatVnd(product.current_price, product.currency)}</span>
+            {product.target_price != null && (
+              <span className={styles.alertBadge} data-testid="alert-status-badge">
+                <Bell size={13} aria-hidden="true" /> Alert at {formatVnd(product.target_price, product.currency)}
+              </span>
+            )}
           </div>
 
           <div className={styles.metaGrid}>
@@ -125,6 +132,17 @@ export const ProductDetailPage: React.FC = () => {
           </div>
 
           <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.btnSettings}
+              onClick={() => setIsSettingsModalOpen(true)}
+              title="Cài đặt sản phẩm & giá mục tiêu"
+              aria-label="Cài đặt sản phẩm"
+              data-testid="btn-product-settings"
+            >
+              <Settings size={16} aria-hidden="true" />
+              <span>Cài đặt</span>
+            </button>
             <button 
               className={styles.btnUnfollow} 
               onClick={handleUnfollow}
@@ -148,6 +166,14 @@ export const ProductDetailPage: React.FC = () => {
       <div className={styles.chartSection}>
         <PriceHistoryChart productId={product.id} currency={product.currency} />
       </div>
+
+      {/* Pop-up Modal Cài đặt theo dõi sản phẩm (US02) */}
+      <ProductSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        product={product}
+        onTargetPriceUpdated={(updatedProduct) => setProduct(updatedProduct)}
+      />
     </div>
   );
 };

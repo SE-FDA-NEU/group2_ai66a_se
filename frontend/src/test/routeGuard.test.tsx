@@ -137,4 +137,14 @@ describe('Route Guard & Navigation Protection', () => {
     expect(window.location.pathname).toBe('/login');
     expect(screen.getByRole('heading', { name: /đăng nhập/i })).toBeInTheDocument();
   });
+
+  it('redirects /settings to /profile and allows access to /profile when token is valid', async () => {
+    const validToken = createMockJwt(3600);
+    localStorage.setItem('access_token', validToken);
+    window.history.pushState({}, '', '/settings');
+    render(<App />);
+
+    expect(window.location.pathname).toBe('/profile');
+    expect(screen.getByRole('link', { name: /hồ sơ cá nhân/i })).toBeInTheDocument();
+  });
 });

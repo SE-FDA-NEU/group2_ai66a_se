@@ -233,3 +233,31 @@ async def test_otp_invalid_and_limit_exceeded(client: AsyncClient):
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "OTP_LIMIT_EXCEEDED"
 
+
+@pytest.mark.asyncio
+async def test_reset_password_blocked_for_google_only_account(client: AsyncClient):
+    """Test chặn yêu cầu gửi OTP reset password cho tài khoản đăng ký Google thuần túy"""
+    google_email = "google_user@test.com"
+    # Tạo user Google thuần túy (không có password_hashed)
+    FAKE_USERS_DB.append(
+        User(
+            id=99,
+            email=google_email,
+            nickname="Google User",
+            password_hashed=None,
+            auth_provider="google",
+            google_sub="google-sub-12345",
+            is_activate=True,
+            is_developer=False,
+        )
+    )
+
+    response = await client.post(
+        "/api/v1/otp/send",
+        json={"email": google_email, "reason": OTPReason.RESET_PASSWORD.value},
+    )
+    assert response.status_code == 400
+    res_json = response.json()
+    assert res_json["error"]["code"] == "GOOGLE_ACCOUNT_NO_PASSWORD"
+
+

@@ -94,6 +94,8 @@ class AuthService:
         elif reason == OTPReason.RESET_PASSWORD:
             if not existed_user:
                 raise UserErrors.USER_NOT_FOUND.throw()
+            if existed_user.auth_provider == "google" and not existed_user.password_hashed:
+                raise UserErrors.GOOGLE_ACCOUNT_NO_PASSWORD.throw()
 
         code = "".join(secrets.choice("0123456789") for _ in range(6))
         payload = json.dumps({"code": code, "attempts": 0})

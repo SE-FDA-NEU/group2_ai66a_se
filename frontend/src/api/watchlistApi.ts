@@ -99,3 +99,17 @@ export const getPriceHistory = async (
   return res.data;
 };
 
+/**
+ * Cập nhật giá mục tiêu cho sản phẩm đang theo dõi (US02)
+ */
+export const updateTargetPrice = async (
+  productId: number,
+  targetPrice: number
+): Promise<WatchlistProduct> => {
+  const res = await apiClient.put<any, { message: string; data: WatchlistProduct }>(
+    `/watchlist/${productId}/target-price`,
+    { target_price: targetPrice }
+  );
+  return res.data;
+};
+

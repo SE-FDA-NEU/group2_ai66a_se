@@ -95,7 +95,7 @@ async def remove_from_watchlist(
 )
 async def get_product_price_history(
     product_id: int,
-    days: int = Query(default=7, ge=1, le=365, description="Số ngày lịch sử giá cần lấy (mặc định 7 ngày)"),
+    days: int = Query(default=7, ge=0, le=365, description="Số ngày lịch sử giá cần lấy (0 = toàn bộ lịch sử)"),
     gap_threshold_minutes: int = Query(default=30, ge=1, le=1440, description="Ngưỡng phát hiện khoảng trống gap (phút)"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
