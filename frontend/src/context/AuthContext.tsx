@@ -1,10 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { isTokenValid, clearAuthStorage } from '../utils/auth';
+import { UserResponse } from '../api/authApi';
+import { getUserProfile } from '../api/userApi';
 
 interface AuthState {
   token: string | null;
+  user: UserResponse | null;
   isLoggedIn: boolean;
   saveToken: (token: string) => void;
+  setUser: (user: UserResponse | null) => void;
   logout: () => void;
 }
 
@@ -20,13 +24,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   });
 
+  const [user, setUser] = useState<UserResponse | null>(null);
+
   useEffect(() => {
     if (token && isTokenValid(token)) {
       localStorage.setItem('access_token', token);
+      // Tự động tải thông tin hồ sơ người dùng nếu chưa có
+      if (!user) {
+        getUserProfile()
+          .then((res) => {
+            if (res.data) setUser(res.data);
+          })
+          .catch((err) => {
+            console.error('Không thể tải hồ sơ người dùng:', err);
+          });
+      }
     } else {
       clearAuthStorage();
+      setUser(null);
     }
-  }, [token]);
+  }, [token, user]);
 
   const saveToken = useCallback((newToken: string) => {
     if (isTokenValid(newToken)) {
@@ -34,12 +51,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       clearAuthStorage();
       setToken(null);
+      setUser(null);
     }
   }, []);
 
   const logout = useCallback(() => {
     clearAuthStorage();
     setToken(null);
+    setUser(null);
   }, []);
 
   useEffect(() => {
@@ -59,8 +78,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         token,
+        user,
         isLoggedIn,
         saveToken,
+        setUser,
         logout,
       }}
     >

@@ -1,17 +1,16 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-
-from sqlalchemy import Date, func, select
 
 from app.core.database import AsyncSessionLocal
 from app.core.logger import logger
-from app.crud.notification_crud import notification_crud
+from app.crud import notification_crud, product_crud, tracked_product_crud
 from app.services.notification_service import enqueue_price_email
 from app.helper.rapidapi_client import rapidapi_client
-from app.models.product_model import PriceHistory, Product, TrackedProduct
 
 
 REFRESH_INTERVAL_SECONDS = 5 * 60
+RETENTION_DAYS = 7
 
 
 class PriceMonitorService:
@@ -23,13 +22,7 @@ class PriceMonitorService:
 
     async def refresh_active_products(self) -> None:
         async with AsyncSessionLocal() as db:
-            product_ids = list(
-                await db.scalars(
-                    select(Product.id)
-                    .where(Product.tracked_by_count > 0)
-                    .order_by(Product.id)
-                )
-            )
+            product_ids = await product_crud.get_active_product_ids(db)
 
         for product_id in product_ids:
             try:
@@ -39,7 +32,7 @@ class PriceMonitorService:
 
     async def _refresh_one(self, product_id: int) -> None:
         async with AsyncSessionLocal() as db:
-            product = await db.scalar(select(Product).where(Product.id == product_id))
+            product = await product_crud.get_by_id(db, product_id)
             if product is None or product.tracked_by_count < 1:
                 return
             external_id = product.external_id
@@ -50,44 +43,20 @@ class PriceMonitorService:
             return
 
         async with AsyncSessionLocal() as db:
-            product = await db.scalar(
-                select(Product).where(Product.id == product_id).with_for_update()
-            )
+            product = await product_crud.get_by_id(db, product_id, for_update=True)
             if product is None or product.tracked_by_count < 1:
                 return
             if item.external_id != product.external_id:
                 logger.error("Marketplace returned a different product for %s", product_id)
                 return
 
-            product.url = item.url
-            product.name = item.name
-            product.image_url = item.image_url
-            product.brand = item.brand
-            product.shop_name = item.shop_name
-            product.product_rating = item.product_rating
-            product.review_count = item.review_count
-            product.current_price = item.current_price
-            product.original_price = item.original_price
-            product.currency = item.currency
-            product.in_stock = item.in_stock
-            product.top_reviews = item.top_reviews
-            product.price_low = min(Decimal(product.price_low), item.current_price)
-            product.price_high = max(Decimal(product.price_high), item.current_price)
-            product.last_refreshed_at = func.now()
-            db.add(PriceHistory(product_id=product.id, price=item.current_price))
-            await db.flush()
+            await product_crud.record_price_snapshot(db, product, item)
 
             if await self._has_enough_history(db, product.id) and self.is_good_price(
                 Decimal(product.current_price), Decimal(product.price_low)
             ):
-                trackers = await db.scalars(
-                    select(TrackedProduct)
-                    .where(
-                        TrackedProduct.product_id == product.id,
-                        TrackedProduct.buy_when_good.is_(True),
-                        TrackedProduct.good_price_notified.is_(False),
-                    )
-                    .with_for_update()
+                trackers = await tracked_product_crud.list_pending_good_price_trackers(
+                    db, product.id, for_update=True
                 )
                 for tracker in trackers:
                     await notification_crud.create(
@@ -101,18 +70,10 @@ class PriceMonitorService:
                             f"{product.currency}, thấp hơn hoặc bằng ngưỡng giá tốt."
                         ),
                     )
-                    tracker.good_price_notified = True
-                    db.add(tracker)
+                    await tracked_product_crud.mark_good_price_notified(db, tracker)
 
-            target_trackers = await db.scalars(
-                select(TrackedProduct)
-                .where(
-                    TrackedProduct.product_id == product.id,
-                    TrackedProduct.target_price.is_not(None),
-                    TrackedProduct.target_price >= product.current_price,
-                    TrackedProduct.target_price_notified.is_(False),
-                )
-                .with_for_update()
+            target_trackers = await tracked_product_crud.list_pending_target_price_trackers(
+                db, product.id, product.current_price, for_update=True
             )
             for tracker in target_trackers:
                 await notification_crud.create(
@@ -126,8 +87,7 @@ class PriceMonitorService:
                         f"{product.currency}, đã chạm giá mục tiêu {tracker.target_price}."
                     ),
                 )
-                tracker.target_price_notified = True
-                db.add(tracker)
+                await tracked_product_crud.mark_target_price_notified(db, tracker)
                 await enqueue_price_email(
                     db,
                     user_id=tracker.user_id,
@@ -143,16 +103,31 @@ class PriceMonitorService:
 
     @staticmethod
     async def _has_enough_history(db, product_id: int) -> bool:
-        distinct_days = await db.scalar(
-            select(func.count(func.distinct(func.cast(PriceHistory.recorded_at, Date)))).where(
-                PriceHistory.product_id == product_id
-            )
-        )
-        return int(distinct_days or 0) >= 7
+        return await product_crud.get_history_distinct_days(db, product_id) >= 7
+
+    async def cleanup_expired_products(
+        self, retention_days: int = RETENTION_DAYS
+    ) -> list[int]:
+        """Xóa vĩnh viễn các sản phẩm đã ngừng theo dõi quá thời hạn lưu trữ (7 ngày)."""
+        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+        async with AsyncSessionLocal() as db:
+            deleted_ids = await product_crud.delete_expired_untracked(db, cutoff=cutoff)
+            if deleted_ids:
+                logger.info(
+                    "Xóa vĩnh viễn %d sản phẩm hết hạn %d ngày không có người theo dõi: %s",
+                    len(deleted_ids),
+                    retention_days,
+                    deleted_ids,
+                )
+            return deleted_ids
 
     async def run_forever(self) -> None:
         while True:
             await self.refresh_active_products()
+            try:
+                await self.cleanup_expired_products()
+            except Exception:
+                logger.exception("Price monitor: Lỗi khi dọn dẹp sản phẩm hết hạn theo dõi")
             await asyncio.sleep(REFRESH_INTERVAL_SECONDS)
 
 

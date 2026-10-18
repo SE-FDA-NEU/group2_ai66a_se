@@ -61,7 +61,13 @@ async def list_watchlist(
 @router.delete(
     "/{product_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Xóa sản phẩm khỏi danh sách theo dõi của người dùng hiện tại",
+    summary="Ngừng theo dõi sản phẩm (Unfollow) khỏi danh sách theo dõi của người dùng",
+    description=(
+        "Xóa sản phẩm khỏi danh sách theo dõi của người dùng hiện tại. "
+        "Sản phẩm sẽ ngừng được hệ thống gọi API cập nhật giá nếu không còn ai theo dõi khác. "
+        "Dữ liệu thông tin sản phẩm và lịch sử giá được lưu âm thầm trong 7 ngày "
+        "để phục vụ người dùng theo dõi lại trước khi bị xóa vĩnh viễn (BR15)."
+    ),
 )
 async def remove_from_watchlist(
     product_id: int,

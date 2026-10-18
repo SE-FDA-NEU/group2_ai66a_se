@@ -11,6 +11,7 @@ from app.core.redis import get_redis
 from app.api.deps import get_current_developer
 from app.core.logger import logger
 from app.services.dev_service import dev_service
+from app.services.price_monitor_service import price_monitor_service
 
 router = APIRouter()
 
@@ -50,3 +51,15 @@ async def set_admin(
     """API Dev cấp quyền admin cho User"""
     await dev_service.set_admin(email=request.email, db=db)
     return ApiResponse(message=f"Đã cập nhật admin cho email {request.email}")
+
+
+@router.post("/cleanup-expired-products", response_model=ApiResponse[dict])
+async def trigger_cleanup_expired_products(
+    dev: User = Depends(get_current_developer),
+):
+    """API Dev kích hoạt ngay tác vụ dọn dẹp các sản phẩm đã ngừng theo dõi quá 7 ngày."""
+    deleted_ids = await price_monitor_service.cleanup_expired_products()
+    return ApiResponse(
+        message=f"Đã dọn dẹp {len(deleted_ids)} sản phẩm hết hạn.",
+        data={"deleted_product_ids": deleted_ids, "count": len(deleted_ids)},
+    )

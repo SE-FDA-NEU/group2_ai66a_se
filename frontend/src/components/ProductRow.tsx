@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProductRow.module.css';
 import { formatVnd } from '../utils/currency';
+import { WatchlistProduct } from '../api/watchlistApi';
 
 export interface ProductRowProps {
   id: string;
@@ -18,7 +19,7 @@ export interface ProductRowProps {
   notEnoughData?: boolean;
   onRemove: (id: string) => void | Promise<void>;
   isRemoving?: boolean;
-  originalProduct?: any;
+  originalProduct?: WatchlistProduct;
 }
 
 export const ProductRow: React.FC<ProductRowProps> = ({

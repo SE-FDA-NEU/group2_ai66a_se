@@ -1,18 +1,18 @@
 import asyncio
 from datetime import datetime, time, timezone
 from zoneinfo import ZoneInfo
-
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
 from app.core.logger import logger
-from app.crud.notification_crud import (
-    notification_crud, notification_settings_crud, pending_notification_email_crud,
+from app.crud import (
+    notification_crud,
+    notification_settings_crud,
+    pending_notification_email_crud,
+    user_crud,
 )
 from app.helper.notification_email import send_notification_email
 from app.models.product_model import PendingNotificationEmail
-from app.models.user_model import User
 from app.schemas.notification_schema import NotificationKind
 from app.schemas.watchlist_schema import NotificationList
 
@@ -23,6 +23,12 @@ class NotificationService:
     ) -> NotificationList:
         notifications = await notification_crud.list_after(db, user_id, after_id)
         return NotificationList(notifications=notifications)
+
+    async def get_user_settings(self, db: AsyncSession, user_id: int):
+        return await notification_settings_crud.get_or_create(db, user_id)
+
+    async def update_user_settings(self, db: AsyncSession, user_id: int, values: dict):
+        return await notification_settings_crud.update(db, user_id, values)
 
 
 notification_service = NotificationService()
@@ -66,7 +72,7 @@ async def deliver_pending_emails(db: AsyncSession, *, now: datetime | None = Non
     for item in pending:
         preference = await notification_settings_crud.get_or_create(db, item.user_id)
         if not preference.email_enabled:
-            item.sent_at = now
+            await pending_notification_email_crud.mark_sent(db, item, sent_at=now)
             continue
         if preference.quiet_hours_enabled:
             local_now = now.astimezone(ZoneInfo(preference.timezone))
@@ -74,9 +80,9 @@ async def deliver_pending_emails(db: AsyncSession, *, now: datetime | None = Non
             end = time.fromisoformat(preference.quiet_end)
             if is_quiet_now(local_now, start=start, end=end):
                 continue
-        user = await db.scalar(select(User).where(User.id == item.user_id))
+        user = await user_crud.get_by_id(db, item.user_id)
         if user is None:
-            item.sent_at = now
+            await pending_notification_email_crud.mark_sent(db, item, sent_at=now)
             continue
         await send_notification_email(
             email=user.email,
@@ -87,7 +93,7 @@ async def deliver_pending_emails(db: AsyncSession, *, now: datetime | None = Non
             product_url=item.product_url,
             target_price=item.target_price,
         )
-        item.sent_at = now
+        await pending_notification_email_crud.mark_sent(db, item, sent_at=now)
         sent += 1
     await db.flush()
     return sent

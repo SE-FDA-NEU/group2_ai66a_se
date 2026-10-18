@@ -11,6 +11,10 @@ class CRUDUser(CRUDBase[User]):
         result = await db.execute(select(self.model).where(self.model.email == email))
         return result.scalars().first()
 
+    async def get_by_id(self, db: AsyncSession, user_id: int, *, for_update: bool = False) -> Optional[User]:
+        """Truy vấn người dùng bằng ID"""
+        return await self.get(db, user_id, for_update=for_update)
+
 
     async def create(
         self,
