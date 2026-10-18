@@ -195,20 +195,20 @@ export const WatchlistPage: React.FC = () => {
           <div>Khoảng giá</div>
           <div>Đánh giá</div>
           <div>Nhãn giá</div>
-          <div style={{ textAlign: 'center' }}>Thao tác</div>
+          <div className={styles.headerActionCol}>Thao tác</div>
         </div>
 
         <div className={styles.tableBody}>
           {isLoading ? (
             <div className={styles.emptyState}>
+              <div className={styles.spinner} aria-hidden="true" />
               <div className={styles.emptyStateTitle}>Đang tải dữ liệu từ máy chủ...</div>
             </div>
           ) : error ? (
             <div className={styles.emptyState}>
               <div className={styles.emptyStateTitle}>{error}</div>
               <button
-                className={styles.toolbarBtn}
-                style={{ margin: '12px auto' }}
+                className={styles.retryButton}
                 onClick={fetchProducts}
               >
                 Thử lại
@@ -291,7 +291,7 @@ export const WatchlistPage: React.FC = () => {
                 />
               </div>
 
-              <div className={styles.formGroup} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className={styles.checkboxGroup}>
                 <input
                   type="checkbox"
                   id="buyWhenGood"
@@ -301,7 +301,7 @@ export const WatchlistPage: React.FC = () => {
                     if (e.target.checked) setTargetPrice('');
                   }}
                 />
-                <label htmlFor="buyWhenGood" className={styles.formLabel} style={{ margin: 0, cursor: 'pointer' }}>
+                <label htmlFor="buyWhenGood" className={styles.checkboxLabel}>
                   Mua khi giá tốt (thay cho giá mục tiêu)
                 </label>
               </div>
