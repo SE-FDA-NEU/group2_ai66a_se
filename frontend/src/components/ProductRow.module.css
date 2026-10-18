@@ -1,6 +1,6 @@
 .rowContainer {
   display: grid;
-  grid-template-columns: 3fr 1.5fr 1.5fr 1fr 1.5fr 150px;
+  grid-template-columns: var(--watchlist-grid-columns, 3fr 1.5fr 1.5fr 1fr 1.5fr 150px);
   align-items: center;
   padding: 12px 24px;
   background-color: var(--bg-surface);
@@ -194,7 +194,7 @@
 
 @media (max-width: 1024px) {
   .rowContainer {
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 135px;
+    grid-template-columns: var(--watchlist-grid-columns, 2fr 1fr 1fr 1fr 1fr 135px);
   }
 }
 
