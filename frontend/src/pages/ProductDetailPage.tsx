@@ -6,6 +6,7 @@ import styles from './ProductDetailPage.module.css';
 import { formatVnd } from '../utils/currency';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { ProductSettingsModal } from '../components/ProductSettingsModal';
+import { getSafeMarketplaceUrl } from '../utils/marketplace';
 
 export const ProductDetailPage: React.FC = () => {
   const location = useLocation();
@@ -73,6 +74,8 @@ export const ProductDetailPage: React.FC = () => {
       }
     }
   };
+
+  const marketplaceUrl = getSafeMarketplaceUrl(product.url);
 
   return (
     <div className={styles.pageContainer}>
@@ -181,14 +184,16 @@ export const ProductDetailPage: React.FC = () => {
             >
               {isRemoving ? 'Đang ngừng theo dõi...' : 'Ngừng theo dõi (Unfollow)'}
             </button>
-            <a 
-              href={product.url}
-              target="_blank"
-              rel="noreferrer"
-              className={styles.btnPrimary}
-            >
-              Xem trên {product.marketplace || 'cửa hàng'}
-            </a>
+            {marketplaceUrl && (
+              <a
+                href={marketplaceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.btnPrimary}
+              >
+                Xem trên {product.marketplace || 'cửa hàng'}
+              </a>
+            )}
           </div>
         </div>
       </div>

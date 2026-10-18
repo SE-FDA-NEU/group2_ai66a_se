@@ -157,6 +157,7 @@
 }
 
 .tableContainer {
+  --watchlist-grid-columns: 3fr 1.5fr 1.5fr 1fr 1.5fr 150px;
   background-color: var(--bg-surface);
   border-radius: 8px;
   border: 1px solid var(--border-color);
@@ -167,9 +168,7 @@
 
 .tableHeader {
   display: grid;
-  grid-template-columns: minmax(200px, 2.5fr) minmax(120px, 1.2fr) minmax(140px, 1.3fr) minmax(75px, 0.7fr) minmax(210px, 2.2fr) 120px;
-  column-gap: 16px;
-  min-width: 900px;
+  grid-template-columns: var(--watchlist-grid-columns);
   padding: 14px 24px;
   align-items: center;
   border-bottom: 1px solid var(--border-color);
@@ -207,6 +206,11 @@
   background-color: var(--bg-surface);
 }
 
+@media (max-width: 1024px) {
+  .tableContainer {
+    --watchlist-grid-columns: 2fr 1fr 1fr 1fr 1fr 135px;
+  }
+}
 @media (max-width: 768px) {
   .pageContainer {
     padding: 24px 16px;
