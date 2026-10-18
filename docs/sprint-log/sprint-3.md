@@ -1,4 +1,4 @@
-# Sprint 3 - weeks 9–10
+# Sprint 3 - 06/10/2026 to 18/10/2026
 
 ## Sprint goal
 
