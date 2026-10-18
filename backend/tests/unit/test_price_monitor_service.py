@@ -183,3 +183,252 @@ def test_target_price_hit_creates_one_notification_and_marks_tracker(monkeypatch
         assert update_session.committed is True
 
     asyncio.run(scenario())
+
+
+def test_price_rises_above_target_creates_notification_and_resets_tracker(monkeypatch):
+    async def scenario():
+        product = _product_snapshot()
+        tracker = SimpleNamespace(
+            user_id=7,
+            target_price=Decimal("195.00"),
+            target_price_notified=True,
+        )
+        initial_session = FakeSession(product)
+        update_session = FakeSession(
+            product, tracker_batches=[[], [tracker]], distinct_days=5
+        )
+        sessions = [initial_session, update_session]
+        monkeypatch.setattr(monitor_module, "AsyncSessionLocal", lambda: sessions.pop(0))
+        monkeypatch.setattr(
+            monitor_module.rapidapi_client,
+            "fetch_product",
+            AsyncMock(
+                return_value=SimpleNamespace(
+                    external_id="B012345678",
+                    url=product.url,
+                    name=product.name,
+                    image_url=product.image_url,
+                    brand=product.brand,
+                    shop_name=product.shop_name,
+                    product_rating=product.product_rating,
+                    review_count=product.review_count,
+                    current_price=Decimal("196.00"),
+                    original_price=None,
+                    currency="USD",
+                    in_stock=True,
+                    top_reviews=[],
+                )
+            ),
+        )
+        notification = AsyncMock()
+        monkeypatch.setattr(monitor_module.notification_crud, "create", notification)
+        email_mock = AsyncMock()
+        monkeypatch.setattr(monitor_module, "enqueue_price_email", email_mock)
+
+        await PriceMonitorService()._refresh_one(31)
+
+        notification.assert_awaited_once()
+        n_kwargs = notification.await_args.kwargs
+        assert n_kwargs["kind"] == "price_above_target"
+        assert n_kwargs["title"] == "Giá đã tăng trên mục tiêu"
+        assert "195.00" in n_kwargs["message"]
+        assert tracker.target_price_notified is False
+        assert update_session.committed is True
+
+        email_mock.assert_awaited_once()
+        e_kwargs = email_mock.await_args.kwargs
+        assert e_kwargs["kind"] == "price_above_target"
+        assert e_kwargs["target_price"] == Decimal("195.00")
+
+    asyncio.run(scenario())
+
+
+def test_target_price_notification_state_machine_full_sequence(monkeypatch):
+    """
+    Test complete price sequence (BR2, BR4):
+    239,000đ -> 189,000đ (notified) -> 190,000đ (suppressed) -> 196,000đ (above target notified) -> 192,000đ (re-notified).
+    Target price: 195,000đ.
+    """
+    async def scenario():
+        product = _product_snapshot()
+        product.current_price = Decimal("239000")
+        product.currency = "VND"
+
+        tracker = SimpleNamespace(
+            user_id=7,
+            product_id=31,
+            target_price=Decimal("195000"),
+            target_price_notified=False,
+            good_price_notified=False,
+        )
+
+        async def fake_list_pending_target(db, product_id, current_price, for_update=False):
+            if (
+                tracker.target_price is not None
+                and tracker.target_price >= current_price
+                and not tracker.target_price_notified
+            ):
+                return [tracker]
+            return []
+
+        async def fake_list_above_target(db, product_id, current_price, for_update=False):
+            if (
+                tracker.target_price is not None
+                and tracker.target_price < current_price
+                and tracker.target_price_notified
+            ):
+                return [tracker]
+            return []
+
+        async def fake_mark_notified(db, t):
+            t.target_price_notified = True
+
+        async def fake_reset_notified(db, t):
+            t.target_price_notified = False
+
+        monkeypatch.setattr(
+            monitor_module.tracked_product_crud,
+            "list_pending_good_price_trackers",
+            AsyncMock(return_value=[]),
+        )
+        monkeypatch.setattr(
+            monitor_module.tracked_product_crud,
+            "list_pending_target_price_trackers",
+            fake_list_pending_target,
+        )
+        monkeypatch.setattr(
+            monitor_module.tracked_product_crud,
+            "list_above_target_price_trackers",
+            fake_list_above_target,
+        )
+        monkeypatch.setattr(
+            monitor_module.tracked_product_crud,
+            "mark_target_price_notified",
+            fake_mark_notified,
+        )
+        monkeypatch.setattr(
+            monitor_module.tracked_product_crud,
+            "reset_target_price_notified",
+            fake_reset_notified,
+        )
+
+        async def fake_record_snapshot(db, p, item):
+            p.current_price = item.current_price
+            return p
+
+        monkeypatch.setattr(
+            monitor_module.product_crud, "record_price_snapshot", fake_record_snapshot
+        )
+
+        notifications_log = []
+        async def fake_create_notification(db, **kwargs):
+            notifications_log.append(kwargs)
+            return SimpleNamespace(**kwargs)
+
+        emails_log = []
+        async def fake_enqueue_email(db, **kwargs):
+            emails_log.append(kwargs)
+
+        monkeypatch.setattr(monitor_module.notification_crud, "create", fake_create_notification)
+        monkeypatch.setattr(monitor_module, "enqueue_price_email", fake_enqueue_email)
+        monkeypatch.setattr(
+            monitor_module.price_stream_service, "publish_price_update", AsyncMock()
+        )
+
+        async def run_step(new_price: Decimal):
+            step_session_1 = FakeSession(product)
+            step_session_2 = FakeSession(product, distinct_days=5)
+            sessions = [step_session_1, step_session_2]
+            monkeypatch.setattr(monitor_module, "AsyncSessionLocal", lambda: sessions.pop(0))
+            monkeypatch.setattr(
+                monitor_module.rapidapi_client,
+                "fetch_product",
+                AsyncMock(
+                    return_value=SimpleNamespace(
+                        external_id="B012345678",
+                        url=product.url,
+                        name=product.name,
+                        image_url=product.image_url,
+                        brand=product.brand,
+                        shop_name=product.shop_name,
+                        product_rating=product.product_rating,
+                        review_count=product.review_count,
+                        current_price=new_price,
+                        original_price=None,
+                        currency="VND",
+                        in_stock=True,
+                        top_reviews=[],
+                    )
+                ),
+            )
+            await PriceMonitorService()._refresh_one(31)
+
+        # Step 0: 239,000đ (Initial price above target, tracker.target_price_notified == False)
+        await run_step(Decimal("239000"))
+        assert len(notifications_log) == 0
+        assert len(emails_log) == 0
+        assert tracker.target_price_notified is False
+
+        # Step 1: 189,000đ (Price drops <= target 195,000đ -> State 1: Notify)
+        await run_step(Decimal("189000"))
+        assert len(notifications_log) == 1
+        assert notifications_log[-1]["kind"] == "target_price_reached"
+        assert notifications_log[-1]["title"] == "Giá mục tiêu đã đạt"
+        assert "189000" in notifications_log[-1]["message"]
+        assert "195000" in notifications_log[-1]["message"]
+        assert len(emails_log) == 1
+        assert emails_log[-1]["kind"] == "target_price_reached"
+        assert tracker.target_price_notified is True
+
+        # Step 2: 190,000đ (Fluctuates below target 195,000đ, notified == True -> State 2: Suppressed)
+        await run_step(Decimal("190000"))
+        assert len(notifications_log) == 1  # No duplicate notification
+        assert len(emails_log) == 1
+        assert tracker.target_price_notified is True
+
+        # Step 3: 196,000đ (Price rises > target 195,000đ, notified == True -> State 3: Above target alert & reset)
+        await run_step(Decimal("196000"))
+        assert len(notifications_log) == 2
+        assert notifications_log[-1]["kind"] == "price_above_target"
+        assert notifications_log[-1]["title"] == "Giá đã tăng trên mục tiêu"
+        assert "196000" in notifications_log[-1]["message"]
+        assert "195000" in notifications_log[-1]["message"]
+        assert len(emails_log) == 2
+        assert emails_log[-1]["kind"] == "price_above_target"
+        assert tracker.target_price_notified is False
+
+        # Step 4: 192,000đ (Price drops <= target 195,000đ, notified == False -> State 1: Re-notified)
+        await run_step(Decimal("192000"))
+        assert len(notifications_log) == 3
+        assert notifications_log[-1]["kind"] == "target_price_reached"
+        assert notifications_log[-1]["title"] == "Giá mục tiêu đã đạt"
+        assert "192000" in notifications_log[-1]["message"]
+        assert "195000" in notifications_log[-1]["message"]
+        assert len(emails_log) == 3
+        assert emails_log[-1]["kind"] == "target_price_reached"
+        assert tracker.target_price_notified is True
+
+    asyncio.run(scenario())
+
+
+def test_tracked_product_crud_helpers():
+    from app.crud.tracked_product_crud import tracked_product_crud
+
+    async def scenario():
+        tracker = SimpleNamespace(target_price_notified=True)
+        fake_db = FakeSession(None)
+        await tracked_product_crud.reset_target_price_notified(fake_db, tracker)
+        assert tracker.target_price_notified is False
+        assert tracker in fake_db.added
+
+        fake_tracker = SimpleNamespace(
+            product_id=31, target_price=Decimal("190000"), target_price_notified=True
+        )
+        fake_db2 = FakeSession(None, tracker_batches=[[fake_tracker]])
+        result = await tracked_product_crud.list_above_target_price_trackers(
+            fake_db2, product_id=31, current_price=Decimal("195000")
+        )
+        assert result == [fake_tracker]
+
+    asyncio.run(scenario())
+
