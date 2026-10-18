@@ -216,6 +216,14 @@ describe('PriceHistoryChart Component', () => {
     await waitFor(() => {
       expect(watchlistApi.getPriceHistory).toHaveBeenCalledWith(42, 30);
     });
+
+    // Switch to Tất cả (all time)
+    const buttonAll = screen.getByRole('button', { name: 'Tất cả' });
+    fireEvent.click(buttonAll);
+
+    await waitFor(() => {
+      expect(watchlistApi.getPriceHistory).toHaveBeenCalledWith(42, 0);
+    });
   });
 
   it('has overflow-x hidden container ensuring no horizontal scrolling on mobile', async () => {

@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { getNotifications } from '../api/notificationApi';
 import { UserNotification } from '../api/watchlistApi';
+import { useAuth } from '../context/AuthContext';
 import styles from './NotificationCenter.module.css';
 
 const POLL_INTERVAL_MS = 5_000;
-const TOAST_DURATION_MS = 5_000;
+const TOAST_DURATION_MS = 6_000;
 const MAX_VISIBLE = 3;
 const MOCK_NOTIFICATIONS: Record<string, UserNotification> = {
   target_price_set: {
@@ -31,6 +33,8 @@ interface NotificationCenterProps {
 }
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly = false }) => {
+  const { isLoggedIn } = useAuth();
+  const navigate = useNavigate();
   const [visible, setVisible] = useState<UserNotification[]>([]);
   const lastSeenIdRef = useRef(0);
   const timersRef = useRef<Map<number, number>>(new Map());
@@ -49,6 +53,11 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
     const timers = timersRef.current;
 
     const poll = async () => {
+      // Chỉ poll nếu người dùng đã đăng nhập hoặc đang test mock
+      if (!isLoggedIn && !mockOnly && !new URLSearchParams(window.location.search).has('mockNotification')) {
+        return;
+      }
+
       try {
         const mockKind = (mockOnly || import.meta.env.DEV)
           ? new URLSearchParams(window.location.search).get('mockNotification')
@@ -72,7 +81,10 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
 
         setVisible((current) => [...current, ...notifications].slice(-MAX_VISIBLE));
       } catch (error) {
-        console.error('Could not load notifications:', error);
+        // Chỉ log nếu không phải 401 khi chưa login
+        if (isLoggedIn) {
+          console.error('Could not load notifications:', error);
+        }
       }
     };
 
@@ -84,7 +96,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
       timers.forEach((timer) => window.clearTimeout(timer));
       timers.clear();
     };
-  }, [dismiss]);
+  }, [dismiss, isLoggedIn, mockOnly]);
 
   if (visible.length === 0) return null;
 
@@ -94,8 +106,21 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
         <div className={styles.toast} key={notification.id} role="status">
           <strong>{notification.title}</strong>
           <span>{notification.message}</span>
+          {notification.product_id && (
+            <button
+              type="button"
+              className={styles.viewLink}
+              onClick={() => {
+                dismiss(notification.id);
+                navigate(`/detail/${notification.product_id}`);
+              }}
+            >
+              Xem chi tiết sản phẩm →
+            </button>
+          )}
           <button
             type="button"
+            className={styles.closeBtn}
             onClick={() => dismiss(notification.id)}
             aria-label="Đóng thông báo"
           >
@@ -107,3 +132,4 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
     document.body,
   );
 };
+

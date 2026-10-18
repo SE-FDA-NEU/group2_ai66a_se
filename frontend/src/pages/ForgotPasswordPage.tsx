@@ -109,6 +109,12 @@ const ForgotPasswordPage: React.FC = () => {
     } catch (err: any) {
       const detail = getErrorMessage(err);
       if (
+        detail.toLowerCase().includes('google') ||
+        err?.error?.code === 'GOOGLE_ACCOUNT_NO_PASSWORD' ||
+        detail.toLowerCase().includes('sign in with google')
+      ) {
+        setApiError('Tài khoản này được đăng ký bằng Google và không có mật khẩu ứng dụng. Vui lòng đăng nhập trực tiếp bằng Google.');
+      } else if (
         detail.toLowerCase().includes('not found') ||
         detail.toLowerCase().includes('tồn tại') ||
         detail.toLowerCase().includes('không tìm thấy')

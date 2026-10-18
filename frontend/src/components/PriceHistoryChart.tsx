@@ -116,7 +116,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
       const numPrice = Number(pt.price);
 
       const displayTime =
-        days <= 1
+        days === 1
           ? date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
           : `${date.getDate()}/${date.getMonth() + 1}`;
 
@@ -350,6 +350,13 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
             onClick={() => setDays(30)}
           >
             30 ngày
+          </button>
+          <button
+            type="button"
+            className={`${styles.rangeButton} ${days === 0 ? styles.rangeButtonActive : ''}`}
+            onClick={() => setDays(0)}
+          >
+            Tất cả
           </button>
         </div>
       </div>

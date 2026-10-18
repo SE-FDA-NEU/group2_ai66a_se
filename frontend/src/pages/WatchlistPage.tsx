@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ArrowUpDown, Plus, RotateCw, Search } from 'lucide-react';
+import { AlertTriangle, ArrowUpDown, Plus, RotateCw, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProductRow } from '../components/ProductRow';
 import { AddProductModal } from '../components/AddProductModal';
@@ -25,6 +25,7 @@ export const WatchlistPage: React.FC = () => {
 
   const [products, setProducts] = useState<WatchlistProduct[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>(() => {
     try {
       const saved = localStorage.getItem(WATCHLIST_SORT_KEY) as SortOption | null;
@@ -127,12 +128,59 @@ export const WatchlistPage: React.FC = () => {
         </div>
         <button
           className={combinedStyles.addButton}
-          disabled={products.length >= 10}
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => {
+            if (products.length >= 10) {
+              setLimitMessage('You have reached the limit of 10 tracked products');
+              return;
+            }
+            setLimitMessage(null);
+            setIsAddModalOpen(true);
+          }}
+          data-testid="btn-add-product"
         >
           <Plus size={16} aria-hidden="true" /> Thêm sản phẩm
         </button>
       </header>
+
+      {limitMessage && (
+        <div
+          style={{
+            backgroundColor: 'var(--status-warning-bg)',
+            border: '1px solid var(--status-warning)',
+            color: 'var(--status-warning)',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '14px',
+            fontWeight: 500,
+          }}
+          role="alert"
+          data-testid="limit-message"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertTriangle size={16} aria-hidden="true" />
+            <span>{limitMessage} (Bạn đã đạt giới hạn tối đa 10 sản phẩm theo dõi).</span>
+          </div>
+          <button
+            onClick={() => setLimitMessage(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'inherit',
+              padding: '2px 6px',
+              fontSize: '18px',
+              lineHeight: 1,
+            }}
+            aria-label="Đóng cảnh báo giới hạn"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <div className={combinedStyles.toolbar}>
         <div className={combinedStyles.toolbarLeft}>
