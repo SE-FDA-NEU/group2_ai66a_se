@@ -9,7 +9,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  const { logout, isLoggedIn } = useAuth();
+  const { logout, isLoggedIn, user } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -60,15 +60,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <div className={styles.userProfile}>
           <div className={styles.avatar}></div>
           <div className={styles.userInfo}>
-            <span className={styles.userName}>{isLoggedIn ? 'Đã đăng nhập' : 'Khách'}</span>
-            <span className={styles.userEmail}>{localStorage.getItem('user_email') || 'Chưa đăng nhập'}</span>
+            <span className={styles.userName}>{isLoggedIn ? (user?.nickname || 'Đã đăng nhập') : 'Khách'}</span>
+            <span className={styles.userEmail}>{user?.email || (isLoggedIn ? 'Đang tải...' : 'Chưa đăng nhập')}</span>
           </div>
           {isLoggedIn && (
             <button
               title="Đăng xuất"
               onClick={() => {
                 logout();
-                localStorage.removeItem('user_email');
                 navigate('/login');
               }}
               className={styles.logoutBtn}

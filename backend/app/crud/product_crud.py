@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import Date, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.product_model import PriceHistory, Product
@@ -15,6 +15,8 @@ class CRUDProduct:
         statement = select(Product).where(Product.id == product_id)
         if for_update:
             statement = statement.with_for_update()
+        if hasattr(db, "scalar"):
+            return await db.scalar(statement)
         result = await db.execute(statement)
         return result.scalar_one_or_none()
 
@@ -27,6 +29,8 @@ class CRUDProduct:
         )
         if for_update:
             statement = statement.with_for_update()
+        if hasattr(db, "scalar"):
+            return await db.scalar(statement)
         result = await db.execute(statement)
         return result.scalar_one_or_none()
 
@@ -104,6 +108,68 @@ class CRUDProduct:
         await db.execute(delete(Product).where(Product.id.in_(expired_ids)))
         await db.commit()
         return expired_ids
+
+    async def get_active_product_ids(self, db: AsyncSession) -> list[int]:
+        """Lấy danh sách ID của các sản phẩm đang được theo dõi ít nhất bởi 1 người dùng."""
+        statement = (
+            select(Product.id)
+            .where(Product.tracked_by_count > 0)
+            .order_by(Product.id)
+        )
+        result = await db.scalars(statement)
+        return list(result)
+
+    async def record_price_snapshot(
+        self, db: AsyncSession, product: Product, item: ProductMarketplace
+    ) -> Product:
+        """Cập nhật thông tin chi tiết và ghi lại một snapshot giá mới vào lịch sử."""
+        product.url = item.url
+        product.name = item.name
+        product.image_url = item.image_url
+        product.brand = item.brand
+        product.shop_name = item.shop_name
+        product.product_rating = item.product_rating
+        product.review_count = item.review_count
+        product.current_price = item.current_price
+        product.original_price = item.original_price
+        product.currency = item.currency
+        product.in_stock = item.in_stock
+        product.top_reviews = item.top_reviews
+        product.price_low = min(Decimal(product.price_low), item.current_price)
+        product.price_high = max(Decimal(product.price_high), item.current_price)
+        product.last_refreshed_at = func.now()
+        db.add(product)
+        db.add(PriceHistory(product_id=product.id, price=item.current_price))
+        await db.flush()
+        return product
+
+    async def increment_tracked_count(self, db: AsyncSession, product: Product) -> Product:
+        """Tăng số lượng người theo dõi sản phẩm."""
+        product.tracked_by_count += 1
+        db.add(product)
+        return product
+
+    async def decrement_tracked_count_or_untrack(self, db: AsyncSession, product: Product) -> Product:
+        """Giảm số lượng người theo dõi; nếu không còn ai theo dõi thì gắn mốc untracked_since."""
+        product.tracked_by_count = max(0, product.tracked_by_count - 1)
+        if product.tracked_by_count == 0:
+            product.untracked_since = func.now()
+        db.add(product)
+        return product
+
+    async def clear_untracked(self, db: AsyncSession, product: Product) -> Product:
+        """Xóa mốc thời gian untracked_since khi có người theo dõi lại."""
+        product.untracked_since = None
+        db.add(product)
+        return product
+
+    async def get_history_distinct_days(self, db: AsyncSession, product_id: int) -> int:
+        """Đếm số ngày riêng biệt có ghi nhận lịch sử giá của sản phẩm."""
+        statement = select(
+            func.count(func.distinct(func.cast(PriceHistory.recorded_at, Date)))
+        ).where(PriceHistory.product_id == product_id)
+        distinct_days = await db.scalar(statement)
+        return int(distinct_days or 0)
 
     async def delete_by_id(self, db: AsyncSession, product_id: int) -> bool:
         """Xóa vĩnh viễn một sản phẩm theo ID."""

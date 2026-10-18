@@ -6,7 +6,7 @@ import styles from './ProfilePage.module.css';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, setUser } = useAuth();
 
   // User state
   const [email, setEmail] = useState('');
@@ -64,11 +64,8 @@ const ProfilePage: React.FC = () => {
       const res = await updateNickname(editNickname);
       if (res.data) {
         setNickname(res.data.nickname);
+        setUser(res.data);
         setProfileMsg({ type: 'success', text: 'Cập nhật tên hiển thị thành công.' });
-        
-        // Cập nhật lại Sidebar nếu cần
-        localStorage.setItem('user_email', res.data.email); 
-        window.dispatchEvent(new Event('storage')); // trigger update for other components
       }
     } catch (err: any) {
       setProfileMsg({ type: 'error', text: err?.message || err?.detail || 'Lỗi cập nhật hồ sơ.' });
@@ -109,7 +106,6 @@ const ProfilePage: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    localStorage.removeItem('user_email');
     navigate('/login');
   };
 

@@ -10,7 +10,12 @@ class CRUDBase(Generic[ModelType]):
     def __init__(self, model: Type[ModelType]):
         self.model = model
 
-    async def get(self, db: AsyncSession, id: Any) -> Optional[ModelType]:
+    async def get(self, db: AsyncSession, id: Any, *, for_update: bool = False) -> Optional[ModelType]:
         """Lấy một thực thể theo ID khóa chính"""
-        result = await db.execute(select(self.model).where(self.model.id == id))
+        statement = select(self.model).where(self.model.id == id)
+        if for_update:
+            statement = statement.with_for_update()
+        if hasattr(db, "scalar"):
+            return await db.scalar(statement)
+        result = await db.execute(statement)
         return result.scalars().first()

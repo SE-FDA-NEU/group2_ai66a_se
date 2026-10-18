@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProductRow } from '../components/ProductRow';
+import { AddProductModal } from '../components/AddProductModal';
 import {
   getWatchlist,
-  addProductToWatchlist,
   removeProductFromWatchlist,
   WatchlistProduct,
 } from '../api/watchlistApi';
 import styles from './WatchlistPage.module.css';
-import { convertToVnd, convertFromVnd, USD_TO_VND_RATE } from '../utils/currency';
+import { convertToVnd } from '../utils/currency';
 
 export type SortOption = 'default' | 'price_asc' | 'price_desc';
 
@@ -44,11 +44,6 @@ export const WatchlistPage: React.FC = () => {
 
   // State cho Modal thêm sản phẩm
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [url, setUrl] = useState('');
-  const [targetPrice, setTargetPrice] = useState('');
-  const [buyWhenGood, setBuyWhenGood] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [addError, setAddError] = useState<string | null>(null);
 
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
@@ -83,36 +78,6 @@ export const WatchlistPage: React.FC = () => {
     }
   };
 
-  const handleAddSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url.trim()) {
-      setAddError('Vui lòng nhập đường dẫn (URL) sản phẩm.');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      setAddError(null);
-      const newProd = await addProductToWatchlist({
-        url: url.trim(),
-        target_price: targetPrice
-          ? convertFromVnd(Number(targetPrice), 'USD')
-          : null,
-        buy_when_good: buyWhenGood,
-      });
-
-      setProducts((prev) => [newProd, ...prev]);
-      setIsAddModalOpen(false);
-      setUrl('');
-      setTargetPrice('');
-      setBuyWhenGood(false);
-    } catch (err: any) {
-      console.error('Add product error:', err);
-      setAddError(err.message || err.detail || 'Không thể thêm sản phẩm. Vui lòng kiểm tra đường dẫn.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const displayedProducts = useMemo(() => {
     let result = products.filter((p) =>
@@ -257,72 +222,11 @@ export const WatchlistPage: React.FC = () => {
       </div>
 
       {/* Modal thêm sản phẩm mới */}
-      {isAddModalOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsAddModalOpen(false)}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 className={styles.modalTitle}>Thêm sản phẩm cần theo dõi</h2>
-
-            {addError && <div className={styles.errorMessage} role="alert">{addError}</div>}
-
-            <form onSubmit={handleAddSubmit}>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Đường dẫn sản phẩm (Amazon URL) *</label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://www.amazon.com/dp/..."
-                  className={styles.formInput}
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  Giá mục tiêu cảnh báo (VND, tùy chọn; 1 USD ≈ {USD_TO_VND_RATE.toLocaleString('vi-VN')} VND)
-                </label>
-                <input
-                  type="number"
-                  placeholder="Ví dụ: 1500000"
-                  className={styles.formInput}
-                  value={targetPrice}
-                  disabled={buyWhenGood}
-                  onChange={(e) => setTargetPrice(e.target.value)}
-                />
-              </div>
-
-              <div className={styles.formGroup} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  type="checkbox"
-                  id="buyWhenGood"
-                  checked={buyWhenGood}
-                  onChange={(e) => {
-                    setBuyWhenGood(e.target.checked);
-                    if (e.target.checked) setTargetPrice('');
-                  }}
-                />
-                <label htmlFor="buyWhenGood" className={styles.formLabel} style={{ margin: 0, cursor: 'pointer' }}>
-                  Mua khi giá tốt (thay cho giá mục tiêu)
-                </label>
-              </div>
-
-              <div className={styles.modalActions}>
-                <button
-                  type="button"
-                  className={styles.btnCancel}
-                  onClick={() => setIsAddModalOpen(false)}
-                  disabled={isSubmitting}
-                >
-                  Hủy
-                </button>
-                <button type="submit" className={styles.btnSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? 'Đang thêm...' : 'Thêm vào danh sách'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <AddProductModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={(newProd) => setProducts((prev) => [newProd, ...prev])}
+      />
     </div>
   );
 };
