@@ -1,18 +1,24 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { ArrowUpDown, Plus, RotateCw, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProductRow } from '../components/ProductRow';
+import { AddProductModal } from '../components/AddProductModal';
 import {
   getWatchlist,
-  addProductToWatchlist,
   removeProductFromWatchlist,
   WatchlistProduct,
 } from '../api/watchlistApi';
 import styles from './WatchlistPage.module.css';
-import { convertToVnd, convertFromVnd, USD_TO_VND_RATE } from '../utils/currency';
+import { convertToVnd } from '../utils/currency';
 
 export type SortOption = 'default' | 'price_asc' | 'price_desc';
+import tokenStyles from './WatchlistPage.tokens.module.css';
 
 const WATCHLIST_SORT_KEY = 'watchlist_sort';
+const combinedStyles: Record<string, string> = { ...styles };
+Object.entries(tokenStyles).forEach(([key, tokenClass]) => {
+  combinedStyles[key] = `${combinedStyles[key] ?? ''} ${tokenClass}`.trim();
+});
 
 export const WatchlistPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +37,7 @@ export const WatchlistPage: React.FC = () => {
     return 'default';
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [removingProductId, setRemovingProductId] = useState<string | null>(null);
 
   const handleSortChange = (newSort: SortOption) => {
     setSortBy(newSort);
@@ -44,11 +51,6 @@ export const WatchlistPage: React.FC = () => {
 
   // State cho Modal thêm sản phẩm
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [url, setUrl] = useState('');
-  const [targetPrice, setTargetPrice] = useState('');
-  const [buyWhenGood, setBuyWhenGood] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [addError, setAddError] = useState<string | null>(null);
 
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
@@ -74,43 +76,21 @@ export const WatchlistPage: React.FC = () => {
   }, [fetchProducts]);
 
   const handleRemove = async (id: string) => {
+    if (removingProductId !== null) return;
+
+    const product = products.find((item) => String(item.id) === id);
+    const productName = product?.name ?? 'sản phẩm này';
+    if (!window.confirm(`Bạn có chắc muốn ngừng theo dõi "${productName}"?`)) return;
+
+    setRemovingProductId(id);
     try {
       await removeProductFromWatchlist(Number(id));
       setProducts((prev) => prev.filter((p) => String(p.id) !== id));
     } catch (err: any) {
       console.error('Remove product error:', err);
       alert(err.message || 'Không thể xóa sản phẩm. Vui lòng thử lại.');
-    }
-  };
-
-  const handleAddSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url.trim()) {
-      setAddError('Vui lòng nhập đường dẫn (URL) sản phẩm.');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      setAddError(null);
-      const newProd = await addProductToWatchlist({
-        url: url.trim(),
-        target_price: targetPrice
-          ? convertFromVnd(Number(targetPrice), 'USD')
-          : null,
-        buy_when_good: buyWhenGood,
-      });
-
-      setProducts((prev) => [newProd, ...prev]);
-      setIsAddModalOpen(false);
-      setUrl('');
-      setTargetPrice('');
-      setBuyWhenGood(false);
-    } catch (err: any) {
-      console.error('Add product error:', err);
-      setAddError(err.message || err.detail || 'Không thể thêm sản phẩm. Vui lòng kiểm tra đường dẫn.');
     } finally {
-      setIsSubmitting(false);
+      setRemovingProductId(null);
     }
   };
 
@@ -137,34 +117,34 @@ export const WatchlistPage: React.FC = () => {
   }, [products, searchQuery, sortBy]);
 
   return (
-    <div className={styles.pageContainer}>
-      <header className={styles.pageHeader}>
+    <div className={combinedStyles.pageContainer}>
+      <header className={combinedStyles.pageHeader}>
         <div>
-          <h1 className={styles.headerTitle}>Danh sách theo dõi</h1>
-          <p className={styles.headerDescription}>
+          <h1 className={combinedStyles.headerTitle}>Danh sách theo dõi</h1>
+          <p className={combinedStyles.headerDescription}>
             Theo dõi biến động giá và nhận thông báo khi có mức giá ưu đãi.
           </p>
         </div>
         <button
-          className={styles.addButton}
+          className={combinedStyles.addButton}
           disabled={products.length >= 10}
           onClick={() => setIsAddModalOpen(true)}
         >
-          <span>+</span> Thêm sản phẩm
+          <Plus size={16} aria-hidden="true" /> Thêm sản phẩm
         </button>
       </header>
 
-      <div className={styles.toolbar}>
-        <div className={styles.toolbarLeft}>
-          <button className={styles.toolbarBtn} onClick={fetchProducts}>
-            <span className="icon">↻</span> Làm mới
+      <div className={combinedStyles.toolbar}>
+        <div className={combinedStyles.toolbarLeft}>
+          <button className={combinedStyles.toolbarBtn} onClick={fetchProducts}>
+            <RotateCw size={16} aria-hidden="true" /> Làm mới
           </button>
         </div>
-        <div className={styles.toolbarRight}>
-          <div className={styles.sortContainer}>
-            <span className={styles.sortIcon}>⇅</span>
+        <div className={combinedStyles.toolbarRight}>
+          <div className={combinedStyles.sortContainer}>
+            <ArrowUpDown className={combinedStyles.sortIcon} size={15} aria-hidden="true" />
             <select
-              className={styles.sortSelect}
+              className={combinedStyles.sortSelect}
               value={sortBy}
               onChange={(e) => handleSortChange(e.target.value as SortOption)}
               aria-label="Sắp xếp sản phẩm"
@@ -175,11 +155,11 @@ export const WatchlistPage: React.FC = () => {
               <option value="price_desc">Giá: Cao đến thấp</option>
             </select>
           </div>
-          <div className={styles.searchContainer}>
-            <span className={styles.searchIcon}>🔍</span>
+          <div className={combinedStyles.searchContainer}>
+            <Search className={combinedStyles.searchIcon} size={16} aria-hidden="true" />
             <input
               type="text"
-              className={styles.searchInput}
+              className={combinedStyles.searchInput}
               placeholder="Tìm kiếm sản phẩm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -188,27 +168,27 @@ export const WatchlistPage: React.FC = () => {
         </div>
       </div>
 
-      <div className={styles.tableContainer}>
-        <div className={styles.tableHeader}>
+      <div className={combinedStyles.tableContainer}>
+        <div className={combinedStyles.tableHeader}>
           <div>Sản phẩm</div>
           <div>Giá hiện tại</div>
           <div>Khoảng giá</div>
           <div>Đánh giá</div>
           <div>Nhãn giá</div>
-          <div className={styles.headerActionCol}>Thao tác</div>
+          <div style={{ textAlign: 'center' }}>Thao tác</div>
         </div>
 
-        <div className={styles.tableBody}>
+        <div className={combinedStyles.tableBody}>
           {isLoading ? (
-            <div className={styles.emptyState}>
-              <div className={styles.spinner} aria-hidden="true" />
-              <div className={styles.emptyStateTitle}>Đang tải dữ liệu từ máy chủ...</div>
+            <div className={combinedStyles.emptyState}>
+              <div className={combinedStyles.emptyStateTitle}>Đang tải dữ liệu từ máy chủ...</div>
             </div>
           ) : error ? (
-            <div className={styles.emptyState}>
-              <div className={styles.emptyStateTitle}>{error}</div>
+            <div className={combinedStyles.emptyState}>
+              <div className={combinedStyles.emptyStateTitle}>{error}</div>
               <button
-                className={styles.retryButton}
+                className={combinedStyles.toolbarBtn}
+                style={{ margin: '12px auto' }}
                 onClick={fetchProducts}
               >
                 Thử lại
@@ -226,16 +206,18 @@ export const WatchlistPage: React.FC = () => {
                 priceLow={product.price_low ? Number(product.price_low) : undefined}
                 priceHigh={product.price_high ? Number(product.price_high) : undefined}
                 starRating={product.product_rating ? Number(product.product_rating) : undefined}
+                targetPrice={product.target_price != null ? Number(product.target_price) : null}
                 priceLabel={product.price_label || undefined}
                 isFakeDiscount={product.fake_discount}
                 notEnoughData={product.price_label === 'Not enough data to assess'}
                 onRemove={handleRemove}
+                isRemoving={removingProductId === String(product.id)}
                 originalProduct={product}
               />
             ))
           ) : (
-            <div className={styles.emptyState}>
-              <div className={styles.emptyStateTitle}>
+            <div className={combinedStyles.emptyState}>
+              <div className={combinedStyles.emptyStateTitle}>
                 {searchQuery
                   ? 'Không tìm thấy sản phẩm'
                   : 'Bạn chưa có sản phẩm nào trong danh sách theo dõi.'}
@@ -250,79 +232,18 @@ export const WatchlistPage: React.FC = () => {
         </div>
 
         {!isLoading && !error && displayedProducts.length > 0 && (
-          <div className={styles.itemCount}>
+          <div className={combinedStyles.itemCount}>
             Tổng cộng {displayedProducts.length} sản phẩm
           </div>
         )}
       </div>
 
       {/* Modal thêm sản phẩm mới */}
-      {isAddModalOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsAddModalOpen(false)}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 className={styles.modalTitle}>Thêm sản phẩm cần theo dõi</h2>
-
-            {addError && <div className={styles.errorMessage} role="alert">{addError}</div>}
-
-            <form onSubmit={handleAddSubmit}>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Đường dẫn sản phẩm (Amazon URL) *</label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://www.amazon.com/dp/..."
-                  className={styles.formInput}
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  Giá mục tiêu cảnh báo (VND, tùy chọn; 1 USD ≈ {USD_TO_VND_RATE.toLocaleString('vi-VN')} VND)
-                </label>
-                <input
-                  type="number"
-                  placeholder="Ví dụ: 1500000"
-                  className={styles.formInput}
-                  value={targetPrice}
-                  disabled={buyWhenGood}
-                  onChange={(e) => setTargetPrice(e.target.value)}
-                />
-              </div>
-
-              <div className={styles.checkboxGroup}>
-                <input
-                  type="checkbox"
-                  id="buyWhenGood"
-                  checked={buyWhenGood}
-                  onChange={(e) => {
-                    setBuyWhenGood(e.target.checked);
-                    if (e.target.checked) setTargetPrice('');
-                  }}
-                />
-                <label htmlFor="buyWhenGood" className={styles.checkboxLabel}>
-                  Mua khi giá tốt (thay cho giá mục tiêu)
-                </label>
-              </div>
-
-              <div className={styles.modalActions}>
-                <button
-                  type="button"
-                  className={styles.btnCancel}
-                  onClick={() => setIsAddModalOpen(false)}
-                  disabled={isSubmitting}
-                >
-                  Hủy
-                </button>
-                <button type="submit" className={styles.btnSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? 'Đang thêm...' : 'Thêm vào danh sách'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <AddProductModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={(newProd) => setProducts((prev) => [newProd, ...prev])}
+      />
     </div>
   );
 };

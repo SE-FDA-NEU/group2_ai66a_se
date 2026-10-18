@@ -1,7 +1,9 @@
 import React from 'react';
+import { AlertTriangle, LoaderCircle, Star, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProductRow.module.css';
 import { formatVnd } from '../utils/currency';
+import { WatchlistProduct } from '../api/watchlistApi';
 
 export interface ProductRowProps {
   id: string;
@@ -9,14 +11,16 @@ export interface ProductRowProps {
   name: string;
   currentPrice: number;
   currency: string;
+  targetPrice?: number | null;
   priceLow?: number;
   priceHigh?: number;
   starRating?: number;
   priceLabel?: string;
   isFakeDiscount?: boolean;
   notEnoughData?: boolean;
-  onRemove: (id: string) => void;
-  originalProduct?: any;
+  onRemove: (id: string) => void | Promise<void>;
+  isRemoving?: boolean;
+  originalProduct?: WatchlistProduct;
 }
 
 export const ProductRow: React.FC<ProductRowProps> = ({
@@ -25,6 +29,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   name,
   currentPrice,
   currency,
+  targetPrice,
   priceLow,
   priceHigh,
   starRating,
@@ -32,6 +37,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   isFakeDiscount,
   notEnoughData,
   onRemove,
+  isRemoving = false,
   originalProduct
 }) => {
   const navigate = useNavigate();
@@ -90,7 +96,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
       {/* Cột 2: Giá hiện tại */}
       <div className={styles.colCenter}>
-        <span className={styles.currentPrice}>{formatVnd(currentPrice, currency)}</span>
+        <div className={styles.priceDetails}>
+          <span className={styles.currentPrice}>{formatVnd(currentPrice, currency)}</span>
+          {targetPrice != null && (
+            <span className={styles.targetPrice}>Cảnh báo tại {formatVnd(targetPrice, currency)}</span>
+          )}
+        </div>
       </div>
 
       {/* Cột 3: Khoảng giá */}
@@ -108,7 +119,8 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       <div className={styles.colCenter}>
         {starRating ? (
           <div className={styles.rating}>
-            ⭐ <span className={styles.ratingNumber}>{starRating}</span>
+            <Star className={styles.starIcon} size={14} fill="currentColor" aria-hidden="true" />
+            <span className={styles.ratingNumber}>{starRating}</span>
           </div>
         ) : (
           <span className={styles.emptyText}>-</span>
@@ -119,7 +131,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       <div className={styles.badgesCol}>
         {notEnoughData && (
           <span className={`${styles.badge} ${styles.badgeWarning}`}>
-            {priceLabel || 'Not enough data to assess'}
+            <AlertTriangle size={13} aria-hidden="true" /> {priceLabel || 'Not enough data to assess'}
           </span>
         )}
         {!notEnoughData && priceLabel && (
@@ -128,7 +140,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
           </span>
         )}
         {isFakeDiscount && (
-          <span className={`${styles.badge} ${styles.badgeWarning}`}>Khuyến mãi ảo</span>
+          <span className={`${styles.badge} ${styles.badgeWarning}`}><AlertTriangle size={13} aria-hidden="true" /> Khuyến mãi ảo</span>
         )}
       </div>
 
@@ -139,8 +151,10 @@ export const ProductRow: React.FC<ProductRowProps> = ({
           onClick={handleRemoveClick}
           aria-label="Xóa khỏi danh sách"
           title="Xóa khỏi danh sách"
+          disabled={isRemoving}
+          aria-busy={isRemoving}
         >
-          🗑️
+          {isRemoving ? <LoaderCircle className={styles.removingIcon} size={17} aria-hidden="true" /> : <Trash2 size={17} aria-hidden="true" />}
         </button>
       </div>
     </div>

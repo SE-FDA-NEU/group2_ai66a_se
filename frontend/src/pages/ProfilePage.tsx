@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AlertCircle, CircleCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getUserProfile, updateNickname, changePassword } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
@@ -143,7 +144,7 @@ const ProfilePage: React.FC = () => {
         
         {profileMsg && (
           <div className={`${styles.alertBanner} ${profileMsg.type === 'success' ? styles.alertSuccess : styles.alertError}`}>
-            {profileMsg.type === 'success' ? '✓ ' : '⚠️ '}{profileMsg.text}
+            {profileMsg.type === 'success' ? <CircleCheck size={16} aria-hidden="true" /> : <AlertCircle size={16} aria-hidden="true" />}{profileMsg.text}
           </div>
         )}
 
@@ -199,7 +200,7 @@ const ProfilePage: React.FC = () => {
 
         {passwordMsg && (
           <div className={`${styles.alertBanner} ${passwordMsg.type === 'success' ? styles.alertSuccess : styles.alertError}`}>
-            {passwordMsg.type === 'success' ? '✓ ' : '⚠️ '}{passwordMsg.text}
+            {passwordMsg.type === 'success' ? <CircleCheck size={16} aria-hidden="true" /> : <AlertCircle size={16} aria-hidden="true" />}{passwordMsg.text}
           </div>
         )}
 

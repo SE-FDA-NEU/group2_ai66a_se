@@ -1,4 +1,5 @@
 import React from 'react';
+import { Bookmark, LayoutDashboard, LogOut, Settings, X } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import styles from './Sidebar.module.css';
@@ -21,8 +22,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </div>
         {/* Nút đóng cho mobile */}
         {isOpen && (
-          <button className={styles.closeBtn} onClick={onClose}>
-            ✕
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Đóng menu">
+            <X size={18} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -33,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           onClick={onClose}
           className={({ isActive }) => `${styles.navItem} ${isActive && window.location.pathname === '/' ? styles.active : ''}`}
         >
-          <span className={styles.icon}>[]</span>
+          <LayoutDashboard className={styles.icon} aria-hidden="true" />
           <span>Tổng quan</span>
         </NavLink>
 
@@ -42,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           onClick={onClose}
           className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
         >
-          <span className={styles.icon}>[]</span>
+          <Bookmark className={styles.icon} aria-hidden="true" />
           <span>Danh sách theo dõi</span>
         </NavLink>
 
@@ -51,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           onClick={onClose}
           className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
         >
-          <span className={styles.icon}>[]</span>
+          <Settings className={styles.icon} aria-hidden="true" />
           <span>Cài đặt</span>
         </NavLink>
       </nav>
@@ -73,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               }}
               className={styles.logoutBtn}
             >
-              ⎋
+              <LogOut size={16} aria-hidden="true" />
             </button>
           )}
         </div>

@@ -142,6 +142,9 @@
   font-size: 14px;
   color: var(--text-primary);
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .actions {

@@ -199,6 +199,9 @@
 }
 
 .alertBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   margin-bottom: 18px;

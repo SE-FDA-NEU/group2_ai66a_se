@@ -1,4 +1,5 @@
 import React from 'react';
+import { Bell, ChartNoAxesCombined, Mail, MapPin, Phone, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './LandingPage.module.css';
 
@@ -92,21 +93,21 @@ const LandingPage: React.FC = () => {
         
         <div className={styles.featuresGrid}>
           <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>📈</div>
+            <div className={styles.featureIcon}><ChartNoAxesCombined size={28} aria-hidden="true" /></div>
             <h3>Biểu đồ lịch sử giá</h3>
             <p>
               Theo dõi biến động giá chi tiết qua từng giai đoạn, nhận biết ngay các đợt giảm giá ảo để mua đúng giá thật.
             </p>
           </div>
           <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>🔔</div>
+            <div className={styles.featureIcon}><Bell size={28} aria-hidden="true" /></div>
             <h3>Cảnh báo giá giảm tức thì</h3>
             <p>
               Đặt mức giá mục tiêu mong muốn và nhận thông báo ngay khi sản phẩm chạm ngưỡng bạn cần mua.
             </p>
           </div>
           <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>🛒</div>
+            <div className={styles.featureIcon}><ShoppingCart size={28} aria-hidden="true" /></div>
             <h3>Hỗ trợ đa sàn thương mại</h3>
             <p>
               Quản lý danh sách theo dõi sản phẩm tập trung từ các sàn thương mại điện tử lớn tại một nơi duy nhất.
@@ -164,9 +165,9 @@ const LandingPage: React.FC = () => {
           <div className={styles.footerCol}>
             <h4>Liên hệ</h4>
             <ul className={styles.contactInfo}>
-              <li>📧 support@trakora.com</li>
-              <li>📞 1800 1234</li>
-              <li>📍 Hà Nội, Việt Nam</li>
+              <li><Mail size={16} aria-hidden="true" /> support@trakora.com</li>
+              <li><Phone size={16} aria-hidden="true" /> 1800 1234</li>
+              <li><MapPin size={16} aria-hidden="true" /> Hà Nội, Việt Nam</li>
             </ul>
           </div>
         </div>

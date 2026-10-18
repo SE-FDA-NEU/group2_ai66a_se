@@ -72,9 +72,11 @@
 }
 
 .iconWrapper {
-  font-size: 2.5rem;
   margin-bottom: 1rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .title {
@@ -161,6 +163,10 @@
   color: var(--status-error);
   font-family: inherit;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   margin: 0;
   animation: fadeIn 0.2s ease;
 }

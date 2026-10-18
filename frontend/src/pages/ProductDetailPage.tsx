@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Star } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { removeProductFromWatchlist, getWatchlist, WatchlistProduct } from '../api/watchlistApi';
 import styles from './ProductDetailPage.module.css';
@@ -97,7 +98,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Đánh giá</span>
               <span className={styles.metaValue}>
-                {product.product_rating ? `${product.product_rating} ⭐` : 'Chưa có đánh giá'}
+                {product.product_rating ? <><Star size={15} fill="currentColor" aria-hidden="true" /> {product.product_rating}</> : 'Chưa có đánh giá'}
               </span>
             </div>
             <div className={styles.metaItem}>

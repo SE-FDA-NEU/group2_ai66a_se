@@ -227,11 +227,6 @@
   animation: fadeIn 0.2s ease;
 }
 
-.errorMsg::before {
-  content: '⚠';
-  font-size: 0.75rem;
-}
-
 /* ─── Password Strength Bar ───────────────────────────────────────────────── */
 
 .strengthWrapper {
