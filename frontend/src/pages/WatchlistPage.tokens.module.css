@@ -188,13 +188,15 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tableHeader {
   display: grid;
   grid-template-columns: var(--watchlist-grid-columns);
   padding: 14px 24px;
+  align-items: center;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-surface);
   color: var(--text-secondary);
@@ -275,7 +277,6 @@
     grid-template-columns: var(--watchlist-grid-columns);
   }
 }
-
 @media (max-width: 768px) {
   .pageContainer {
     padding: 24px 16px;

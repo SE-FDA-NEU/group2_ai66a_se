@@ -57,11 +57,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       current_price: currentPrice,
       price_low: priceLow,
       price_high: priceHigh,
+      target_price: targetPrice,
       product_rating: starRating,
       price_label: priceLabel || '',
       is_fake_discount: isFakeDiscount || false,
-      currency: 'VND',
-      marketplace: 'Mock Market',
+      currency: currency || 'USD',
+      marketplace: 'Amazon',
       url: '#'
     };
     navigate(`/detail/${id}`, { state: { product: productData } });
@@ -123,7 +124,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       <div className={styles.colCenter}>
         {starRating ? (
           <div className={styles.rating}>
-            <Star className={styles.starIcon} size={14} fill="currentColor" aria-hidden="true" />
+            <Star className={styles.starIcon} size={14} fill="#f59e0b" color="#f59e0b" aria-hidden="true" />
             <span className={styles.ratingNumber}>{starRating}</span>
           </div>
         ) : (
