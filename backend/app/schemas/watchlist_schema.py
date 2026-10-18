@@ -17,6 +17,10 @@ class ProductCreate(BaseModel):
         return self
 
 
+class TargetPriceUpdate(BaseModel):
+    target_price: Decimal = Field(gt=0, description="Mức giá mục tiêu mong muốn (phải lớn hơn 0)")
+
+
 class Product(BaseModel):
     id: int
     name: str

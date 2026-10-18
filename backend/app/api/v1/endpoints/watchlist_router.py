@@ -13,6 +13,7 @@ from app.schemas.watchlist_schema import (
     Product,
     ProductCreate,
     ProductList,
+    TargetPriceUpdate,
 )
 from app.services.notification_service import notification_service
 from app.services.price_stream_service import price_stream_service
@@ -137,3 +138,23 @@ async def stream_product_price(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@router.put(
+    "/{product_id}/target-price",
+    response_model=ApiResponse[Product],
+    status_code=status.HTTP_200_OK,
+    summary="Đặt hoặc cập nhật giá mục tiêu cho sản phẩm đang theo dõi",
+    description="Thiết lập mức giá mục tiêu cho sản phẩm. Yêu cầu giá mục tiêu phải nhỏ hơn giá hiện tại (BR1).",
+)
+async def update_target_price(
+    product_id: int,
+    request: TargetPriceUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    product = await watchlist_service.update_target_price(
+        db, current_user, product_id, request.target_price
+    )
+    return ApiResponse(message="Target price updated successfully.", data=product)
+

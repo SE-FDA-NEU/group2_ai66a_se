@@ -72,6 +72,22 @@ class CRUDTrackedProduct:
         )
         db.add(tracking)
         await db.flush()
+        return tracking
+
+    async def update_target_price(
+        self,
+        db: AsyncSession,
+        tracker: TrackedProduct,
+        target_price: Decimal,
+    ) -> TrackedProduct:
+        """Cập nhật giá mục tiêu, đặt lại cờ chưa thông báo và tắt buy_when_good."""
+        tracker.target_price = target_price
+        tracker.target_price_notified = False
+        tracker.buy_when_good = False
+        db.add(tracker)
+        await db.flush()
+        return tracker
+
     async def delete(self, db: AsyncSession, tracking: TrackedProduct) -> None:
         """Xóa một bản ghi theo dõi sản phẩm."""
         await db.delete(tracking)
