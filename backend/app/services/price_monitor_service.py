@@ -6,6 +6,7 @@ from app.core.database import AsyncSessionLocal
 from app.core.logger import logger
 from app.crud import notification_crud, product_crud, tracked_product_crud
 from app.services.notification_service import enqueue_price_email
+from app.services.price_stream_service import price_stream_service
 from app.helper.rapidapi_client import rapidapi_client
 
 
@@ -100,6 +101,14 @@ class PriceMonitorService:
                 )
 
             await db.commit()
+            await price_stream_service.publish_price_update(
+                product_id=product.id,
+                price=Decimal(product.current_price),
+                currency=product.currency,
+                timestamp=datetime.now(timezone.utc),
+                price_low=Decimal(product.price_low),
+                price_high=Decimal(product.price_high),
+            )
 
     @staticmethod
     async def _has_enough_history(db, product_id: int) -> bool:
