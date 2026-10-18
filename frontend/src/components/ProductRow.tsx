@@ -146,10 +146,10 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         <button
           className={styles.removeButton}
           onClick={handleRemoveClick}
-          aria-label="Xóa khỏi danh sách"
-          title="Xóa khỏi danh sách"
+          aria-label="Ngừng theo dõi sản phẩm"
+          title="Ngừng theo dõi sản phẩm"
         >
-          🗑️
+          Ngừng theo dõi
         </button>
       </div>
     </div>
