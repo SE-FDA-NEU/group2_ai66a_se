@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, LoaderCircle, Star, Trash2 } from 'lucide-react';
+import { AlertTriangle, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProductRow.module.css';
 import { formatVnd } from '../utils/currency';
@@ -99,7 +99,9 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         <div className={styles.priceDetails}>
           <span className={styles.currentPrice}>{formatVnd(currentPrice, currency)}</span>
           {targetPrice != null && (
-            <span className={styles.targetPrice}>Cảnh báo tại {formatVnd(targetPrice, currency)}</span>
+            <span className={styles.targetPrice}>
+              Cảnh báo tại {formatVnd(targetPrice, currency)}
+            </span>
           )}
         </div>
       </div>
@@ -149,12 +151,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         <button
           className={styles.removeButton}
           onClick={handleRemoveClick}
-          aria-label="Xóa khỏi danh sách"
-          title="Xóa khỏi danh sách"
           disabled={isRemoving}
           aria-busy={isRemoving}
+          aria-label="Ngừng theo dõi sản phẩm"
+          title="Ngừng theo dõi sản phẩm"
         >
-          {isRemoving ? <LoaderCircle className={styles.removingIcon} size={17} aria-hidden="true" /> : <Trash2 size={17} aria-hidden="true" />}
+          {isRemoving ? 'Đang xử lý...' : 'Ngừng theo dõi'}
         </button>
       </div>
     </div>

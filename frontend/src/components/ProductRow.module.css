@@ -146,37 +146,30 @@
 }
 
 .removeButton {
-  background: none;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--status-error);
+  color: var(--status-error);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
-  padding: 8px;
+  padding: 7px 9px;
   border-radius: 6px;
-  opacity: 0.5;
-  transition: all 0.2s;
-}
-
-.rowContainer:hover .removeButton {
-  opacity: 1;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .removeButton:hover {
   background-color: var(--status-error-bg);
 }
 
+.removeButton:focus-visible {
+  outline: 2px solid var(--status-error);
+  outline-offset: 2px;
+}
+
 .removeButton:disabled {
   cursor: wait;
   opacity: 0.65;
-}
-
-.removingIcon {
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 @media (max-width: 1024px) {
