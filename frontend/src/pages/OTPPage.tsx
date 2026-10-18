@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { AlertCircle, Mail } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { verifyOTP, registerUser, login, sendOTP, OTPReason } from '../api/authApi';
 import { getUserProfile } from '../api/userApi';
@@ -187,7 +188,7 @@ const OTPPage: React.FC = () => {
       {/* Centered card */}
       <main className={styles.main}>
         <div className={styles.card}>
-          <div className={styles.iconWrapper} aria-hidden="true">📬</div>
+          <div className={styles.iconWrapper} aria-hidden="true"><Mail size={28} /></div>
 
           <h1 className={styles.title}>Xác minh email</h1>
           <p className={styles.subtitle}>
@@ -219,7 +220,7 @@ const OTPPage: React.FC = () => {
 
             {/* API error */}
             {apiError && (
-              <p className={styles.errorMsg} role="alert">⚠ {apiError}</p>
+              <p className={styles.errorMsg} role="alert"><AlertCircle size={16} aria-hidden="true" /> {apiError}</p>
             )}
 
             <button

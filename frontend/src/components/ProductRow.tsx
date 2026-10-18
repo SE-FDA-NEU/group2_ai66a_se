@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertTriangle, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProductRow.module.css';
 import { formatVnd } from '../utils/currency';
@@ -120,7 +121,8 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       <div className={styles.colCenter}>
         {starRating ? (
           <div className={styles.rating}>
-            ⭐ <span className={styles.ratingNumber}>{starRating}</span>
+            <Star className={styles.starIcon} size={14} fill="currentColor" aria-hidden="true" />
+            <span className={styles.ratingNumber}>{starRating}</span>
           </div>
         ) : (
           <span className={styles.emptyText}>-</span>
@@ -131,7 +133,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       <div className={styles.badgesCol}>
         {notEnoughData && (
           <span className={`${styles.badge} ${styles.badgeWarning}`}>
-            {priceLabel || 'Not enough data to assess'}
+            <AlertTriangle size={13} aria-hidden="true" /> {priceLabel || 'Not enough data to assess'}
           </span>
         )}
         {!notEnoughData && priceLabel && (
@@ -140,7 +142,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
           </span>
         )}
         {isFakeDiscount && (
-          <span className={`${styles.badge} ${styles.badgeWarning}`}>Khuyến mãi ảo</span>
+          <span className={`${styles.badge} ${styles.badgeWarning}`}><AlertTriangle size={13} aria-hidden="true" /> Khuyến mãi ảo</span>
         )}
       </div>
 

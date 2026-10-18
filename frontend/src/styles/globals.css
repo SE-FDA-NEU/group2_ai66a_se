@@ -33,6 +33,17 @@
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Focus Ring */
+  --focus-ring: 0 0 0 3px rgba(35, 47, 62, 0.15);
+
+  /* Auth Brand Gradient */
+  --auth-panel-bg: linear-gradient(145deg, #131921 0%, #232F3E 50%, #37475A 100%);
 }
 
 * {

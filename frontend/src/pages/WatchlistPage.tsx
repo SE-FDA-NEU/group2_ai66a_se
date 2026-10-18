@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { ArrowUpDown, Plus, RotateCw, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProductRow } from '../components/ProductRow';
 import { AddProductModal } from '../components/AddProductModal';
@@ -11,8 +12,13 @@ import styles from './WatchlistPage.module.css';
 import { convertToVnd } from '../utils/currency';
 
 export type SortOption = 'default' | 'price_asc' | 'price_desc';
+import tokenStyles from './WatchlistPage.tokens.module.css';
 
 const WATCHLIST_SORT_KEY = 'watchlist_sort';
+const combinedStyles: Record<string, string> = { ...styles };
+Object.entries(tokenStyles).forEach(([key, tokenClass]) => {
+  combinedStyles[key] = `${combinedStyles[key] ?? ''} ${tokenClass}`.trim();
+});
 
 export const WatchlistPage: React.FC = () => {
   const navigate = useNavigate();
@@ -111,34 +117,34 @@ export const WatchlistPage: React.FC = () => {
   }, [products, searchQuery, sortBy]);
 
   return (
-    <div className={styles.pageContainer}>
-      <header className={styles.pageHeader}>
+    <div className={combinedStyles.pageContainer}>
+      <header className={combinedStyles.pageHeader}>
         <div>
-          <h1 className={styles.headerTitle}>Danh sách theo dõi</h1>
-          <p className={styles.headerDescription}>
+          <h1 className={combinedStyles.headerTitle}>Danh sách theo dõi</h1>
+          <p className={combinedStyles.headerDescription}>
             Theo dõi biến động giá và nhận thông báo khi có mức giá ưu đãi.
           </p>
         </div>
         <button
-          className={styles.addButton}
+          className={combinedStyles.addButton}
           disabled={products.length >= 10}
           onClick={() => setIsAddModalOpen(true)}
         >
-          <span>+</span> Thêm sản phẩm
+          <Plus size={16} aria-hidden="true" /> Thêm sản phẩm
         </button>
       </header>
 
-      <div className={styles.toolbar}>
-        <div className={styles.toolbarLeft}>
-          <button className={styles.toolbarBtn} onClick={fetchProducts}>
-            <span className="icon">↻</span> Làm mới
+      <div className={combinedStyles.toolbar}>
+        <div className={combinedStyles.toolbarLeft}>
+          <button className={combinedStyles.toolbarBtn} onClick={fetchProducts}>
+            <RotateCw size={16} aria-hidden="true" /> Làm mới
           </button>
         </div>
-        <div className={styles.toolbarRight}>
-          <div className={styles.sortContainer}>
-            <span className={styles.sortIcon}>⇅</span>
+        <div className={combinedStyles.toolbarRight}>
+          <div className={combinedStyles.sortContainer}>
+            <ArrowUpDown className={combinedStyles.sortIcon} size={15} aria-hidden="true" />
             <select
-              className={styles.sortSelect}
+              className={combinedStyles.sortSelect}
               value={sortBy}
               onChange={(e) => handleSortChange(e.target.value as SortOption)}
               aria-label="Sắp xếp sản phẩm"
@@ -149,11 +155,11 @@ export const WatchlistPage: React.FC = () => {
               <option value="price_desc">Giá: Cao đến thấp</option>
             </select>
           </div>
-          <div className={styles.searchContainer}>
-            <span className={styles.searchIcon}>🔍</span>
+          <div className={combinedStyles.searchContainer}>
+            <Search className={combinedStyles.searchIcon} size={16} aria-hidden="true" />
             <input
               type="text"
-              className={styles.searchInput}
+              className={combinedStyles.searchInput}
               placeholder="Tìm kiếm sản phẩm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -162,8 +168,8 @@ export const WatchlistPage: React.FC = () => {
         </div>
       </div>
 
-      <div className={styles.tableContainer}>
-        <div className={styles.tableHeader}>
+      <div className={combinedStyles.tableContainer}>
+        <div className={combinedStyles.tableHeader}>
           <div>Sản phẩm</div>
           <div>Giá hiện tại</div>
           <div>Khoảng giá</div>
@@ -172,16 +178,16 @@ export const WatchlistPage: React.FC = () => {
           <div style={{ textAlign: 'center' }}>Thao tác</div>
         </div>
 
-        <div className={styles.tableBody}>
+        <div className={combinedStyles.tableBody}>
           {isLoading ? (
-            <div className={styles.emptyState}>
-              <div className={styles.emptyStateTitle}>Đang tải dữ liệu từ máy chủ...</div>
+            <div className={combinedStyles.emptyState}>
+              <div className={combinedStyles.emptyStateTitle}>Đang tải dữ liệu từ máy chủ...</div>
             </div>
           ) : error ? (
-            <div className={styles.emptyState}>
-              <div className={styles.emptyStateTitle}>{error}</div>
+            <div className={combinedStyles.emptyState}>
+              <div className={combinedStyles.emptyStateTitle}>{error}</div>
               <button
-                className={styles.toolbarBtn}
+                className={combinedStyles.toolbarBtn}
                 style={{ margin: '12px auto' }}
                 onClick={fetchProducts}
               >
@@ -210,8 +216,8 @@ export const WatchlistPage: React.FC = () => {
               />
             ))
           ) : (
-            <div className={styles.emptyState}>
-              <div className={styles.emptyStateTitle}>
+            <div className={combinedStyles.emptyState}>
+              <div className={combinedStyles.emptyStateTitle}>
                 {searchQuery
                   ? 'Không tìm thấy sản phẩm'
                   : 'Bạn chưa có sản phẩm nào trong danh sách theo dõi.'}
@@ -226,7 +232,7 @@ export const WatchlistPage: React.FC = () => {
         </div>
 
         {!isLoading && !error && displayedProducts.length > 0 && (
-          <div className={styles.itemCount}>
+          <div className={combinedStyles.itemCount}>
             Tổng cộng {displayedProducts.length} sản phẩm
           </div>
         )}

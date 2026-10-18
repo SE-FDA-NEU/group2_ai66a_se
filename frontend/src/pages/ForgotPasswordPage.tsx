@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { AlertCircle, Eye, EyeOff, KeyRound, LockKeyhole, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { sendOTP, verifyOTP, resetPassword } from '../api/authApi';
 import styles from './ForgotPasswordPage.module.css';
@@ -383,7 +384,7 @@ const ForgotPasswordPage: React.FC = () => {
           {currentStep === 1 && (
             <div>
               <div className={styles.header}>
-                <div className={styles.iconWrapper}>🔑</div>
+                <div className={styles.iconWrapper}><KeyRound size={28} aria-hidden="true" /></div>
                 <h1 className={styles.title}>Quên mật khẩu?</h1>
                 <p className={styles.subtitle}>
                   Đừng lo lắng! Nhập địa chỉ email liên kết với tài khoản của bạn để nhận mã xác
@@ -419,7 +420,7 @@ const ForgotPasswordPage: React.FC = () => {
 
                 {apiError && (
                   <div className={styles.alertBanner} role="alert">
-                    ⚠️ {apiError}
+                    <AlertCircle size={16} aria-hidden="true" /> {apiError}
                   </div>
                 )}
 
@@ -445,7 +446,7 @@ const ForgotPasswordPage: React.FC = () => {
           {currentStep === 2 && (
             <div>
               <div className={styles.header}>
-                <div className={styles.iconWrapper}>📩</div>
+                <div className={styles.iconWrapper}><Mail size={28} aria-hidden="true" /></div>
                 <h1 className={styles.title}>Xác thực mã OTP</h1>
                 <p className={styles.subtitle}>
                   Chúng tôi đã gửi mã xác thực gồm 6 chữ số đến:
@@ -520,7 +521,7 @@ const ForgotPasswordPage: React.FC = () => {
 
                 {apiError && (
                   <div className={styles.alertBanner} role="alert">
-                    ⚠️ {apiError}
+                    <AlertCircle size={16} aria-hidden="true" /> {apiError}
                   </div>
                 )}
 
@@ -550,7 +551,7 @@ const ForgotPasswordPage: React.FC = () => {
           {currentStep === 3 && (
             <div>
               <div className={styles.header}>
-                <div className={styles.iconWrapper}>🔒</div>
+                <div className={styles.iconWrapper}><LockKeyhole size={28} aria-hidden="true" /></div>
                 <h1 className={styles.title}>Tạo mật khẩu mới</h1>
                 <p className={styles.subtitle}>
                   Vui lòng tạo một mật khẩu mạnh với ít nhất 8 ký tự để bảo vệ tài khoản của bạn.
@@ -585,7 +586,7 @@ const ForgotPasswordPage: React.FC = () => {
                       onClick={() => setShowNewPassword((prev) => !prev)}
                       aria-label={showNewPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                     >
-                      {showNewPassword ? '🙈' : '👁️'}
+                      {showNewPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
                     </button>
                   </div>
 
@@ -656,7 +657,7 @@ const ForgotPasswordPage: React.FC = () => {
                       onClick={() => setShowConfirmPassword((prev) => !prev)}
                       aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                     >
-                      {showConfirmPassword ? '🙈' : '👁️'}
+                      {showConfirmPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
                     </button>
                   </div>
                   {confirmPasswordError && (
@@ -668,7 +669,7 @@ const ForgotPasswordPage: React.FC = () => {
 
                 {apiError && (
                   <div className={styles.alertBanner} role="alert">
-                    ⚠️ {apiError}
+                    <AlertCircle size={16} aria-hidden="true" /> {apiError}
                   </div>
                 )}
 

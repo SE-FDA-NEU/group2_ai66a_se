@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AlertCircle, Bell, Eye, EyeOff, ShoppingCart, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { login, loginWithGoogle } from '../api/authApi';
 import { getUserProfile } from '../api/userApi';
@@ -186,9 +187,9 @@ const LoginPage: React.FC = () => {
               Đăng nhập để xem danh sách sản phẩm đang theo dõi và nhận thông báo ngay khi giá về mức bạn muốn.
             </p>
             <div className={styles.featurePills}>
-              <span className={styles.pill}>📈 Biểu đồ lịch sử giá</span>
-              <span className={styles.pill}>🔔 Cảnh báo giá theo thời gian thực</span>
-              <span className={styles.pill}>🛒 Nhiều sàn thương mại điện tử</span>
+              <span className={styles.pill}><TrendingUp size={15} aria-hidden="true" /> Biểu đồ lịch sử giá</span>
+              <span className={styles.pill}><Bell size={15} aria-hidden="true" /> Cảnh báo giá theo thời gian thực</span>
+              <span className={styles.pill}><ShoppingCart size={15} aria-hidden="true" /> Nhiều sàn thương mại điện tử</span>
             </div>
 
             {/* Decorative mock card */}
@@ -266,7 +267,7 @@ const LoginPage: React.FC = () => {
                     aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                     tabIndex={0}
                   >
-                    {showPassword ? '🙈' : '👁️'}
+                    {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
                   </button>
                 </div>
                 {touched.password && errors.password && (
@@ -277,7 +278,7 @@ const LoginPage: React.FC = () => {
               {/* API error banner */}
               {apiError && (
                 <div className={styles.apiErrorBanner} role="alert">
-                  ⚠️ {apiError}
+                  <AlertCircle size={16} aria-hidden="true" /> {apiError}
                 </div>
               )}
 

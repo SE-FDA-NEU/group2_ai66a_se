@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Menu } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import styles from './Layout.module.css';
 import { NotificationCenter } from './NotificationCenter';
@@ -22,7 +23,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           onClick={() => setIsSidebarOpen(true)}
           aria-label="Mở menu"
         >
-          ☰
+          <Menu size={22} aria-hidden="true" />
         </button>
         <h1 className={styles.mobileTitle}>Trakora</h1>
         <div style={{ width: '32px' }}></div> {/* Spacer để cân bằng title ra giữa */}

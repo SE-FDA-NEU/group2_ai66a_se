@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AlertCircle, Bell, ShoppingCart, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { sendOTP, loginWithGoogle } from '../api/authApi';
 import { getUserProfile } from '../api/userApi';
@@ -335,7 +336,7 @@ const RegisterPage: React.FC = () => {
               {/* API error banner */}
               {apiError && (
                 <div className={styles.apiErrorBanner} role="alert">
-                  ⚠️ {apiError}
+                  <AlertCircle size={16} aria-hidden="true" /> {apiError}
                 </div>
               )}
 
@@ -388,9 +389,9 @@ const RegisterPage: React.FC = () => {
               Trakora tự động theo dõi lịch sử giá sản phẩm thương mại điện tử và báo ngay khi giá giảm xuống mức bạn muốn.
             </p>
             <div className={styles.featurePills}>
-              <span className={styles.pill}>📈 Lịch sử giá chi tiết</span>
-              <span className={styles.pill}>🔔 Cảnh báo khi giá giảm</span>
-              <span className={styles.pill}>🛒 Hỗ trợ nhiều sàn TMĐT</span>
+              <span className={styles.pill}><TrendingUp size={15} aria-hidden="true" /> Lịch sử giá chi tiết</span>
+              <span className={styles.pill}><Bell size={15} aria-hidden="true" /> Cảnh báo khi giá giảm</span>
+              <span className={styles.pill}><ShoppingCart size={15} aria-hidden="true" /> Hỗ trợ nhiều sàn TMĐT</span>
             </div>
 
             {/* Decorative mock card */}

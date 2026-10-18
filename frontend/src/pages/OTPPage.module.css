@@ -1,17 +1,15 @@
 /* OTPPage.module.css
-   Centered card layout — no split screen.
-   Same visual system: indigo palette, Inter/Outfit fonts, glass elements.
+   Styled according to docs/frontend-design-system.md
+   Paired with OTPPage.tsx
 */
-
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;600&display=swap');
 
 /* ─── Page Shell ──────────────────────────────────────────────────────────── */
 
 .pageContainer {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
-  font-family: 'Outfit', 'Inter', sans-serif;
-  color: #0f172a;
+  background-color: var(--bg-main);
+  font-family: var(--font-family-main);
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
 }
@@ -21,16 +19,17 @@
 .navbar {
   display: flex;
   align-items: center;
-  padding: 1.25rem 5%;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  padding: 1rem 5%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   box-sizing: border-box;
 }
 
@@ -40,9 +39,9 @@
 }
 
 .logo {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: var(--primary-color, #6366f1);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
   letter-spacing: -0.5px;
   cursor: pointer;
   user-select: none;
@@ -55,7 +54,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6rem 1.5rem 3rem;
+  padding: 5.5rem 1.5rem 2.5rem;
 }
 
 /* ─── Card ────────────────────────────────────────────────────────────────── */
@@ -63,45 +62,45 @@
 .card {
   width: 100%;
   max-width: 440px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 24px;
-  padding: 2.5rem 2.5rem 2rem;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 2.25rem 2rem;
+  box-shadow: var(--shadow-sm);
   text-align: center;
-  animation: slideUp 0.5s ease-out forwards;
+  animation: slideUp 0.4s ease-out forwards;
 }
 
 .iconWrapper {
-  font-size: 3rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .title {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 0.5rem;
-  letter-spacing: -0.5px;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.4rem;
+  letter-spacing: -0.3px;
 }
 
 .subtitle {
-  font-size: 0.95rem;
-  color: #64748b;
-  font-family: 'Inter', sans-serif;
+  font-size: 0.925rem;
+  color: var(--text-secondary);
+  font-family: inherit;
   margin: 0;
   line-height: 1.5;
 }
 
 .emailHighlight {
-  font-size: 0.95rem;
+  font-size: 0.925rem;
   font-weight: 600;
-  color: var(--primary-color, #6366f1);
-  font-family: 'Inter', sans-serif;
-  margin: 0.25rem 0 1.75rem;
+  color: var(--primary-color);
+  font-family: inherit;
+  margin: 0.25rem 0 1.5rem;
   word-break: break-all;
 }
 
@@ -122,25 +121,24 @@
 }
 
 .otpInput {
-  width: 48px;
-  height: 56px;
+  width: 46px;
+  height: 52px;
   text-align: center;
-  font-size: 1.5rem;
-  font-weight: 700;
-  font-family: 'Inter', sans-serif;
-  color: #0f172a;
-  background: rgba(255, 255, 255, 0.9);
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  font-size: 1.35rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
   outline: none;
-  caret-color: var(--primary-color, #6366f1);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  caret-color: var(--primary-color);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .otpInput:focus {
-  border-color: var(--primary-color, #6366f1);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-  background: #ffffff;
+  border-color: var(--primary-color);
+  box-shadow: var(--focus-ring);
 }
 
 .otpInput:disabled {
@@ -149,22 +147,26 @@
 }
 
 .otpInputError {
-  border-color: #ef4444;
+  border-color: var(--status-error);
   animation: shake 0.3s ease;
 }
 
 .otpInputError:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+  border-color: var(--status-error);
+  box-shadow: 0 0 0 3px var(--status-error-bg);
 }
 
 /* ─── Error message ───────────────────────────────────────────────────────── */
 
 .errorMsg {
   font-size: 0.85rem;
-  color: #ef4444;
-  font-family: 'Inter', sans-serif;
+  color: var(--status-error);
+  font-family: inherit;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   margin: 0;
   animation: fadeIn 0.2s ease;
 }
@@ -173,58 +175,56 @@
 
 .submitBtn {
   width: 100%;
-  padding: 0.85rem;
-  font-size: 1.05rem;
-  font-weight: 700;
-  font-family: 'Outfit', 'Inter', sans-serif;
-  color: white;
-  background: var(--primary-color, #6366f1);
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #ffffff;
+  background: var(--primary-color);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: var(--primary-hover, #4f46e5);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-md);
 }
 
 .submitBtn:disabled {
-  opacity: 0.55;
+  opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
 }
 
 /* Loading spinner */
 .spinner {
-  width: 18px;
-  height: 18px;
-  border: 2.5px solid rgba(255, 255, 255, 0.4);
-  border-top-color: white;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   display: inline-block;
   flex-shrink: 0;
 }
 
-/* ─── Resend row ──────────────────────────────────────────────────────────── */
+/* ─── Resend row ──────────────────────────────────────────────────── */
 
 .resendRow {
-  font-size: 0.9rem;
-  color: #64748b;
-  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-family: inherit;
   margin: 0.25rem 0 0;
 }
 
 .cooldownText {
-  color: #94a3b8;
+  color: var(--text-tertiary);
   font-weight: 500;
 }
 
@@ -235,7 +235,7 @@
   font-size: inherit;
   font-family: inherit;
   font-weight: 600;
-  color: var(--primary-color, #6366f1);
+  color: var(--primary-color);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -243,12 +243,13 @@
 }
 
 .resendBtn:hover:not(:disabled) {
-  color: var(--primary-hover, #4f46e5);
+  color: var(--primary-hover);
 }
 
 .resendBtn:disabled {
-  opacity: 0.5;
+  color: var(--text-tertiary);
   cursor: not-allowed;
+  text-decoration: none;
 }
 
 /* ─── Back button ─────────────────────────────────────────────────────────── */
@@ -256,9 +257,9 @@
 .backBtn {
   background: transparent;
   border: none;
-  font-size: 0.875rem;
-  font-family: 'Inter', sans-serif;
-  color: #94a3b8;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0.25rem;
   margin-top: 0.5rem;
@@ -266,13 +267,13 @@
 }
 
 .backBtn:hover {
-  color: #64748b;
+  color: var(--primary-color);
 }
 
 /* ─── Animations ──────────────────────────────────────────────────────────── */
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(24px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -295,18 +296,16 @@
 
 @media (max-width: 480px) {
   .card {
-    padding: 2rem 1.5rem 1.75rem;
-    border-radius: 18px;
+    padding: 2rem 1.25rem;
   }
 
   .otpInput {
-    width: 40px;
-    height: 48px;
-    font-size: 1.25rem;
-    border-radius: 10px;
+    width: 38px;
+    height: 46px;
+    font-size: 1.2rem;
   }
 
   .otpRow {
-    gap: 0.4rem;
+    gap: 0.35rem;
   }
 }

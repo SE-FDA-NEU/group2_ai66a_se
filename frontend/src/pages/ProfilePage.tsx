@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AlertCircle, CircleCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getUserProfile, updateNickname, changePassword } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
@@ -117,7 +118,14 @@ const ProfilePage: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div className={styles.pageContainer}>Đang tải dữ liệu...</div>;
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner} aria-hidden="true" />
+          <span>Đang tải thông tin tài khoản...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -132,7 +140,7 @@ const ProfilePage: React.FC = () => {
         
         {profileMsg && (
           <div className={`${styles.alertBanner} ${profileMsg.type === 'success' ? styles.alertSuccess : styles.alertError}`}>
-            {profileMsg.type === 'success' ? '✓ ' : '⚠️ '}{profileMsg.text}
+            {profileMsg.type === 'success' ? <CircleCheck size={16} aria-hidden="true" /> : <AlertCircle size={16} aria-hidden="true" />}{profileMsg.text}
           </div>
         )}
 
@@ -141,10 +149,9 @@ const ProfilePage: React.FC = () => {
             <label className={styles.label}>Email đăng nhập</label>
             <input 
               type="email" 
-              className={styles.input} 
+              className={`${styles.input} ${styles.inputDisabled}`} 
               value={email} 
               disabled 
-              style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
             />
             <span className={styles.infoText}>Email không thể thay đổi.</span>
           </div>
@@ -189,7 +196,7 @@ const ProfilePage: React.FC = () => {
 
         {passwordMsg && (
           <div className={`${styles.alertBanner} ${passwordMsg.type === 'success' ? styles.alertSuccess : styles.alertError}`}>
-            {passwordMsg.type === 'success' ? '✓ ' : '⚠️ '}{passwordMsg.text}
+            {passwordMsg.type === 'success' ? <CircleCheck size={16} aria-hidden="true" /> : <AlertCircle size={16} aria-hidden="true" />}{passwordMsg.text}
           </div>
         )}
 
@@ -247,7 +254,7 @@ const ProfilePage: React.FC = () => {
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Phiên đăng nhập</h2>
         </div>
-        <p className={styles.infoText} style={{ marginBottom: '1.5rem' }}>
+        <p className={styles.sessionDesc}>
           Đăng xuất khỏi thiết bị hiện tại. Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng Trakora.
         </p>
         <button type="button" className={styles.btnOutline} onClick={handleLogout}>

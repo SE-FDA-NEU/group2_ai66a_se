@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Star } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { removeProductFromWatchlist, getWatchlist, WatchlistProduct } from '../api/watchlistApi';
 import styles from './ProductDetailPage.module.css';
@@ -36,7 +37,14 @@ export const ProductDetailPage: React.FC = () => {
   }, [id, product]);
 
   if (isLoading) {
-    return <div className={styles.pageContainer}>Đang tải thông tin sản phẩm...</div>;
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner} aria-hidden="true" />
+          <span>Đang tải thông tin sản phẩm...</span>
+        </div>
+      </div>
+    );
   }
 
   if (!product) {
@@ -90,7 +98,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Đánh giá</span>
               <span className={styles.metaValue}>
-                {product.product_rating ? `${product.product_rating} ⭐` : 'Chưa có đánh giá'}
+                {product.product_rating ? <><Star size={15} fill="currentColor" aria-hidden="true" /> {product.product_rating}</> : 'Chưa có đánh giá'}
               </span>
             </div>
             <div className={styles.metaItem}>

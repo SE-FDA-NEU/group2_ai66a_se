@@ -90,9 +90,9 @@
 }
 
 .icon {
-  font-size: 18px;
   width: 20px;
-  text-align: center;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .footer {
@@ -170,7 +170,8 @@
   }
 
   .icon {
-    font-size: 20px;
+    width: 20px;
+    height: 20px;
   }
 }
 
