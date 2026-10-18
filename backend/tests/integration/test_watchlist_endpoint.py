@@ -337,6 +337,38 @@ async def test_stream_price_history_returns_event_stream_when_authorized(
 
 
 @pytest.mark.asyncio
+async def test_stream_price_history_releases_db_session_before_streaming(
+    client, monkeypatch, current_user_override
+):
+    """GET /stream phải giải phóng (close) db session trước khi stream bắt đầu."""
+    from app.services.price_stream_service import price_stream_service
+    from app.core.database import get_db
+    from main import app
+
+    mock_db = AsyncMock()
+    app.dependency_overrides[get_db] = lambda: mock_db
+    try:
+        monkeypatch.setattr(
+            service_module.tracked_product_crud,
+            "get",
+            AsyncMock(return_value=SimpleNamespace(user_id=7, product_id=31)),
+        )
+
+        async def fake_stream(_product_id, _request=None):
+            # Tại thời điểm stream bắt đầu yield, db session phải đã được đóng!
+            assert mock_db.close.await_count == 1
+            yield "data: {\"product_id\": 31, \"price\": \"195.00\"}\n\n"
+
+        monkeypatch.setattr(price_stream_service, "subscribe_price_updates", fake_stream)
+
+        response = client.get("/api/v1/watchlist/31/stream")
+        assert response.status_code == 200
+        assert mock_db.close.await_count >= 1
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+
+@pytest.mark.asyncio
 async def test_put_target_price_returns_200_on_success(client, monkeypatch, current_user_override):
     """PUT /target-price trả về 200 khi cập nhật thành công."""
     product_res = _response_product()

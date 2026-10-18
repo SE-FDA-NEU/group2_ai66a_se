@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -125,9 +126,20 @@ async def stream_product_price(
     Server-Sent Events (SSE) stream đẩy giá thời gian thực từ Redis Pub/Sub lên Frontend.
     Hỗ trợ xác thực qua Authorization Header hoặc ?token= query parameter cho EventSource.
     """
-    tracking = await tracked_product_crud.get(db, current_user.id, product_id)
-    if tracking is None:
-        raise TRACKING_NOT_FOUND.throw()
+    try:
+        tracking = await tracked_product_crud.get(db, current_user.id, product_id)
+        if tracking is None:
+            raise TRACKING_NOT_FOUND.throw()
+    finally:
+        # Giải phóng session database ngay lập tức trước khi bắt đầu StreamingResponse dài hạn.
+        # Do cơ chế request-scoped dependencies của FastAPI chỉ cleanup sau khi response kết thúc,
+        # nếu không đóng sớm, mỗi stream SSE mở sẽ giữ 1 kết nối DB cho đến khi client ngắt kết nối,
+        # dẫn tới cạn kiệt Connection Pool.
+        close_method = getattr(db, "close", None)
+        if callable(close_method):
+            close_result = close_method()
+            if asyncio.iscoroutine(close_result) or hasattr(close_result, "__await__"):
+                await close_result
 
     return StreamingResponse(
         price_stream_service.subscribe_price_updates(product_id, request),
