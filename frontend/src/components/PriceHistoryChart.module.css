@@ -1,0 +1,341 @@
+/* PriceHistoryChart.module.css
+   Styled according to docs/frontend-design-system.md
+   Optimized for mobile responsiveness (min 375px) with zero horizontal overflow
+*/
+
+.chartCard {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  font-family: var(--font-family-main);
+  color: var(--text-primary);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.titleArea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chartTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rangeButtons {
+  display: inline-flex;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+}
+
+.rangeButton {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rangeButton:hover {
+  color: var(--text-primary);
+}
+
+.rangeButtonActive {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.rangeButtonActive:hover {
+  background-color: var(--primary-hover);
+  color: #ffffff;
+}
+
+/* Warning Banner for tracked_days < 7 */
+.warningBanner {
+  background-color: var(--status-warning-bg);
+  border-left: 4px solid var(--status-warning);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #78350f; /* High contrast dark amber */
+  font-size: 13px;
+  line-height: 1.5;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.warningIcon {
+  flex-shrink: 0;
+  color: var(--status-warning);
+  margin-top: 1px;
+}
+
+.warningText strong {
+  font-weight: 600;
+}
+
+/* Stats / Milestones Overview */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.statItem {
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.statValue {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statValueLowest {
+  color: var(--status-success);
+}
+
+.statValueHighest {
+  color: var(--status-error);
+}
+
+/* Chart Canvas Wrapper */
+.chartWrapper {
+  width: 100%;
+  max-width: 100%;
+  height: 280px;
+  min-height: 240px;
+  position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Custom Tooltip */
+.customTooltip {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  box-shadow: var(--shadow-md);
+  font-size: 12px;
+  color: var(--text-primary);
+  max-width: 220px;
+}
+
+.tooltipTime {
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.tooltipPrice {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.tooltipGap {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-color);
+  font-size: 11px;
+  color: var(--status-warning);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tooltipTag {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.tagLowest {
+  background-color: var(--status-success-bg);
+  color: var(--status-success);
+}
+
+.tagHighest {
+  background-color: var(--status-error-bg);
+  color: var(--status-error);
+}
+
+/* UX States */
+.stateContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  min-height: 200px;
+  gap: 12px;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.errorText {
+  color: var(--status-error);
+  font-weight: 500;
+}
+
+.btnRetry {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border: 1px solid var(--primary-color);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btnRetry:hover {
+  background-color: var(--primary-hover);
+}
+
+.emptyTitle {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile Responsiveness (<= 480px and <= 375px) */
+@media (max-width: 480px) {
+  .chartCard {
+    padding: 16px 12px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .rangeButtons {
+    width: 100%;
+    display: flex;
+  }
+
+  .rangeButton {
+    flex: 1;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 12px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .statItem {
+    padding: 8px 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .statValue {
+    font-size: 14px;
+  }
+
+  .chartWrapper {
+    height: 240px;
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 375px) {
+  .chartCard {
+    padding: 14px 10px;
+  }
+
+  .chartTitle {
+    font-size: 16px;
+  }
+
+  .warningBanner {
+    padding: 10px;
+    font-size: 12px;
+  }
+}
+

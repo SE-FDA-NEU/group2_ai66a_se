@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { removeProductFromWatchlist, getWatchlist, WatchlistProduct } from '../api/watchlistApi';
 import styles from './ProductDetailPage.module.css';
 import { formatVnd } from '../utils/currency';
+import { PriceHistoryChart } from '../components/PriceHistoryChart';
 
 export const ProductDetailPage: React.FC = () => {
   const location = useLocation();
@@ -142,6 +143,10 @@ export const ProductDetailPage: React.FC = () => {
             </a>
           </div>
         </div>
+      </div>
+
+      <div className={styles.chartSection}>
+        <PriceHistoryChart productId={product.id} currency={product.currency} />
       </div>
     </div>
   );
