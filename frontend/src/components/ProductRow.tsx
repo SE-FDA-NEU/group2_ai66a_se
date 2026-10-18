@@ -9,6 +9,7 @@ export interface ProductRowProps {
   name: string;
   currentPrice: number;
   currency: string;
+  targetPrice?: number | null;
   priceLow?: number;
   priceHigh?: number;
   starRating?: number;
@@ -25,6 +26,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   name,
   currentPrice,
   currency,
+  targetPrice,
   priceLow,
   priceHigh,
   starRating,
@@ -90,7 +92,14 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
       {/* Cột 2: Giá hiện tại */}
       <div className={styles.colCenter}>
-        <span className={styles.currentPrice}>{formatVnd(currentPrice, currency)}</span>
+        <div className={styles.priceDetails}>
+          <span className={styles.currentPrice}>{formatVnd(currentPrice, currency)}</span>
+          {targetPrice != null && (
+            <span className={styles.targetPrice}>
+              Cảnh báo tại {formatVnd(targetPrice, currency)}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Cột 3: Khoảng giá */}

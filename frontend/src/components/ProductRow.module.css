@@ -72,6 +72,19 @@
   color: var(--text-primary);
 }
 
+.priceDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.targetPrice {
+  color: var(--primary-color);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
 .priceRange {
   font-size: 13px;
   color: var(--text-secondary);
