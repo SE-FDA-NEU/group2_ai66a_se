@@ -78,3 +78,20 @@ class ProductMarketplace(BaseModel):
     currency: str = Field(min_length=1, max_length=10)
     in_stock: bool = True
     top_reviews: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class PriceDataPoint(BaseModel):
+    price: Decimal
+    timestamp: datetime
+    is_gap: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PriceHistoryResponse(BaseModel):
+    min_price: Decimal | None = None
+    max_price: Decimal | None = None
+    tracked_days: int = 0
+    data_points: list[PriceDataPoint] = Field(default_factory=list)
+
+    model_config = ConfigDict(from_attributes=True)

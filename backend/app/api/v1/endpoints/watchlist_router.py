@@ -5,8 +5,13 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.user_model import User
 from app.schemas.common import ApiResponse
-from app.schemas.watchlist_schema import ProductList, Product, ProductCreate
-from app.schemas.watchlist_schema import NotificationList
+from app.schemas.watchlist_schema import (
+    NotificationList,
+    PriceHistoryResponse,
+    Product,
+    ProductCreate,
+    ProductList,
+)
 from app.services.notification_service import notification_service
 from app.services.watchlist_service import watchlist_service
 
@@ -75,3 +80,26 @@ async def remove_from_watchlist(
     current_user: User = Depends(get_current_user),
 ):
     await watchlist_service.remove_product(db, current_user, product_id)
+
+
+@router.get(
+    "/{product_id}/history",
+    response_model=ApiResponse[PriceHistoryResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Lấy lịch sử giá và phát hiện khoảng trống gap của sản phẩm trong vòng 1 tuần",
+)
+async def get_product_price_history(
+    product_id: int,
+    days: int = Query(default=7, ge=1, le=365, description="Số ngày lịch sử giá cần lấy (mặc định 7 ngày)"),
+    gap_threshold_minutes: int = Query(default=30, ge=1, le=1440, description="Ngưỡng phát hiện khoảng trống gap (phút)"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await watchlist_service.get_price_history(
+        db,
+        user=current_user,
+        product_id=product_id,
+        days=days,
+        gap_threshold_minutes=gap_threshold_minutes,
+    )
+    return ApiResponse(message="Price history loaded successfully.", data=result)

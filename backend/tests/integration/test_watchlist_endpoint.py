@@ -224,3 +224,64 @@ async def test_delete_watchlist_returns_404_when_not_tracked(
     response = client.delete("/api/v1/watchlist/999")
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "TRACKING_NOT_FOUND"
+
+
+@pytest.mark.asyncio
+async def test_get_price_history_returns_401_without_auth(client):
+    """GET /history trả về 401 khi chưa xác thực."""
+    response = client.get("/api/v1/watchlist/31/history")
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_get_price_history_returns_404_when_not_tracked(
+    client, monkeypatch, current_user_override
+):
+    """GET /history trả về 404 khi sản phẩm không thuộc watchlist của user."""
+    monkeypatch.setattr(
+        service_module.tracked_product_crud,
+        "get",
+        AsyncMock(return_value=None),
+    )
+
+    response = client.get("/api/v1/watchlist/999/history")
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "TRACKING_NOT_FOUND"
+
+
+@pytest.mark.asyncio
+async def test_get_price_history_returns_success_with_gap_detection(
+    client, monkeypatch, current_user_override
+):
+    """GET /history trả về 200 kèm min_price, max_price, tracked_days, data_points."""
+    from datetime import datetime, timezone, timedelta
+    from app.schemas.watchlist_schema import PriceHistoryResponse, PriceDataPoint
+
+    t0 = datetime(2026, 10, 18, 10, 0, tzinfo=timezone.utc)
+    mock_history_response = PriceHistoryResponse(
+        min_price=Decimal("189.00"),
+        max_price=Decimal("399.00"),
+        tracked_days=3,
+        data_points=[
+            PriceDataPoint(price=Decimal("189.00"), timestamp=t0, is_gap=False),
+            PriceDataPoint(price=Decimal("239.00"), timestamp=t0 + timedelta(minutes=5), is_gap=False),
+            PriceDataPoint(price=Decimal("399.00"), timestamp=t0 + timedelta(hours=2), is_gap=True),
+        ],
+    )
+
+    monkeypatch.setattr(
+        service_module.watchlist_service,
+        "get_price_history",
+        AsyncMock(return_value=mock_history_response),
+    )
+
+    response = client.get("/api/v1/watchlist/31/history?days=7&gap_threshold_minutes=30")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["min_price"] == "189.00"
+    assert data["max_price"] == "399.00"
+    assert data["tracked_days"] == 3
+    assert len(data["data_points"]) == 3
+    assert data["data_points"][0]["is_gap"] is False
+    assert data["data_points"][1]["is_gap"] is False
+    assert data["data_points"][2]["is_gap"] is True

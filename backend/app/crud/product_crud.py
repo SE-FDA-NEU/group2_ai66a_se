@@ -178,5 +178,16 @@ class CRUDProduct:
         await db.commit()
         return result.rowcount > 0
 
+    async def get_price_history(
+        self, db: AsyncSession, product_id: int, *, since: datetime | None = None
+    ) -> list[PriceHistory]:
+        """Lấy danh sách lịch sử giá của sản phẩm sắp xếp theo thứ tự thời gian tăng dần."""
+        statement = select(PriceHistory).where(PriceHistory.product_id == product_id)
+        if since is not None:
+            statement = statement.where(PriceHistory.recorded_at >= since)
+        statement = statement.order_by(PriceHistory.recorded_at.asc(), PriceHistory.id.asc())
+        result = await db.scalars(statement)
+        return list(result)
+
 
 product_crud = CRUDProduct()

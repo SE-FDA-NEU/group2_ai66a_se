@@ -9,7 +9,13 @@ from app.helper.amazon_link_parser import parse_amazon_link
 from app.helper.rapidapi_client import rapidapi_client
 from app.models.product_model import Product as ProductModel
 from app.models.user_model import User
-from app.schemas.watchlist_schema import ProductList, Product, ProductCreate
+from app.schemas.watchlist_schema import (
+    PriceDataPoint,
+    PriceHistoryResponse,
+    Product,
+    ProductCreate,
+    ProductList,
+)
 
 
 WATCHLIST_LIMIT_REACHED = ErrorDetail(
@@ -216,6 +222,74 @@ class WatchlistService:
             price_label=price_label,
             fake_discount=fake_discount,
             fake_discount_percent=fake_discount_percent,
+        )
+
+    async def get_price_history(
+        self,
+        db: AsyncSession,
+        user: User,
+        product_id: int,
+        *,
+        days: int = 7,
+        gap_threshold_minutes: int = 30,
+    ) -> PriceHistoryResponse:
+        tracking = await tracked_product_crud.get(db, user.id, product_id)
+        if tracking is None:
+            raise TRACKING_NOT_FOUND.throw()
+
+        # 1. Tính tổng số ngày dương lịch riêng biệt đã theo dõi (BR3, BR5)
+        tracked_days = await product_crud.get_history_distinct_days(db, product_id)
+
+        # 2. Lấy dữ liệu trong khung thời gian yêu cầu (mặc định 7 ngày gần nhất)
+        since = datetime.now(timezone.utc) - timedelta(days=days) if days > 0 else None
+        records = await product_crud.get_price_history(db, product_id, since=since)
+
+        if not records:
+            return PriceHistoryResponse(
+                min_price=None,
+                max_price=None,
+                tracked_days=tracked_days,
+                data_points=[],
+            )
+
+        # 3. Tính min_price và max_price trong khung thời gian biểu đồ
+        min_price = min(r.price for r in records)
+        max_price = max(r.price for r in records)
+
+        # 4. Thuật toán phát hiện Gap (BR15)
+        gap_threshold = timedelta(minutes=gap_threshold_minutes)
+        data_points: list[PriceDataPoint] = []
+
+        for i, record in enumerate(records):
+            is_gap = False
+            if i > 0:
+                dt_curr = (
+                    record.recorded_at
+                    if record.recorded_at.tzinfo is not None
+                    else record.recorded_at.replace(tzinfo=timezone.utc)
+                )
+                dt_prev = (
+                    records[i - 1].recorded_at
+                    if records[i - 1].recorded_at.tzinfo is not None
+                    else records[i - 1].recorded_at.replace(tzinfo=timezone.utc)
+                )
+                interval = dt_curr - dt_prev
+                if interval > gap_threshold:
+                    is_gap = True
+
+            data_points.append(
+                PriceDataPoint(
+                    price=record.price,
+                    timestamp=record.recorded_at,
+                    is_gap=is_gap,
+                )
+            )
+
+        return PriceHistoryResponse(
+            min_price=min_price,
+            max_price=max_price,
+            tracked_days=tracked_days,
+            data_points=data_points,
         )
 
 
