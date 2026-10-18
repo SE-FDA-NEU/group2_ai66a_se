@@ -84,8 +84,9 @@ class PriceMonitorService:
                     kind="target_price_reached",
                     title="Giá mục tiêu đã đạt",
                     message=(
-                        f"{product.name} hiện có giá {product.current_price} "
-                        f"{product.currency}, đã chạm giá mục tiêu {tracker.target_price}."
+                        f"Sản phẩm {product.name} hiện có giá {product.current_price} "
+                        f"{product.currency}, đã chạm mức giá mục tiêu {tracker.target_price} "
+                        f"{product.currency} của bạn. Xem tại: {product.url}"
                     ),
                 )
                 await tracked_product_crud.mark_target_price_notified(db, tracker)
@@ -93,6 +94,34 @@ class PriceMonitorService:
                     db,
                     user_id=tracker.user_id,
                     kind="target_price_reached",
+                    product_name=product.name,
+                    current_price=product.current_price,
+                    currency=product.currency,
+                    product_url=product.url,
+                    target_price=tracker.target_price,
+                )
+
+            above_target_trackers = await tracked_product_crud.list_above_target_price_trackers(
+                db, product.id, product.current_price, for_update=True
+            )
+            for tracker in above_target_trackers:
+                await notification_crud.create(
+                    db,
+                    user_id=tracker.user_id,
+                    product_id=product.id,
+                    kind="price_above_target",
+                    title="Giá đã tăng trên mục tiêu",
+                    message=(
+                        f"Sản phẩm {product.name} hiện có giá {product.current_price} "
+                        f"{product.currency}, đã vượt trên mức giá mục tiêu {tracker.target_price} "
+                        f"{product.currency} của bạn."
+                    ),
+                )
+                await tracked_product_crud.reset_target_price_notified(db, tracker)
+                await enqueue_price_email(
+                    db,
+                    user_id=tracker.user_id,
+                    kind="price_above_target",
                     product_name=product.name,
                     current_price=product.current_price,
                     currency=product.currency,

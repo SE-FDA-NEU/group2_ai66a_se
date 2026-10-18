@@ -132,5 +132,25 @@ class CRUDTrackedProduct:
         tracker.target_price_notified = True
         db.add(tracker)
 
+    async def list_above_target_price_trackers(
+        self, db: AsyncSession, product_id: int, current_price: Decimal, *, for_update: bool = False
+    ) -> list[TrackedProduct]:
+        """Lấy danh sách người theo dõi có giá mục tiêu thấp hơn giá hiện tại và đã được thông báo trước đó."""
+        statement = select(TrackedProduct).where(
+            TrackedProduct.product_id == product_id,
+            TrackedProduct.target_price.is_not(None),
+            TrackedProduct.target_price < current_price,
+            TrackedProduct.target_price_notified.is_(True),
+        )
+        if for_update:
+            statement = statement.with_for_update()
+        result = await db.scalars(statement)
+        return list(result)
+
+    async def reset_target_price_notified(self, db: AsyncSession, tracker: TrackedProduct) -> None:
+        """Đặt lại cờ thông báo giá mục tiêu về False khi giá vượt lên trên mục tiêu."""
+        tracker.target_price_notified = False
+        db.add(tracker)
+
 
 tracked_product_crud = CRUDTrackedProduct()
