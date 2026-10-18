@@ -203,3 +203,24 @@ async def test_delete_last_watchlist_tracker_sets_untracked_timestamp_without_pr
             "price_history_count": len(price_history),
         },
     )
+
+
+@pytest.mark.asyncio
+async def test_delete_watchlist_returns_404_when_not_tracked(
+    client, db_session, monkeypatch, current_user_override
+):
+    """Trả về 404 khi người dùng xóa sản phẩm không có trong watchlist."""
+    monkeypatch.setattr(
+        service_module.product_crud,
+        "get_by_id",
+        AsyncMock(return_value=_product(tracked_by_count=1)),
+    )
+    monkeypatch.setattr(
+        service_module.tracked_product_crud,
+        "get",
+        AsyncMock(return_value=None),
+    )
+
+    response = client.delete("/api/v1/watchlist/999")
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "TRACKING_NOT_FOUND"

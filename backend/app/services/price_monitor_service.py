@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from sqlalchemy import Date, func, select
@@ -6,12 +7,14 @@ from sqlalchemy import Date, func, select
 from app.core.database import AsyncSessionLocal
 from app.core.logger import logger
 from app.crud.notification_crud import notification_crud
+from app.crud.product_crud import product_crud
 from app.services.notification_service import enqueue_price_email
 from app.helper.rapidapi_client import rapidapi_client
 from app.models.product_model import PriceHistory, Product, TrackedProduct
 
 
 REFRESH_INTERVAL_SECONDS = 5 * 60
+RETENTION_DAYS = 7
 
 
 class PriceMonitorService:
@@ -150,9 +153,29 @@ class PriceMonitorService:
         )
         return int(distinct_days or 0) >= 7
 
+    async def cleanup_expired_products(
+        self, retention_days: int = RETENTION_DAYS
+    ) -> list[int]:
+        """Xóa vĩnh viễn các sản phẩm đã ngừng theo dõi quá thời hạn lưu trữ (7 ngày)."""
+        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+        async with AsyncSessionLocal() as db:
+            deleted_ids = await product_crud.delete_expired_untracked(db, cutoff=cutoff)
+            if deleted_ids:
+                logger.info(
+                    "Xóa vĩnh viễn %d sản phẩm hết hạn %d ngày không có người theo dõi: %s",
+                    len(deleted_ids),
+                    retention_days,
+                    deleted_ids,
+                )
+            return deleted_ids
+
     async def run_forever(self) -> None:
         while True:
             await self.refresh_active_products()
+            try:
+                await self.cleanup_expired_products()
+            except Exception:
+                logger.exception("Price monitor: Lỗi khi dọn dẹp sản phẩm hết hạn theo dõi")
             await asyncio.sleep(REFRESH_INTERVAL_SECONDS)
 
 

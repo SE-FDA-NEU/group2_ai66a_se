@@ -1,6 +1,7 @@
+from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.product_model import PriceHistory, Product
@@ -81,6 +82,35 @@ class CRUDProduct:
         db.add(PriceHistory(product_id=product.id, price=item.current_price))
         await db.flush()
         return product
+
+    async def delete_expired_untracked(
+        self, db: AsyncSession, cutoff: datetime
+    ) -> list[int]:
+        """Xóa vĩnh viễn các sản phẩm có 0 người theo dõi và đã quá thời hạn ân hạn (7 ngày)."""
+        statement = (
+            select(Product.id)
+            .where(
+                Product.tracked_by_count == 0,
+                Product.untracked_since.is_not(None),
+                Product.untracked_since <= cutoff,
+            )
+            .with_for_update()
+        )
+        result = await db.scalars(statement)
+        expired_ids = list(result)
+        if not expired_ids:
+            return []
+
+        await db.execute(delete(Product).where(Product.id.in_(expired_ids)))
+        await db.commit()
+        return expired_ids
+
+    async def delete_by_id(self, db: AsyncSession, product_id: int) -> bool:
+        """Xóa vĩnh viễn một sản phẩm theo ID."""
+        statement = delete(Product).where(Product.id == product_id)
+        result = await db.execute(statement)
+        await db.commit()
+        return result.rowcount > 0
 
 
 product_crud = CRUDProduct()

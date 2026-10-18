@@ -155,7 +155,7 @@ class WatchlistService:
 
             await db.delete(tracking)
             await db.flush()
-            product.tracked_by_count -= 1
+            product.tracked_by_count = max(0, product.tracked_by_count - 1)
             if product.tracked_by_count == 0:
                 product.untracked_since = func.now()
             db.add(product)
