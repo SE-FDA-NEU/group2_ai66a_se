@@ -23,6 +23,31 @@
   font-size: 14px;
 }
 
+.stateCard {
+  padding: 28px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.stateTitle {
+  margin: 0 0 8px;
+  font-size: 20px;
+  color: var(--text-primary);
+}
+
+.stateCard p {
+  margin: 0 0 20px;
+  color: var(--text-secondary);
+}
+
+.stateActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .spinner {
   width: 28px;
   height: 28px;
@@ -78,6 +103,11 @@
   box-sizing: border-box;
 }
 
+.imagePlaceholder {
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
 .productImage {
   width: 100%;
   height: auto;
@@ -109,6 +139,10 @@
 }
 
 .priceSection {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
@@ -118,9 +152,33 @@
   color: var(--text-primary);
 }
 
+.originalPrice {
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-decoration: line-through;
+}
+
+.warningBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  margin: 0 0 20px;
+  color: var(--status-warning);
+  background: var(--status-warning-bg);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.warningBanner svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
 .metaGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 24px;
   padding-top: 20px;
@@ -128,8 +186,15 @@
 }
 
 .metaItem {
+  min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+.metaItem dt,
+.metaItem dd {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .metaLabel {
@@ -146,6 +211,14 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+}
+
+.metaSecondary {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 400;
 }
 
 .actions {
@@ -212,6 +285,22 @@
   border-color: var(--primary-hover);
 }
 
+.btnSecondary {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.btnSecondary:hover {
+  background: var(--bg-main);
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -253,6 +342,9 @@
   }
   .productCard {
     padding: 14px 10px;
+  }
+  .stateCard {
+    padding: 20px 14px;
   }
 }
 
