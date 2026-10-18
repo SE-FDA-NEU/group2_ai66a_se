@@ -36,7 +36,14 @@ export const ProductDetailPage: React.FC = () => {
   }, [id, product]);
 
   if (isLoading) {
-    return <div className={styles.pageContainer}>Đang tải thông tin sản phẩm...</div>;
+    return (
+      <div className={styles.pageContainer}>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner} aria-hidden="true" />
+          <span>Đang tải thông tin sản phẩm...</span>
+        </div>
+      </div>
+    );
   }
 
   if (!product) {

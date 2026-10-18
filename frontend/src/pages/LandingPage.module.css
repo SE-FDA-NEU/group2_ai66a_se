@@ -1,0 +1,448 @@
+/* LandingPage.module.css
+   Styled according to docs/frontend-design-system.md
+   Paired with LandingPage.tsx
+*/
+
+.landingContainer {
+  background-color: var(--bg-main);
+  font-family: var(--font-family-main);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ─── Navbar ──────────────────────────────────────────────────────────────── */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  z-index: 1000;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  letter-spacing: -0.5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.navLinks {
+  display: flex;
+  gap: 1rem;
+}
+
+.navLink {
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.95rem;
+  font-family: inherit;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius-sm);
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.navLink:hover {
+  color: var(--text-primary);
+  background-color: var(--border-light);
+}
+
+.navButtons {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.btnLogin {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnLogin:hover {
+  background-color: var(--border-light);
+}
+
+.btnSignup {
+  background: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 0.45rem 1.15rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btnSignup:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+/* ─── Hero Section ────────────────────────────────────────────────────────── */
+
+.heroSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 7rem 5% 4rem;
+  min-height: calc(100vh - 70px);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.heroContent {
+  max-width: 780px;
+  animation: slideUp 0.6s ease-out forwards;
+  margin-bottom: 3.5rem;
+}
+
+.heroTitle {
+  font-size: 3.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 1.25rem 0;
+  color: var(--text-primary);
+  letter-spacing: -1px;
+}
+
+.highlight {
+  color: var(--primary-color);
+  position: relative;
+  display: inline-block;
+}
+
+.heroSubtitle {
+  font-size: 1.15rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 2rem 0;
+  font-family: inherit;
+}
+
+.ctaButtons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.btnPrimaryCta {
+  background: var(--primary-color);
+  color: #ffffff;
+  padding: 0.85rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--primary-color);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btnPrimaryCta:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.btnSecondaryCta {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 0.85rem 2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.btnSecondaryCta:hover {
+  background-color: var(--border-light);
+}
+
+/* ─── Hero Visual Mockup ──────────────────────────────────────────────────── */
+
+.heroVisual {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.8s ease-out forwards;
+  width: 100%;
+  max-width: 560px;
+}
+
+.glassCard {
+  width: 100%;
+  max-width: 520px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.cardHeader {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.red    { background: var(--status-error); }
+.yellow { background: var(--status-warning); }
+.green  { background: var(--status-success); }
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mockupLine {
+  height: 10px;
+  background: var(--border-color);
+  border-radius: 5px;
+}
+
+.line1 { width: 80%; }
+.line2 { width: 100%; }
+.line3 { width: 60%; }
+
+/* ─── Intro Section ───────────────────────────────────────────────────────── */
+
+.introSection {
+  padding: 5rem 5%;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.sectionTitle {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem 0;
+  letter-spacing: -0.5px;
+}
+
+.sectionSubtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0 auto 3.5rem;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.featureCard {
+  padding: 2rem 1.75rem;
+  background-color: var(--bg-main);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.featureCard:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.featureIcon {
+  font-size: 2.25rem;
+  margin-bottom: 1.25rem;
+  line-height: 1;
+}
+
+.featureCard h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.featureCard p {
+  color: var(--text-secondary);
+  font-size: 0.925rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ─── Footer ──────────────────────────────────────────────────────────────── */
+
+.footer {
+  background-color: var(--primary-color);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 3.5rem 5% 1.5rem;
+}
+
+.footerContent {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 2.5rem;
+  max-width: 1100px;
+  margin: 0 auto 2.5rem;
+}
+
+.footerLogo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.75rem 0;
+}
+
+.footerDesc {
+  line-height: 1.6;
+  max-width: 300px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+}
+
+.footerCol h4 {
+  color: #ffffff;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  font-size: 0.95rem;
+}
+
+.footerCol ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.footerCol button, 
+.footerCol a {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s ease;
+  text-decoration: none;
+}
+
+.footerCol button:hover, 
+.footerCol a:hover {
+  color: #ffffff;
+}
+
+.contactInfo li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.footerBottom {
+  text-align: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.footerBottom p {
+  margin: 0;
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 968px) {
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+  .footerContent {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .navLeft {
+    gap: 1rem;
+  }
+  .navLinks {
+    display: none;
+  }
+  .heroTitle {
+    font-size: 2rem;
+  }
+  .footerContent {
+    grid-template-columns: 1fr;
+  }
+  .ctaButtons {
+    flex-direction: column;
+  }
+}
