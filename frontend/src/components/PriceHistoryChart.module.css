@@ -170,39 +170,50 @@
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  padding: 10px 14px;
   box-shadow: var(--shadow-md);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-primary);
-  max-width: 220px;
+  max-width: 280px;
+  box-sizing: border-box;
 }
 
-.tooltipTime {
-  color: var(--text-secondary);
-  font-size: 11px;
-  margin-bottom: 4px;
-}
-
-.tooltipPrice {
+.tooltipFormattedText {
   font-size: 14px;
   font-weight: 700;
   color: var(--primary-color);
+  letter-spacing: -0.2px;
 }
 
-.tooltipGap {
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px dashed var(--border-color);
+.tooltipOriginalPrice {
   font-size: 11px;
-  color: var(--status-warning);
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.tooltipGapAlert {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  color: #b45309; /* High-contrast amber */
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.gapIcon {
+  color: var(--status-warning);
+  flex-shrink: 0;
+}
+
+.tooltipGapTime {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
 }
 
 .tooltipTag {
   display: inline-block;
-  margin-top: 4px;
+  margin-top: 6px;
   font-size: 10px;
   font-weight: 600;
   padding: 2px 6px;
@@ -218,6 +229,46 @@
 .tagHighest {
   background-color: var(--status-error-bg);
   color: var(--status-error);
+}
+
+/* Legend */
+.chartLegend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendLineSolid {
+  width: 16px;
+  height: 3px;
+  background-color: var(--primary-color);
+  border-radius: 1px;
+}
+
+.legendLineDashed {
+  width: 16px;
+  height: 0px;
+  border-top: 2px dashed var(--status-warning);
+}
+
+.legendBoxShaded {
+  width: 14px;
+  height: 10px;
+  background-color: var(--status-warning-bg);
+  border: 1px dashed var(--status-warning);
+  border-radius: 2px;
 }
 
 /* UX States */
@@ -321,6 +372,13 @@
   .chartWrapper {
     height: 240px;
     min-height: 220px;
+  }
+
+  .chartLegend {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 11px;
   }
 }
 

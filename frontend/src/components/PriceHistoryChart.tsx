@@ -7,11 +7,12 @@ import {
   YAxis,
   Tooltip,
   ReferenceLine,
+  ReferenceArea,
   CartesianGrid,
 } from 'recharts';
 import { AlertTriangle, TrendingUp, ArrowDown, ArrowUp } from 'lucide-react';
 import { getPriceHistory, PriceHistoryResponse } from '../api/watchlistApi';
-import { formatVnd } from '../utils/currency';
+import { formatVnd, convertToVnd } from '../utils/currency';
 import styles from './PriceHistoryChart.module.css';
 
 export interface PriceHistoryChartProps {
@@ -20,15 +21,47 @@ export interface PriceHistoryChartProps {
   requiredTrackedDaysThreshold?: number;
 }
 
-interface ChartItem {
+export interface ChartItem {
+  chartKey: string;
   timestamp: string;
   displayTime: string;
   fullTime: string;
-  price: number;
+  price: number | null;
+  solidPrice: number | null;
+  gapPrice: number | null;
   is_gap: boolean;
+  isGapArea: boolean;
+  gapTimeRange?: string;
   isMin: boolean;
   isMax: boolean;
 }
+
+export interface GapArea {
+  startKey: string;
+  endKey: string;
+  gapTimeRange: string;
+}
+
+/**
+ * Format tooltip display string for normal data points:
+ * "<Price>đ – <DD/MM> HH:MM" (e.g., 239,000đ – 18/09 14:00)
+ */
+export const formatTooltipDisplay = (
+  price: number,
+  timestamp: string | Date,
+  currency: string = 'VND'
+): string => {
+  const d = new Date(timestamp);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+
+  const vndAmount = Math.round(convertToVnd(price, currency));
+  const formattedPrice = vndAmount.toLocaleString('en-US');
+
+  return `${formattedPrice}đ – ${day}/${month} ${hours}:${minutes}`;
+};
 
 export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
   productId,
@@ -68,14 +101,20 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
     return Number(data.max_price);
   }, [data?.max_price]);
 
-  const chartData: ChartItem[] = useMemo(() => {
-    if (!data?.data_points || data.data_points.length === 0) return [];
+  // Xử lý dữ liệu biểu đồ, phát hiện các khoảng trống (gaps) và cấu hình đường đứt đoạn/vùng đổ bóng
+  const { chartData, gapAreas, keyToLabelMap } = useMemo(() => {
+    if (!data?.data_points || data.data_points.length === 0) {
+      return { chartData: [], gapAreas: [], keyToLabelMap: {} };
+    }
 
-    return data.data_points.map((pt) => {
+    const items: ChartItem[] = [];
+    const gaps: GapArea[] = [];
+    const labelMap: Record<string, string> = {};
+
+    data.data_points.forEach((pt, index) => {
       const date = new Date(pt.timestamp);
       const numPrice = Number(pt.price);
 
-      // Định dạng ngày/giờ hiển thị trục X
       const displayTime =
         days <= 1
           ? date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
@@ -86,21 +125,83 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
         minute: '2-digit',
       })}`;
 
-      return {
+      const currentKey = `pt-${index}`;
+
+      // Khi phát hiện có khoảng trống (is_gap === true) so với điểm trước đó
+      if (index > 0 && pt.is_gap) {
+        const prevItem = items[items.length - 1];
+        const prevDate = new Date(prevItem.timestamp);
+
+        const gapStartFormatted = `${String(prevDate.getDate()).padStart(2, '0')}/${String(
+          prevDate.getMonth() + 1
+        ).padStart(2, '0')} ${String(prevDate.getHours()).padStart(2, '0')}:${String(
+          prevDate.getMinutes()
+        ).padStart(2, '0')}`;
+
+        const gapEndFormatted = `${String(date.getDate()).padStart(2, '0')}/${String(
+          date.getMonth() + 1
+        ).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(
+          date.getMinutes()
+        ).padStart(2, '0')}`;
+
+        const gapTimeRange = `${gapStartFormatted} – ${gapEndFormatted}`;
+        const gapKey = `gap-${index}`;
+        const midTimestamp = new Date(
+          (prevDate.getTime() + date.getTime()) / 2
+        ).toISOString();
+
+        // Điểm trước nối vào đường dashed gap
+        prevItem.gapPrice = prevItem.price;
+
+        // Thêm điểm trung gian đại diện cho vùng khoảng trống (Gap Area)
+        items.push({
+          chartKey: gapKey,
+          timestamp: midTimestamp,
+          displayTime: '',
+          fullTime: `Khoảng trống dữ liệu (${gapTimeRange})`,
+          price: null,
+          solidPrice: null, // Làm đứt nét đường thẳng đặc thông thường (break line stroke)
+          gapPrice: prevItem.price !== null ? (prevItem.price + numPrice) / 2 : numPrice,
+          is_gap: true,
+          isGapArea: true,
+          gapTimeRange,
+          isMin: false,
+          isMax: false,
+        });
+
+        gaps.push({
+          startKey: prevItem.chartKey,
+          endKey: currentKey,
+          gapTimeRange,
+        });
+      }
+
+      // Thêm điểm dữ liệu thực tế
+      items.push({
+        chartKey: currentKey,
         timestamp: pt.timestamp,
         displayTime,
         fullTime,
         price: numPrice,
+        solidPrice: numPrice,
+        gapPrice: index > 0 && pt.is_gap ? numPrice : null,
         is_gap: Boolean(pt.is_gap),
+        isGapArea: false,
         isMin: minPrice !== null && numPrice === minPrice,
         isMax: maxPrice !== null && numPrice === maxPrice,
-      };
+      });
+
+      labelMap[currentKey] = displayTime;
     });
+
+    return { chartData: items, gapAreas: gaps, keyToLabelMap: labelMap };
   }, [data?.data_points, days, minPrice, maxPrice]);
 
   const latestPrice = useMemo(() => {
     if (!chartData || chartData.length === 0) return null;
-    return chartData[chartData.length - 1].price;
+    const normalPoints = chartData.filter((item) => !item.isGapArea && item.price !== null);
+    if (normalPoints.length === 0) return null;
+    return normalPoints[normalPoints.length - 1].price;
   }, [chartData]);
 
   // Y-axis tick formatter: rút gọn số để tránh tràn màn hình mobile (375px)
@@ -117,25 +218,44 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
     return `$${val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val}`;
   };
 
-  // Custom Tooltip
+  // Custom Interactive Tooltip
   const renderCustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload || !payload.length) return null;
     const item: ChartItem = payload[0].payload;
 
+    // 1. Nếu điểm chạm rơi vào vùng khoảng trống (Gap Area):
+    // Hiển thị thông báo "No data recorded during this period" thay vì hiển thị giá
+    if (item.isGapArea || item.price === null) {
+      return (
+        <div className={styles.customTooltip} data-testid="tooltip-gap">
+          <div className={styles.tooltipGapAlert}>
+            <AlertTriangle size={15} className={styles.gapIcon} aria-hidden="true" />
+            <span>No data recorded during this period</span>
+          </div>
+          {item.gapTimeRange && (
+            <div className={styles.tooltipGapTime}>{item.gapTimeRange}</div>
+          )}
+        </div>
+      );
+    }
+
+    // 2. Nếu điểm chạm là dữ liệu bình thường:
+    // Định dạng hiển thị "đ – <DD/MM> HH:MM" (e.g., 239,000đ – 18/09 14:00)
     return (
-      <div className={styles.customTooltip}>
-        <div className={styles.tooltipTime}>{item.fullTime}</div>
-        <div className={styles.tooltipPrice}>{formatVnd(item.price, currency)}</div>
+      <div className={styles.customTooltip} data-testid="tooltip-normal">
+        <div className={styles.tooltipFormattedText} data-testid="tooltip-price-date">
+          {formatTooltipDisplay(item.price, item.timestamp, currency)}
+        </div>
+        {currency.toUpperCase() !== 'VND' && (
+          <div className={styles.tooltipOriginalPrice}>
+            ({item.price.toLocaleString('en-US', { style: 'currency', currency: currency.toUpperCase() })})
+          </div>
+        )}
         {item.isMin && (
           <span className={`${styles.tooltipTag} ${styles.tagLowest}`}>Giá thấp nhất</span>
         )}
         {item.isMax && (
           <span className={`${styles.tooltipTag} ${styles.tagHighest}`}>Giá cao nhất</span>
-        )}
-        {item.is_gap && (
-          <div className={styles.tooltipGap}>
-            <AlertTriangle size={12} /> Khoảng cách dữ liệu &gt; 30 phút
-          </div>
         )}
       </div>
     );
@@ -285,7 +405,8 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
           <LineChart data={chartData} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" vertical={false} />
             <XAxis
-              dataKey="displayTime"
+              dataKey="chartKey"
+              tickFormatter={(key) => keyToLabelMap[key] || ''}
               tickLine={false}
               axisLine={{ stroke: 'var(--border-color)' }}
               tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
@@ -298,7 +419,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
               tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
               width={50}
             />
-            <Tooltip content={renderCustomTooltip} />
+            <Tooltip content={renderCustomTooltip} isAnimationActive={false} />
 
             {/* Mốc giá thấp nhất */}
             {minPrice !== null && (
@@ -332,16 +453,56 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
               />
             )}
 
+            {/* Vùng đổ bóng khi xuất hiện khoảng trống mất dữ liệu (Gap Region Shading) */}
+            {gapAreas.map((gap, idx) => (
+              <ReferenceArea
+                key={`gap-area-${idx}`}
+                x1={gap.startKey}
+                x2={gap.endKey}
+                fill="var(--status-warning-bg)"
+                fillOpacity={0.45}
+                stroke="var(--status-warning)"
+                strokeDasharray="3 3"
+              />
+            ))}
+
+            {/* Đường nét liền thông thường: đứt nét khi gặp khoảng trống (connectNulls=false) */}
             <Line
               type="monotone"
-              dataKey="price"
+              dataKey="solidPrice"
               stroke="var(--primary-color)"
               strokeWidth={2}
+              connectNulls={false}
               dot={{ r: 2.5, fill: 'var(--primary-color)' }}
               activeDot={{ r: 5, fill: 'var(--primary-color)', stroke: '#fff', strokeWidth: 2 }}
             />
+
+            {/* Đường nét đứt nối qua khoảng trống mất dữ liệu (Dashed gap stroke) */}
+            <Line
+              type="monotone"
+              dataKey="gapPrice"
+              stroke="var(--status-warning)"
+              strokeWidth={2}
+              strokeDasharray="4 4"
+              connectNulls={false}
+              dot={{ r: 3, fill: 'var(--status-warning)', stroke: '#fff', strokeWidth: 1 }}
+              activeDot={{ r: 5, fill: 'var(--status-warning)', stroke: '#fff', strokeWidth: 2 }}
+            />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Chú thích biểu đồ (Legend) */}
+      <div className={styles.chartLegend}>
+        <div className={styles.legendItem}>
+          <div className={styles.legendLineSolid} />
+          <span>Dữ liệu liên tục</span>
+        </div>
+        <div className={styles.legendItem}>
+          <div className={styles.legendBoxShaded} />
+          <div className={styles.legendLineDashed} />
+          <span>Khoảng trống (Gaps)</span>
+        </div>
       </div>
     </div>
   );
