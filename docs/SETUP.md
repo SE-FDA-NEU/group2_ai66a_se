@@ -70,10 +70,58 @@ The database is **automatically configured** — no manual steps required:
 
 1. **Schema creation**: The backend's `entrypoint.sh` runs `alembic upgrade head` on every container start, applying all 5 migration files to create the `users`, `products`, `price_history`, and `tracked_products` tables.
 2. **Admin seeding**: On startup, the FastAPI `lifespan` event calls `create_admin_user()`, which creates (or updates) a developer/admin account using the `ADMIN_EMAIL` and `ADMIN_PASSWORD` from `.env`.
+3. **Demo Data Seeding**: Run `docker compose exec backend python seed.py --init` to populate 10 demo products with 31 days of continuous price history.
 
 After startup, the database contains:
 - 4 tables with all indexes and constraints
 - 1 admin user (`is_developer = true`)
+
+## Demo Seed Data (Khởi tạo dữ liệu mẫu)
+
+Hệ thống cung cấp sẵn bộ công cụ seed dữ liệu demo trực quan giúp người chấm hoặc người kiểm thử có ngay **10 sản phẩm công nghệ cao cấp**, **31 ngày lịch sử biến động giá chân thực** (đầy đủ các nhãn Giá tốt, Bình thường, Giảm ảo trên Watchlist và biểu đồ Dashboard), đồng thời tự động gán sản phẩm vào tài khoản đang đăng nhập.
+
+### Cách 1 — Chạy trong môi trường Docker (Khuyến nghị cho giảng viên / người chấm)
+
+Sau khi khởi chạy container (`docker compose up -d`), thực hiện lệnh:
+
+```bash
+# Khởi tạo 10 sản phẩm demo và 31 ngày lịch sử biến động giá liên tục:
+docker compose exec backend python seed.py --init
+
+# Hoặc chạy toàn bộ chu trình kèm mô phỏng biến động giá và thông báo đa kênh:
+docker compose exec backend python seed.py
+```
+
+### Cách 2 — Chạy trực tiếp từ máy host (Local Python)
+
+```bash
+# Chạy từ thư mục gốc của repository:
+python backend/seed.py --init
+```
+
+### Các tùy chọn nâng cao của công cụ Seed:
+
+| Lệnh / Cờ | Mô tả hành động |
+|-----------|-----------------|
+| `python backend/seed.py --init` | **(Khuyến nghị)** Khởi tạo 10 sản phẩm demo Amazon và 31 ngày dữ liệu giá liên tục (đầy đủ 3 đường mốc nét đứt trên biểu đồ). |
+| `python backend/seed.py --products` | Chỉ tạo / cập nhật 10 sản phẩm và gán vào Watchlist của người dùng hiện có trong CSDL. |
+| `python backend/seed.py --history` | Chỉ tạo lại lịch sử biến động giá 30 ngày cho toàn bộ sản phẩm. |
+| `python backend/seed.py --simulate` | Giả lập biến động giá ngẫu nhiên để kích hoạt chuông cảnh báo giá mục tiêu (Target price reached) và cảnh báo giá tốt (Good price). |
+| `python backend/seed.py --single` | **Khởi tạo riêng 1 sản phẩm demo độc lập** (*PlayStation DualSense Wireless Controller - Midnight Black*, ASIN `DEMO-B094WL86N5`) kèm 31 ngày lịch sử giá (~4.225 điểm) và gán thẳng vào Watchlist. |
+| `python backend/seed.py --single --no-track` | Khởi tạo 1 sản phẩm riêng lẻ nhưng **chưa gán vào Watchlist**, phục vụ việc copy link `https://www.amazon.com/dp/B094WL86N5` dán trực tiếp vào giao diện web để trải nghiệm luồng thêm sản phẩm từ đầu. |
+| `python backend/seed.py --single --email user@example.com` | Khởi tạo 1 sản phẩm riêng lẻ và gán thẳng vào tài khoản email cụ thể. |
+
+> [!NOTE]
+> Bạn cũng có thể chạy trực tiếp script độc lập:
+> ```bash
+> python backend/seed/seed_single_product.py
+> # hoặc không gán theo dõi để tự dán link URL trên giao diện:
+> python backend/seed/seed_single_product.py --no-track
+> ```
+
+> [!TIP]
+> **Thử nghiệm vi phạm Business Rule BR8 (Giới hạn tối đa 10 sản phẩm):**
+> Sau khi chạy lệnh seed trên (`--init`), tài khoản của bạn sẽ có đủ **10 / 10 sản phẩm** trong Watchlist. Khi nhấn nút `+ Thêm sản phẩm`, hệ thống sẽ lập tức chặn lại và hiển thị cảnh báo: `"You have reached the limit of 10 tracked products"`, sẵn sàng chụp ảnh màn hình minh chứng vi phạm Business Rule.
 
 ## Test Accounts (Tài khoản kiểm thử)
 
@@ -105,7 +153,7 @@ docker compose exec backend python -m pytest tests/unit -v -s
 docker compose exec backend python -m pytest tests/integration -v -s
 ```
 
-Current test suite: **22 test cases** (16 unit + 6 integration), covering auth flows, OTP verification, watchlist CRUD, Amazon link parsing, RapidAPI client, and price label computation.
+Current test suite: **79 test cases** (72 unit + 7 integration), covering auth flows, OTP verification with 5-attempt tracking, watchlist CRUD, Amazon link parsing, RapidAPI client, and price label computation.
 
 ## Stopping and Cleaning Up
 

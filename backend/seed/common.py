@@ -264,6 +264,38 @@ DEMO_PRODUCTS = (
 )
 
 
+# Sản phẩm demo riêng lẻ (Single standalone demo product) phục vụ test tính năng độc lập
+STANDALONE_DEMO_PRODUCT = {
+    "marketplace": "amazon",
+    "external_id": "DEMO-B094WL86N5",
+    "url": "https://www.amazon.com/dp/B094WL86N5",
+    "name": "PlayStation DualSense Wireless Controller - Midnight Black",
+    "image_url": "https://m.media-amazon.com/images/I/612hnT+558L._AC_SL1500_.jpg",
+    "brand": "PlayStation",
+    "shop_name": "PlayStation Store",
+    "product_rating": Decimal("4.80"),
+    "review_count": 85200,
+    "current_price": Decimal("69.99"),
+    "original_price": Decimal("74.99"),
+    "currency": "USD",
+    "in_stock": True,
+    "price_low": Decimal("49.99"),
+    "price_high": Decimal("74.99"),
+    "top_reviews": [
+        {
+            "rating": 5,
+            "title": "Tay cầm chơi game xuất sắc nhất cho PC và PS5",
+            "text": "Phản hồi xúc giác Haptic feedback và cò thích ứng Adaptive triggers chân thực tuyệt đối.",
+        },
+        {
+            "rating": 5,
+            "title": "Thiết kế Midnight Black cực kỳ sang trọng",
+            "text": "Cầm đầm tay, pin trâu và kết nối Bluetooth siêu nhạy không giật lag.",
+        },
+    ],
+}
+
+
 def format_display_price(price: Decimal | float | str, currency: str = "USD") -> str:
     """Format giá kèm quy đổi VNĐ chuẩn UI."""
     dec_price = Decimal(str(price))

@@ -83,6 +83,11 @@ class WatchlistService:
             if await tracked_product_crud.count_for_user(db, user.id) >= 10:
                 raise WATCHLIST_LIMIT_REACHED.throw()
 
+            is_demo = product is not None and (
+                str(product.marketplace) == "demo"
+                or str(product.external_id).startswith(("DEMO-", "SEED-"))
+            )
+
             within_reuse_grace = False
             if product is not None and product.tracked_by_count == 0 and product.untracked_since is not None:
                 untracked_since = product.untracked_since
@@ -92,7 +97,11 @@ class WatchlistService:
                     days=self.MIN_DAYS_FOR_ASSESSMENT
                 )
 
-            if product is None or (product.tracked_by_count == 0 and not within_reuse_grace):
+            should_fetch_marketplace = not is_demo and (
+                product is None or (product.tracked_by_count == 0 and not within_reuse_grace)
+            )
+
+            if should_fetch_marketplace:
                 item = await rapidapi_client.fetch_product(parsed_link.asin, country="US")
                 if item.external_id != parsed_link.asin:
                     raise MARKETPLACE_PRODUCT_MISMATCH.throw()
@@ -102,8 +111,9 @@ class WatchlistService:
                     product = await product_crud.create_with_first_price(db, "amazon", item)
                 else:
                     product = await product_crud.refresh_untracked(db, product, item)
-            elif within_reuse_grace:
-                await product_crud.clear_untracked(db, product)
+            elif product is not None:
+                if within_reuse_grace or product.untracked_since is not None:
+                    await product_crud.clear_untracked(db, product)
 
             normalized_target_price = None
             if request.target_price is not None:

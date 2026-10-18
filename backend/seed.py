@@ -26,6 +26,7 @@ if str(BACKEND_DIR) not in sys.path:
 from seed.seed_products import seed_demo_products
 from seed.seed_history import seed_price_history
 from seed.seed_simulate_update import simulate_price_updates
+from seed.seed_single_product import seed_single_demo_product
 
 
 async def main() -> None:
@@ -53,12 +54,33 @@ async def main() -> None:
         action="store_true",
         help="Chỉ chạy Bước 1 và Bước 2 (Khởi tạo sản phẩm và lịch sử giá ban đầu)",
     )
+    parser.add_argument(
+        "--single",
+        action="store_true",
+        help="Khởi tạo 1 sản phẩm demo riêng lẻ kèm 30 ngày lịch sử giá (cho phép dán link trên web hoặc gán thẳng)",
+    )
+    parser.add_argument(
+        "--no-track",
+        action="store_true",
+        help="Khi dùng kèm --single: Không gán trước vào Watchlist để người dùng tự dán link URL trên giao diện",
+    )
+    parser.add_argument(
+        "--email",
+        type=str,
+        default=None,
+        help="Khi dùng kèm --single: Chỉ định email tài khoản nhận sản phẩm theo dõi",
+    )
 
     args = parser.parse_args()
 
     print("=" * 70)
     print("           TRAKORA DATABASE SEED & SIMULATION TOOL")
     print("=" * 70)
+
+    # Chế độ khởi tạo riêng 1 sản phẩm độc lập
+    if args.single:
+        await seed_single_demo_product(user_email=args.email, auto_track=not args.no_track)
+        return
 
     # Nếu không truyền cờ nào, mặc định chạy toàn bộ chu trình 1 -> 2 -> 3
     run_all = not (args.products or args.history or args.simulate or args.init)
