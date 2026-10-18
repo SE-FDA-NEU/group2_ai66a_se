@@ -16,7 +16,8 @@ export interface ProductRowProps {
   priceLabel?: string;
   isFakeDiscount?: boolean;
   notEnoughData?: boolean;
-  onRemove: (id: string) => void;
+  onRemove: (id: string) => void | Promise<void>;
+  isRemoving?: boolean;
   originalProduct?: any;
 }
 
@@ -34,6 +35,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   isFakeDiscount,
   notEnoughData,
   onRemove,
+  isRemoving = false,
   originalProduct
 }) => {
   const navigate = useNavigate();
@@ -146,10 +148,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         <button
           className={styles.removeButton}
           onClick={handleRemoveClick}
+          disabled={isRemoving}
+          aria-busy={isRemoving}
           aria-label="Ngừng theo dõi sản phẩm"
           title="Ngừng theo dõi sản phẩm"
         >
-          Ngừng theo dõi
+          {isRemoving ? 'Đang xử lý...' : 'Ngừng theo dõi'}
         </button>
       </div>
     </div>
