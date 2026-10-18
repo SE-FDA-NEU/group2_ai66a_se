@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_current_user_from_token_or_query
 from app.models.user_model import User
 from app.services import watchlist_service as service_module
 from app.schemas.watchlist_schema import Product
@@ -64,8 +64,10 @@ def current_user_override():
     from main import app
 
     app.dependency_overrides[get_current_user] = lambda: _user(7)
+    app.dependency_overrides[get_current_user_from_token_or_query] = lambda: _user(7)
     yield
     app.dependency_overrides.pop(get_current_user, None)
+    app.dependency_overrides.pop(get_current_user_from_token_or_query, None)
 
 
 @pytest.mark.asyncio
@@ -285,3 +287,50 @@ async def test_get_price_history_returns_success_with_gap_detection(
     assert data["data_points"][0]["is_gap"] is False
     assert data["data_points"][1]["is_gap"] is False
     assert data["data_points"][2]["is_gap"] is True
+
+
+@pytest.mark.asyncio
+async def test_stream_price_history_returns_401_without_auth(client):
+    """GET /stream trả về 401 khi chưa xác thực."""
+    response = client.get("/api/v1/watchlist/31/stream")
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_stream_price_history_returns_404_when_not_tracked(
+    client, monkeypatch, current_user_override
+):
+    """GET /stream trả về 404 khi sản phẩm không thuộc watchlist của user."""
+    monkeypatch.setattr(
+        service_module.tracked_product_crud,
+        "get",
+        AsyncMock(return_value=None),
+    )
+
+    response = client.get("/api/v1/watchlist/999/stream")
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "TRACKING_NOT_FOUND"
+
+
+@pytest.mark.asyncio
+async def test_stream_price_history_returns_event_stream_when_authorized(
+    client, monkeypatch, current_user_override
+):
+    """GET /stream trả về 200 media_type text/event-stream khi hợp lệ."""
+    from app.services.price_stream_service import price_stream_service
+
+    monkeypatch.setattr(
+        service_module.tracked_product_crud,
+        "get",
+        AsyncMock(return_value=SimpleNamespace(user_id=7, product_id=31)),
+    )
+
+    async def fake_stream(_product_id, _request=None):
+        yield "data: {\"product_id\": 31, \"price\": \"195.00\"}\n\n"
+
+    monkeypatch.setattr(price_stream_service, "subscribe_price_updates", fake_stream)
+
+    response = client.get("/api/v1/watchlist/31/stream")
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers.get("content-type", "")
+    assert "data: {\"product_id\": 31, \"price\": \"195.00\"}" in response.text

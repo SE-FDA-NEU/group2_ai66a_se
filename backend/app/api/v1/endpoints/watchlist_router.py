@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_current_user_from_token_or_query
 from app.core.database import get_db
+from app.crud import tracked_product_crud
 from app.models.user_model import User
 from app.schemas.common import ApiResponse
 from app.schemas.watchlist_schema import (
@@ -13,7 +15,8 @@ from app.schemas.watchlist_schema import (
     ProductList,
 )
 from app.services.notification_service import notification_service
-from app.services.watchlist_service import watchlist_service
+from app.services.price_stream_service import price_stream_service
+from app.services.watchlist_service import TRACKING_NOT_FOUND, watchlist_service
 
 
 router = APIRouter()
@@ -103,3 +106,34 @@ async def get_product_price_history(
         gap_threshold_minutes=gap_threshold_minutes,
     )
     return ApiResponse(message="Price history loaded successfully.", data=result)
+
+
+@router.get(
+    "/{product_id}/stream",
+    summary="SSE stream nhận cập nhật giá thời gian thực của sản phẩm",
+    response_class=StreamingResponse,
+)
+async def stream_product_price(
+    product_id: int,
+    request: Request,
+    token: str | None = Query(default=None, description="Access token cho EventSource của trình duyệt"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_token_or_query),
+):
+    """
+    Server-Sent Events (SSE) stream đẩy giá thời gian thực từ Redis Pub/Sub lên Frontend.
+    Hỗ trợ xác thực qua Authorization Header hoặc ?token= query parameter cho EventSource.
+    """
+    tracking = await tracked_product_crud.get(db, current_user.id, product_id)
+    if tracking is None:
+        raise TRACKING_NOT_FOUND.throw()
+
+    return StreamingResponse(
+        price_stream_service.subscribe_price_updates(product_id, request),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

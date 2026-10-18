@@ -15,6 +15,7 @@ secret_key = settings.SECRET_KEY
 algorithm = settings.ALGORITHM
 
 oauth_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
 async def get_current_user(
@@ -38,6 +39,35 @@ async def get_current_user(
 
     user = await user_crud.get(db, id=int(token_data.user_id))
 
+    if user is None:
+        raise AuthErrors.UNAUTHORIZED.throw()
+
+    return user
+
+
+async def get_current_user_from_token_or_query(
+    token: str | None = None,
+    token_header: str | None = Depends(oauth_scheme_optional),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """
+    Xác thực user qua Authorization header hoặc query parameter ?token= (dành cho EventSource/SSE).
+    """
+    effective_token = token_header or token
+    if not effective_token:
+        raise AuthErrors.UNAUTHORIZED.throw()
+
+    try:
+        payload = jwt.decode(effective_token, secret_key, algorithms=[algorithm])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise AuthErrors.UNAUTHORIZED.throw()
+        token_data = TokenData(user_id=user_id)
+    except JWTError as e:
+        logger.error(f"Lỗi kiểm tra JWT: {str(e)}")
+        raise AuthErrors.UNAUTHORIZED.throw()
+
+    user = await user_crud.get(db, id=int(token_data.user_id))
     if user is None:
         raise AuthErrors.UNAUTHORIZED.throw()
 
