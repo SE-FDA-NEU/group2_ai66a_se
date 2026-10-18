@@ -153,9 +153,13 @@ Composite PK `(user_id, product_id)` prevents duplicate tracking.
 
 | # | Method | Path | Auth | Input | Success | Errors |
 |---|--------|------|------|-------|---------|--------|
-| 10 | POST | `/api/v1/watchlist` | Bearer | JSON: `{url, target_price?, buy_when_good?}` | `201 ApiResponse<Product>` | `400 AMAZON_ONLY`, `400 INVALID_PRODUCT_LINK`, `400 WATCHLIST_LIMIT_REACHED`, `404 USER_NOT_FOUND`, `502 MARKETPLACE_PRODUCT_MISMATCH`, `502 MARKETPLACE_UPSTREAM_ERROR`, `503 MARKETPLACE_UNAVAILABLE` |
+| 10 | POST | `/api/v1/watchlist` | Bearer | JSON: `{url, target_price?, buy_when_good?}` | `201 ApiResponse<Product>` | `400 AMAZON_ONLY`, `400 INVALID_PRODUCT_LINK`, `400 WATCHLIST_LIMIT_REACHED`, `404 USER_NOT_FOUND`, `409 PRODUCT_ALREADY_TRACKED`, `502 MARKETPLACE_PRODUCT_MISMATCH`, `502 MARKETPLACE_UPSTREAM_ERROR`, `503 MARKETPLACE_UNAVAILABLE` |
 | 11 | GET | `/api/v1/watchlist` | Bearer | — | `200 ApiResponse<ProductList>` | `401 UNAUTHORIZED` |
 | 12 | DELETE | `/api/v1/watchlist/{product_id}` | Bearer | Path: `product_id` | `204 No Content` | `404 TRACKING_NOT_FOUND` |
+| 13 | GET | `/api/v1/watchlist/{product_id}/history` | Bearer | Query: `days=0..365` (0 = all), `gap_threshold_minutes=30` | `200 ApiResponse<PriceHistoryResponse>` | `404 TRACKING_NOT_FOUND`, `401 UNAUTHORIZED` |
+| 14 | PUT | `/api/v1/watchlist/{product_id}/target-price` | Bearer | JSON: `{target_price}` | `200 ApiResponse<Product>` | `400 INVALID_TARGET_PRICE`, `404 TRACKING_NOT_FOUND` |
+| 15 | GET | `/api/v1/watchlist/{product_id}/stream` | Bearer / Query `?token=` | Path: `product_id` | `200 text/event-stream` (SSE) | `401 UNAUTHORIZED`, `404 TRACKING_NOT_FOUND` |
+| 16 | GET | `/api/v1/watchlist/notifications` | Bearer | Query: `after_id=0` | `200 ApiResponse<NotificationList>` | `401 UNAUTHORIZED` |
 
 ### 3.5 Developer (`/api/v1/dev`)
 
@@ -350,3 +354,45 @@ ORDER BY products.id
 | **Current design** | Products with 0 trackers are kept for a 7-day grace period. Tracking resumes if added again within 7 days. Permanently deleted after 7 days. |
 | **Reason** | Saves database space by removing dead products, while preventing accidental data loss if a user immediately re-tracks a product. |
 | **Impact** | Added `untracked_since` column to `products` table and a background cleanup mechanism. |
+
+---
+
+## 6. What changed since M2 (Sprint 3 / Milestone 3)
+
+The process of building and validating the real user interface during Sprint 3 required four architectural and API updates:
+
+### Change 1: Added Target Price Settings Modal and Milestone Dashed Reference Lines (US02)
+
+| Aspect | Detail |
+|--------|--------|
+| **M2 design** | Target price (`target_price`) could only be set once when creating the tracking via `POST /api/v1/watchlist`. No visual target milestone was drawn on the chart. |
+| **Current design** | 1. Added Settings modal (`ProductSettingsModal`) on `/detail/:productId` allowing users to update their target price at any time via `PUT /api/v1/watchlist/{product_id}/target-price`.<br>2. Added **blue dashed horizontal line (`stroke="#2563eb"`, `strokeDasharray="4 4"`)** for target price on the price chart, alongside the highest and lowest price dashed lines.<br>3. Added target price to the stats grid and legend. |
+| **Reason** | Seeing the actual price chart history naturally prompts users to refine their target price. Visualizing the target milestone as a dashed line lets users immediately gauge the distance between current price and their target. |
+| **Impact** | Frontend updated `PriceHistoryChart.tsx` (added `targetPrice` prop, Y-axis auto-scaling, ReferenceLine) and `ProductDetailPage.tsx`. |
+
+### Change 2: Expanded Price History Range to Support "All Time" (`days=0`) (US03)
+
+| Aspect | Detail |
+|--------|--------|
+| **M2 design** | Endpoint `GET /api/v1/watchlist/{product_id}/history` strictly validated `days: int = Query(ge=1, le=365)`. Only 7, 14, 30 days were available on UI. |
+| **Current design** | Changed validation to `ge=0`, where `days=0` indicates "All time" (entire tracking lifetime). Added "Tất cả" range button on chart. |
+| **Reason** | Matches US03 acceptance criteria: *"covering however long the product has been tracked"*. Users need to view the entire product lifecycle across months to identify long-term macro trends. |
+| **Impact** | Backend updated `watchlist_router.py`. Frontend added `all` (`days=0`) option to `PriceHistoryChart.tsx`. |
+
+### Change 3: Blocked Password Reset for Google-Only Accounts (`GOOGLE_ACCOUNT_NO_PASSWORD`) (US04)
+
+| Aspect | Detail |
+|--------|--------|
+| **M2 design** | `POST /api/v1/otp/send` for `reset-password` only checked if email existed, without checking `auth_provider`. |
+| **Current design** | Backend verifies `auth_provider == 'google' and not password_hashed`, throwing `GOOGLE_ACCOUNT_NO_PASSWORD` (HTTP 400). UI directs user to "Sign in with Google" button. |
+| **Reason** | Google OAuth users do not have a password hash in the database. Sending an OTP leads to dead-ends. A specific error code prevents user confusion. |
+| **Impact** | Added `GOOGLE_ACCOUNT_NO_PASSWORD` in `user_schema.py` and handled in `ForgotPasswordPage.tsx`. |
+
+### Change 4: Standardized Profile Route to `/profile` (US04, BR14)
+
+| Aspect | Detail |
+|--------|--------|
+| **M2 design** | User profile editing was located under `/settings` in frontend routing. |
+| **Current design** | Standardized to `/profile` matching `docs/requirements.md` and M1 screen flow diagram, with backward-compatible redirect from `/settings`. |
+| **Reason** | Eliminates inconsistency between architecture documentation and running codebase. |
+| **Impact** | Updated router in `App.tsx` and navigation in `Sidebar.tsx`. |

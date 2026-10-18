@@ -14,9 +14,9 @@ SM Sprint 3: @maimanhbel
 
 ## Sprint 3 (weeks 9–10)
 
-Goal: _
-Committed _ · Completed _ · Velocity _
-Not finished: - <#-id-issue> - issue. Move to Sprint 4.
+Goal: Deliver interactive and accessible UI for all P0 stories (US01–US05) through real DB interaction, robust error validation, dynamic price history chart with gap detection and target price dashed line milestones.
+Committed 31 · Completed 31 · Velocity 31.
+Not finished: None.
 SM Sprint 4: @huydang2006
 
 ## Sprint 4 (weeks 11–12)

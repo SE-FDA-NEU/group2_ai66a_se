@@ -236,10 +236,11 @@ const ForgotPasswordPage: React.FC = () => {
         detail.toLowerCase().includes('không chính xác') ||
         detail.toLowerCase().includes('hết hạn') ||
         detail.toLowerCase().includes('expired') ||
-        detail.toLowerCase().includes('invalid')
+        detail.toLowerCase().includes('invalid') ||
+        detail.toLowerCase().includes('thử')
       ) {
-        setOtpError('Mã OTP không đúng hoặc đã hết hạn.');
-        setApiError(detail || 'Mã OTP không chính xác hoặc đã hết hạn. Vui lòng kiểm tra lại.');
+        setOtpError(detail || 'Mã OTP không chính xác hoặc đã hết hạn.');
+        setApiError(undefined);
       } else {
         setApiError(detail || 'Xác thực OTP thất bại. Vui lòng thử lại.');
       }

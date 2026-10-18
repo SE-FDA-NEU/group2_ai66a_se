@@ -4,8 +4,22 @@ import { useNavigate } from 'react-router-dom';
 import { getNotifications } from '../api/notificationApi';
 import { getWatchlist, UserNotification } from '../api/watchlistApi';
 import { useAuth } from '../context/AuthContext';
+import { formatVnd } from '../utils/currency';
 import { getSafeMarketplaceUrl } from '../utils/marketplace';
 import styles from './NotificationCenter.module.css';
+
+export const formatNotificationMessage = (msg: string): string => {
+  if (!msg) return '';
+  if (msg.includes('₫') || msg.includes('đ')) {
+    return msg;
+  }
+  return msg.replace(/(\d+(?:\.\d+)?)\s*USD\b/gi, (match, numStr) => {
+    const val = parseFloat(numStr);
+    if (!Number.isFinite(val)) return match;
+    const vndFormatted = formatVnd(val, 'USD');
+    return `${vndFormatted} (${val.toFixed(2)} USD)`;
+  });
+};
 
 const POLL_INTERVAL_MS = 5_000;
 const TOAST_DURATION_MS = 6_000;
@@ -52,10 +66,22 @@ interface NotificationCenterProps {
 }
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly = false }) => {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const navigate = useNavigate();
   const [visible, setVisible] = useState<VisibleNotification[]>([]);
-  const lastSeenIdRef = useRef(0);
+
+  const storageKey = user?.id ? `trakora_last_seen_notif_${user.id}` : 'trakora_last_seen_notif';
+  const getInitialLastSeen = (): number => {
+    try {
+      const v = localStorage.getItem(storageKey);
+      return v ? Number(v) : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const lastSeenIdRef = useRef<number>(getInitialLastSeen());
+  const isInitialSyncRef = useRef<boolean>(true);
   const timersRef = useRef<Map<number, number>>(new Map());
 
   const dismiss = useCallback((id: number) => {
@@ -82,13 +108,44 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
           ? new URLSearchParams(window.location.search).get('mockNotification')
           : null;
         const mockNotification = mockKind ? MOCK_NOTIFICATIONS[mockKind] : undefined;
-        const notifications = mockNotification
-          ? mockNotification.id > lastSeenIdRef.current ? [mockNotification] : []
-          : mockOnly ? [] : await getNotifications(lastSeenIdRef.current);
-        if (!active || notifications.length === 0) return;
+
+        let notifications: UserNotification[] = [];
+        if (mockNotification) {
+          notifications = mockNotification.id > lastSeenIdRef.current ? [mockNotification] : [];
+        } else if (!mockOnly) {
+          notifications = await getNotifications(lastSeenIdRef.current);
+        }
+
+        if (!active || notifications.length === 0) {
+          isInitialSyncRef.current = false;
+          return;
+        }
+
+        const isFirstVisitWithoutStoredId = lastSeenIdRef.current === 0;
+        const maxId = Math.max(...notifications.map((n) => n.id));
+        lastSeenIdRef.current = Math.max(lastSeenIdRef.current, maxId);
+        try {
+          localStorage.setItem(storageKey, String(lastSeenIdRef.current));
+        } catch {
+          // Ignore localStorage write error
+        }
+
+        // Lần đầu tải trang: Chỉ đồng bộ maxId vào bộ nhớ đệm nếu chưa từng lưu lastSeenId và không trong test/mock
+        if (isInitialSyncRef.current && !mockNotification && isFirstVisitWithoutStoredId && import.meta.env.MODE !== 'test') {
+          isInitialSyncRef.current = false;
+          return;
+        }
+        isInitialSyncRef.current = false;
+
+        // Chỉ hiển thị popup Toast cho các cảnh báo giá thời gian thực, bỏ qua thông báo cấu hình giá mục tiêu
+        const actionableAlerts = notifications.filter(
+          (n) => n.kind !== 'target_price_set'
+        );
+
+        if (actionableAlerts.length === 0) return;
 
         let productUrls = new Map<number, string>();
-        if (!mockOnly && notifications.some((item) => item.product_id != null)) {
+        if (!mockOnly && actionableAlerts.some((item) => item.product_id != null)) {
           try {
             const watchlist = await getWatchlist();
             productUrls = new Map(
@@ -104,15 +161,10 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
         }
         if (!active) return;
 
-        const notificationsWithLinks: VisibleNotification[] = notifications.map((item) => ({
+        const notificationsWithLinks: VisibleNotification[] = actionableAlerts.map((item) => ({
           ...item,
           productUrl: item.product_id == null ? undefined : productUrls.get(item.product_id),
         }));
-
-        lastSeenIdRef.current = Math.max(
-          lastSeenIdRef.current,
-          ...notificationsWithLinks.map((n) => n.id),
-        );
 
         notificationsWithLinks.forEach((n) => {
           if (timers.has(n.id)) return;
@@ -122,7 +174,6 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
 
         setVisible((current) => [...current, ...notificationsWithLinks].slice(-MAX_VISIBLE));
       } catch (error) {
-        // Chỉ log nếu không phải 401 khi chưa login
         if (isLoggedIn) {
           console.error('Could not load notifications:', error);
         }
@@ -137,7 +188,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
       timers.forEach((timer) => window.clearTimeout(timer));
       timers.clear();
     };
-  }, [dismiss, isLoggedIn, mockOnly]);
+  }, [dismiss, isLoggedIn, mockOnly, storageKey]);
 
   if (visible.length === 0) return null;
 
@@ -154,12 +205,12 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
               aria-label={`${notification.title}. Mở sản phẩm trên marketplace trong tab mới`}
             >
               <strong>{notification.title}</strong>
-              <span>{notification.message}</span>
+              <span>{formatNotificationMessage(notification.message)}</span>
             </a>
           ) : (
             <div className={styles.toastContent}>
               <strong>{notification.title}</strong>
-              <span>{notification.message}</span>
+              <span>{formatNotificationMessage(notification.message)}</span>
             </div>
           )}
           {notification.product_id && (
@@ -188,4 +239,3 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
     document.body,
   );
 };
-

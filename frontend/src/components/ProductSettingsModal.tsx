@@ -155,12 +155,24 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
             <div className={styles.priceInfoBox}>
               <div className={styles.priceInfoItem}>
                 <span className={styles.priceInfoLabel}>Giá hiện tại</span>
-                <span className={styles.priceInfoValue}>{currentPriceFormatted}</span>
+                <span className={styles.priceInfoValue}>
+                  {currentPriceFormatted}
+                  {product.currency?.toUpperCase() !== 'VND' && (
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', fontWeight: 400 }}>
+                      (~${Number(product.current_price).toFixed(2)} {product.currency})
+                    </span>
+                  )}
+                </span>
               </div>
               <div className={styles.priceInfoItem} style={{ textAlign: 'right' }}>
                 <span className={styles.priceInfoLabel}>Mục tiêu hiện tại</span>
                 <span className={styles.priceInfoValue}>
                   {product.target_price != null ? formatVnd(product.target_price, product.currency) : 'Chưa đặt'}
+                  {product.target_price != null && product.currency?.toUpperCase() !== 'VND' && (
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', fontWeight: 400 }}>
+                      (~${Number(product.target_price).toFixed(2)} {product.currency})
+                    </span>
+                  )}
                 </span>
               </div>
             </div>
@@ -184,6 +196,15 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
                   aria-describedby={validationError ? 'targetPriceError' : undefined}
                 />
               </div>
+
+              {targetPriceInput.trim() !== '' && Number(targetPriceInput) > 0 && !validationError && (
+                <div style={{ fontSize: '12px', color: 'var(--primary-color)', marginTop: '4px', fontWeight: 500 }}>
+                  ≈ {formatVnd(Number(targetPriceInput), 'VND')}
+                  {product.currency?.toUpperCase() !== 'VND' && (
+                    <span> (khoảng ${convertFromVnd(Number(targetPriceInput), product.currency).toFixed(2)} {product.currency})</span>
+                  )}
+                </div>
+              )}
 
               {validationError && (
                 <div id="targetPriceError" className={styles.errorMessage} role="alert">

@@ -129,41 +129,88 @@
   border-radius: 20px;
 }
 
+.currentPrice {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
 .metaGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 24px;
-  row-gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
   margin-bottom: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-color);
+  padding: 16px;
+  background-color: var(--bg-main);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
 }
 
 .metaItem {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 14px;
+  line-height: 1.5;
   min-width: 0;
 }
 
 .metaLabel {
   color: var(--text-secondary);
-  font-size: 12px;
   font-weight: 500;
-  line-height: 1.4;
+  flex-shrink: 0;
 }
 
 .metaValue {
+  color: var(--text-primary);
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  text-align: right;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   min-width: 0;
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
   overflow-wrap: anywhere;
+}
+
+.reviewCount {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.badgeSuccess {
+  background-color: var(--status-success-bg);
+  color: var(--status-success);
+  border: 1px solid var(--status-success);
+}
+
+.badgeWarning {
+  background-color: var(--status-warning-bg);
+  color: var(--status-warning);
+  border: 1px solid var(--status-warning);
+}
+
+.badgeNeutral {
+  background-color: var(--status-neutral-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
 }
 
 .btnSettings {
@@ -278,14 +325,20 @@
 }
 
 @media (max-width: 480px) {
-  .metaGrid {
-    grid-template-columns: 1fr;
+  .metaItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .metaValue {
+    justify-content: flex-start;
+    text-align: left;
   }
   .title {
     font-size: 17px;
   }
   .currentPrice {
-    font-size: 22px;
+    font-size: 20px;
   }
 }
 

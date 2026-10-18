@@ -23,9 +23,19 @@ class CRUDProduct:
     async def get_by_marketplace_id(
         self, db: AsyncSession, marketplace: str, external_id: str, *, for_update: bool = False
     ) -> Product | None:
+        possible_ids = [external_id]
+        if not external_id.startswith("DEMO-"):
+            possible_ids.append(f"DEMO-{external_id}")
+        if not external_id.startswith("SEED-"):
+            possible_ids.append(f"SEED-{external_id}")
+        if external_id.startswith("DEMO-"):
+            possible_ids.append(external_id[5:])
+        if external_id.startswith("SEED-"):
+            possible_ids.append(external_id[5:])
+
         statement = select(Product).where(
             Product.marketplace == marketplace,
-            Product.external_id == external_id,
+            Product.external_id.in_(possible_ids),
         )
         if for_update:
             statement = statement.with_for_update()
