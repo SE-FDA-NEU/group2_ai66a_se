@@ -6,10 +6,12 @@ Prove that users can complete the core product-owner stories through the UI with
 
 ## Committed
 
-| Issue | Story | Scope | Estimate | Owner |
-|:-----:|:-----:|:-------|:--------:|:------|
+| Issue | Story | Scope | Estimate | Owner (PR author) |
+|:-----:|:-----:|:-------|:--------:|:-----------------|
 | #126 | N/A | Fix frontend route guard so protected pages redirect unauthenticated users to login | Not specified | @Dai-Nguyen1506 |
 | #127 | US05 | Restyle login, register, and watchlist pages consistently | 3 h | @mfortunaa |
+| #48 | US07 | Show price labels and notify users when a product reaches a good price | 5 pts | @CaMapCon26 |
+| #49 | US08 | Sort tracked products by current price in ascending or descending order | 3 pts | @mfortunaa |
 | #130 | US02 | Design notification templates and sending function | 2 h | @huydang2006 |
 | #131 | US02 | Automatically check product prices and trigger notifications | 3 h | @huydang2006 |
 | #132 | US01 | Untrack products while retaining product and price history for 7 days | 3 h | @Dai-Nguyen1506 |
@@ -26,7 +28,7 @@ Prove that users can complete the core product-owner stories through the UI with
 | #158 | US02 | Display target-price notifications and navigate to marketplace product links | 3 h | @mfortunaa |
 | #164 | N/A | Fix product table column alignment with row values | Not specified | @mfortunaa |
 
-**Total committed: 38 hours**   
+**Committed estimates: 38 hours across technical tasks, plus 8 story points for #48 and #49. These units are not combined.**
 
 ## Result
 
@@ -34,6 +36,8 @@ Prove that users can complete the core product-owner stories through the UI with
 |:-----:|:--------:|:------|:-----------------|
 | #126 | Not specified | Done — merged in PR #142 | |
 | #127 | 3 h | Done — merged in PR #160 | |
+| #48 | 5 pts | Closed — merged in PR #129; two acceptance criteria remain unchecked in the issue | Confirm acceptance criteria with the team |
+| #49 | 3 pts | Closed — merged in PR #128; acceptance criteria remain unchecked in the issue | Confirm acceptance criteria with the team |
 | #130 | 2 h | Done — merged in PR #141 | |
 | #131 | 3 h | Done — merged in PR #143 | |
 | #132 | 3 h | Done — merged in PR #148 | |
@@ -50,11 +54,11 @@ Prove that users can complete the core product-owner stories through the UI with
 | #158 | 3 h | Done — merged in PR #166 | |
 | #164 | Not specified | Done — merged in PR #167 | |
 
-**Completed: 38 hours**     
+**Completed: all 19 listed issues are closed/merged. Recorded technical-task effort: 38 hours; story points recorded for #48 and #49: 8. Confirm the unchecked acceptance criteria on #48 and #49 before treating those stories as fully accepted.**
 
 ## Sprint Review
 
-- **What we demonstrated:** Protected routes now require authentication; users can track and untrack products, configure target prices, receive price-change notifications, and open marketplace listings. The detail page includes responsive price history with minimum/maximum values and clear visual treatment for data gaps. The frontend was restyled, with watchlist columns aligned to their values and detail-page metadata labels separated from their content.
+- **What we demonstrated:** Protected routes now require authentication; users can track and untrack products, sort the watchlist, view price labels, configure target prices, receive price-change notifications, and open marketplace listings. The detail page includes responsive price history with minimum/maximum values and clear visual treatment for data gaps. The frontend was restyled, with watchlist columns aligned to their values and detail-page metadata labels separated from their content.
 - **Feedback received:** Integration surfaced a watchlist table alignment issue (#164) and product-detail metadata that ran together. The table now uses a shared responsive grid, and the detail metadata has spacing and responsive layout rules.
 - **Backlog changes as a result:** Sprint 3 backlog refinement was completed in #144. Follow-up backlog changes after the sprint review were not available in the issue records checked.
 
