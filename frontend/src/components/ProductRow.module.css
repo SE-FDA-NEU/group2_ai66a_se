@@ -1,6 +1,6 @@
 .rowContainer {
   display: grid;
-  grid-template-columns: 3fr 1.5fr 1.5fr 1fr 1.5fr 80px;
+  grid-template-columns: 3fr 1.5fr 1.5fr 1fr 1.5fr 150px;
   align-items: center;
   padding: 12px 24px;
   background-color: var(--bg-surface);
@@ -142,7 +142,27 @@
 
 .actionCol {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.marketplaceLink {
+  color: var(--primary-color);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
+.marketplaceLink:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+.marketplaceLink:focus-visible {
+  box-shadow: var(--focus-ring);
+  border-radius: 2px;
 }
 
 .removeButton {
@@ -174,7 +194,7 @@
 
 @media (max-width: 1024px) {
   .rowContainer {
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 60px;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 135px;
   }
 }
 
@@ -214,6 +234,7 @@
     position: absolute;
     top: 16px;
     right: 16px;
+    align-items: flex-end;
   }
 }
 
