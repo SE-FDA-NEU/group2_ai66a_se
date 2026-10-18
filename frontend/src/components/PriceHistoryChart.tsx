@@ -19,6 +19,7 @@ export interface PriceHistoryChartProps {
   productId: number;
   currency?: string;
   requiredTrackedDaysThreshold?: number;
+  targetPrice?: number | null;
 }
 
 export interface ChartItem {
@@ -63,12 +64,34 @@ export const formatTooltipDisplay = (
   return `${formattedPrice}đ – ${day}/${month} ${hours}:${minutes}`;
 };
 
+export type TimeRangeKey = '30m' | '1h' | '1d' | '7d' | '14d' | '30d' | 'all';
+
+export interface RangeOption {
+  key: TimeRangeKey;
+  label: string;
+  days: number;
+  hours?: number;
+}
+
+export const RANGE_OPTIONS: RangeOption[] = [
+  { key: '30m', label: '30 phút', days: 0, hours: 0.5 },
+  { key: '1h', label: '1 giờ', days: 0, hours: 1 },
+  { key: '1d', label: '1 ngày', days: 1 },
+  { key: '7d', label: '7 ngày', days: 7 },
+  { key: '14d', label: '14 ngày', days: 14 },
+  { key: '30d', label: '30 ngày', days: 30 },
+  { key: 'all', label: 'Tất cả', days: 0 },
+];
+
 export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
   productId,
   currency = 'VND',
   requiredTrackedDaysThreshold = 7,
+  targetPrice,
 }) => {
+  const [selectedRange, setSelectedRange] = useState<TimeRangeKey>('7d');
   const [days, setDays] = useState<number>(7);
+  const [hours, setHours] = useState<number | undefined>(undefined);
   const [data, setData] = useState<PriceHistoryResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +100,10 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const response = await getPriceHistory(productId, days);
+      const response =
+        hours !== undefined
+          ? await getPriceHistory(productId, days, 30, hours)
+          : await getPriceHistory(productId, days);
       setData(response);
     } catch (err: any) {
       console.error('Failed to fetch price history', err);
@@ -85,7 +111,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [productId, days]);
+  }, [productId, days, hours]);
 
   useEffect(() => {
     fetchData();
@@ -101,6 +127,25 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
     return Number(data.max_price);
   }, [data?.max_price]);
 
+  // Tính mốc thấp nhất/cao nhất bao gồm cả giá mục tiêu (nếu có) để định miền trục Y
+  const effectiveMin = useMemo(() => {
+    const validTarget = targetPrice != null && Number(targetPrice) > 0 ? Number(targetPrice) : null;
+    if (minPrice === null) return validTarget;
+    if (validTarget === null) return minPrice;
+    return Math.min(minPrice, validTarget);
+  }, [minPrice, targetPrice]);
+
+  const effectiveMax = useMemo(() => {
+    const validTarget = targetPrice != null && Number(targetPrice) > 0 ? Number(targetPrice) : null;
+    if (maxPrice === null) return validTarget;
+    if (validTarget === null) return maxPrice;
+    return Math.max(maxPrice, validTarget);
+  }, [maxPrice, targetPrice]);
+
+  // Tính miền Y-axis để biểu đồ có khoảng thở (padding) phía trên và dưới
+  const yDomainMin = effectiveMin !== null ? Math.floor(effectiveMin * 0.98) : 'auto';
+  const yDomainMax = effectiveMax !== null ? Math.ceil(effectiveMax * 1.02) : 'auto';
+
   // Xử lý dữ liệu biểu đồ, phát hiện các khoảng trống (gaps) và cấu hình đường đứt đoạn/vùng đổ bóng
   const { chartData, gapAreas, keyToLabelMap } = useMemo(() => {
     if (!data?.data_points || data.data_points.length === 0) {
@@ -110,15 +155,28 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
     const items: ChartItem[] = [];
     const gaps: GapArea[] = [];
     const labelMap: Record<string, string> = {};
+    const isSubDay =
+      selectedRange === '30m' ||
+      selectedRange === '1h' ||
+      selectedRange === '1d' ||
+      days === 1 ||
+      (hours !== undefined && hours <= 24);
+    let lastDateLabel = '';
 
     data.data_points.forEach((pt, index) => {
       const date = new Date(pt.timestamp);
       const numPrice = Number(pt.price);
 
-      const displayTime =
-        days === 1
-          ? date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-          : `${date.getDate()}/${date.getMonth() + 1}`;
+      let displayTime = '';
+      if (isSubDay) {
+        displayTime = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      } else {
+        const dateStr = `${date.getDate()}/${date.getMonth() + 1}`;
+        if (dateStr !== lastDateLabel) {
+          displayTime = dateStr;
+          lastDateLabel = dateStr;
+        }
+      }
 
       const fullTime = `${date.toLocaleDateString('vi-VN')} ${date.toLocaleTimeString('vi-VN', {
         hour: '2-digit',
@@ -195,7 +253,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
     });
 
     return { chartData: items, gapAreas: gaps, keyToLabelMap: labelMap };
-  }, [data?.data_points, days, minPrice, maxPrice]);
+  }, [data?.data_points, days, hours, selectedRange, minPrice, maxPrice]);
 
   const latestPrice = useMemo(() => {
     if (!chartData || chartData.length === 0) return null;
@@ -316,9 +374,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
 
   const showWarning = data ? data.tracked_days < requiredTrackedDaysThreshold : false;
 
-  // Tính miền Y-axis để biểu đồ có khoảng thở (padding) phía trên và dưới
-  const yDomainMin = minPrice !== null ? Math.floor(minPrice * 0.98) : 'auto';
-  const yDomainMax = maxPrice !== null ? Math.ceil(maxPrice * 1.02) : 'auto';
+
 
   return (
     <div className={styles.chartCard} data-testid="price-history-chart">
@@ -330,34 +386,20 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
           </h3>
         </div>
         <div className={styles.rangeButtons} role="group" aria-label="Khoảng thời gian">
-          <button
-            type="button"
-            className={`${styles.rangeButton} ${days === 7 ? styles.rangeButtonActive : ''}`}
-            onClick={() => setDays(7)}
-          >
-            7 ngày
-          </button>
-          <button
-            type="button"
-            className={`${styles.rangeButton} ${days === 14 ? styles.rangeButtonActive : ''}`}
-            onClick={() => setDays(14)}
-          >
-            14 ngày
-          </button>
-          <button
-            type="button"
-            className={`${styles.rangeButton} ${days === 30 ? styles.rangeButtonActive : ''}`}
-            onClick={() => setDays(30)}
-          >
-            30 ngày
-          </button>
-          <button
-            type="button"
-            className={`${styles.rangeButton} ${days === 0 ? styles.rangeButtonActive : ''}`}
-            onClick={() => setDays(0)}
-          >
-            Tất cả
-          </button>
+          {RANGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              className={`${styles.rangeButton} ${selectedRange === opt.key ? styles.rangeButtonActive : ''}`}
+              onClick={() => {
+                setSelectedRange(opt.key);
+                setDays(opt.days);
+                setHours(opt.hours);
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -372,7 +414,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
         </div>
       )}
 
-      {/* Tóm tắt Milestones: Thấp nhất, Cao nhất, Hiện tại */}
+      {/* Tóm tắt Milestones: Thấp nhất, Cao nhất, Mục tiêu, Hiện tại */}
       <div className={styles.statsGrid}>
         <div className={styles.statItem}>
           <span className={styles.statLabel}>
@@ -397,6 +439,21 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
             {maxPrice !== null ? formatVnd(maxPrice, currency) : '--'}
           </span>
         </div>
+
+        {targetPrice != null && Number(targetPrice) > 0 && (
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>
+              <TrendingUp size={14} color="#2563eb" aria-hidden="true" /> Mục tiêu
+            </span>
+            <span
+              className={styles.statValue}
+              style={{ color: '#2563eb' }}
+              data-testid="stat-target-price"
+            >
+              {formatVnd(Number(targetPrice), currency)}
+            </span>
+          </div>
+        )}
 
         <div className={styles.statItem}>
           <span className={styles.statLabel}>Hiện tại</span>
@@ -446,7 +503,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
             />
             <Tooltip content={renderCustomTooltip} isAnimationActive={false} />
 
-            {/* Mốc giá thấp nhất */}
+            {/* Mốc giá thấp nhất - đường nét đứt */}
             {minPrice !== null && (
               <ReferenceLine
                 y={minPrice}
@@ -462,7 +519,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
               />
             )}
 
-            {/* Mốc giá cao nhất */}
+            {/* Mốc giá cao nhất - đường nét đứt */}
             {maxPrice !== null && (
               <ReferenceLine
                 y={maxPrice}
@@ -472,6 +529,22 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
                   value: 'Cao nhất',
                   position: 'insideTopRight',
                   fill: 'var(--status-error)',
+                  fontSize: 10,
+                  fontWeight: 600,
+                }}
+              />
+            )}
+
+            {/* Mốc giá mục tiêu (Target price) - đường gạch ngang nét đứt */}
+            {targetPrice != null && Number(targetPrice) > 0 && (
+              <ReferenceLine
+                y={Number(targetPrice)}
+                stroke="#2563eb"
+                strokeDasharray="4 4"
+                label={{
+                  value: 'Mục tiêu',
+                  position: 'insideBottomLeft',
+                  fill: '#2563eb',
                   fontSize: 10,
                   fontWeight: 600,
                 }}
@@ -528,6 +601,20 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
           <div className={styles.legendBoxShaded} />
           <div className={styles.legendLineDashed} />
           <span>Khoảng trống (Gaps)</span>
+        </div>
+        {targetPrice != null && Number(targetPrice) > 0 && (
+          <div className={styles.legendItem}>
+            <div className={styles.legendLineTarget} />
+            <span>Mục tiêu</span>
+          </div>
+        )}
+        <div className={styles.legendItem}>
+          <div className={styles.legendLineLowest} />
+          <span>Thấp nhất</span>
+        </div>
+        <div className={styles.legendItem}>
+          <div className={styles.legendLineHighest} />
+          <span>Cao nhất</span>
         </div>
       </div>
     </div>

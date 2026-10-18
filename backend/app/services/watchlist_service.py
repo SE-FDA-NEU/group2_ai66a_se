@@ -328,6 +328,7 @@ class WatchlistService:
         product_id: int,
         *,
         days: int = 7,
+        hours: float | None = None,
         gap_threshold_minutes: int = 30,
     ) -> PriceHistoryResponse:
         tracking = await tracked_product_crud.get(db, user.id, product_id)
@@ -337,8 +338,13 @@ class WatchlistService:
         # 1. Tính tổng số ngày dương lịch riêng biệt đã theo dõi (BR3, BR5)
         tracked_days = await product_crud.get_history_distinct_days(db, product_id)
 
-        # 2. Lấy dữ liệu trong khung thời gian yêu cầu (mặc định 7 ngày gần nhất)
-        since = datetime.now(timezone.utc) - timedelta(days=days) if days > 0 else None
+        # 2. Lấy dữ liệu trong khung thời gian yêu cầu (hỗ trợ theo giờ hoặc ngày)
+        if hours is not None and hours > 0:
+            since = datetime.now(timezone.utc) - timedelta(hours=hours)
+        elif days > 0:
+            since = datetime.now(timezone.utc) - timedelta(days=days)
+        else:
+            since = None
         records = await product_crud.get_price_history(db, product_id, since=since)
 
         if not records:

@@ -117,13 +117,34 @@ class AuthService:
 
         if otp_data.get("attempts", 0) >= 5:
             await redis.delete(redis_key)
-            raise OTPErrors.OTP_LIMIT_EXCEEDED.throw()
+            raise OTPErrors.OTP_LIMIT_EXCEEDED.throw(
+                dynamic_message="Bạn đã nhập sai mã OTP quá 5 lần. Mã hiện tại đã bị hủy để đảm bảo an toàn. Vui lòng yêu cầu mã mới."
+            )
 
         if otp_data["code"] != otp:
-            otp_data["attempts"] = otp_data.get("attempts", 0) + 1
-            remain = 5 - otp_data["attempts"]
-            await redis.set(redis_key, json.dumps(otp_data), ex=300)
-            raise OTPErrors.OTP_INVALID.throw(dynamic_message=f"Mã OTP không chính xác.\n Bạn còn {remain} lần thử.")
+            current_attempts = otp_data.get("attempts", 0) + 1
+            otp_data["attempts"] = current_attempts
+            remain = 5 - current_attempts
+
+            ttl = 300
+            if hasattr(redis, "ttl"):
+                try:
+                    t = await redis.ttl(redis_key)
+                    if t and t > 0:
+                        ttl = t
+                except Exception:
+                    pass
+
+            await redis.set(redis_key, json.dumps(otp_data), ex=ttl)
+
+            if remain > 0:
+                raise OTPErrors.OTP_INVALID.throw(
+                    dynamic_message=f"Mã OTP không chính xác. Bạn còn {remain} lần thử."
+                )
+            else:
+                raise OTPErrors.OTP_INVALID.throw(
+                    dynamic_message="Mã OTP không chính xác. Bạn đã hết 5 lần thử. Vui lòng nhấn 'Gửi lại mã' để nhận mã mới."
+                )
 
         verification_token = secrets.token_hex(16)
 

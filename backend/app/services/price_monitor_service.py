@@ -36,11 +36,20 @@ class PriceMonitorService:
             product = await product_crud.get_by_id(db, product_id)
             if product is None or product.tracked_by_count < 1:
                 return
-            external_id = product.external_id
+            # Dữ liệu demo / test là tĩnh, bỏ qua không gọi RapidAPI để bảo toàn quota
+            marketplace = getattr(product, "marketplace", "amazon")
+            external_id = getattr(product, "external_id", "")
+            if marketplace == "demo" or str(external_id).startswith(("DEMO-", "SEED-")):
+                return
 
-        item = await rapidapi_client.fetch_product(external_id, country="US")
-        if item.external_id != external_id:
-            logger.error("Marketplace returned a different product for %s", product_id)
+        try:
+            item = await rapidapi_client.fetch_product(external_id, country="US")
+        except Exception as exc:
+            logger.info("RapidAPI không lấy được dữ liệu cho sản phẩm %s (%s), bỏ qua.", external_id, exc)
+            return
+
+        if item is None or item.external_id != external_id:
+            logger.info("RapidAPI trả về None hoặc mã sản phẩm không khớp cho %s, bỏ qua.", external_id)
             return
 
         async with AsyncSessionLocal() as db:

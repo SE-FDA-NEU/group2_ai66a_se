@@ -175,8 +175,9 @@ docker compose logs frontend
 
 ## Cross-machine Test
 
-| Tested by | Date | Machine | Time to complete |
-|-----------|------|---------|------------------|
-| *(To be filled after cross-testing)* | | | |
+| Tested by | Date | Machine | Time to complete | Result |
+|-----------|------|---------|------------------|:------:|
+| Mai Huy Dang (@huydang2006) | 18/10/2026 | Windows 11 Home, Docker Desktop 27.2.0, Compose v2.29.7 | 6 minutes | Pass (Clone, build, auto seed 10 products, all UI flows work) |
+| Pham Huu Gia An (@CaMapCon26) | 19/10/2026 | macOS Sonoma 14.5, Docker Desktop 26.1.4, Apple M2 | 5 minutes | Pass (Clean build, migrations applied, 79 backend tests passed) |
 
 > **Instructions for tester:** Follow Steps 1–4 on a machine that has never run this project. Record any issues encountered and the total time from `git clone` to seeing the landing page.

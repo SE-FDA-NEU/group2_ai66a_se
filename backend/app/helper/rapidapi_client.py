@@ -68,6 +68,13 @@ def _normalize_product(payload: dict[str, Any]) -> ProductMarketplace:
     raw_review_count = payload.get("product_num_ratings", 0)
     review_digits = re.sub(r"\D", "", str(raw_review_count))
 
+    curr_price = _optional_price(payload.get("product_price"))
+    orig_price = _optional_price(payload.get("product_original_price"))
+    if curr_price is None:
+        curr_price = orig_price
+    if curr_price is None:
+        raise ValueError(f"Sản phẩm {payload.get('asin')} không có thông tin giá từ sàn (hết hàng hoặc chưa chọn phiên bản).")
+
     return ProductMarketplace.model_validate(
         {
             "external_id": payload.get("asin"),
@@ -78,8 +85,8 @@ def _normalize_product(payload: dict[str, Any]) -> ProductMarketplace:
             "shop_name": _clean_text(buy_box.get("seller")),
             "product_rating": rating,
             "review_count": int(review_digits) if review_digits else 0,
-            "current_price": _optional_price(payload.get("product_price")),
-            "original_price": _optional_price(payload.get("product_original_price")),
+            "current_price": curr_price,
+            "original_price": orig_price,
             "currency": payload.get("currency") or "USD",
             "in_stock": in_stock,
             "top_reviews": _unescape_review(payload.get("top_reviews") or []),

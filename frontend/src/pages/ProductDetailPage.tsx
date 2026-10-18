@@ -194,7 +194,11 @@ export const ProductDetailPage: React.FC = () => {
       </div>
 
       <div className={styles.chartSection}>
-        <PriceHistoryChart productId={product.id} currency={product.currency} />
+        <PriceHistoryChart
+          productId={product.id}
+          currency={product.currency}
+          targetPrice={product.target_price}
+        />
       </div>
 
       {/* Pop-up Modal Cài đặt theo dõi sản phẩm (US02) */}
