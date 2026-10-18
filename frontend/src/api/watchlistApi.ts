@@ -65,3 +65,37 @@ export const addProductToWatchlist = async (payload: AddProductPayload): Promise
 export const removeProductFromWatchlist = async (productId: number): Promise<void> => {
   await apiClient.delete(`/watchlist/${productId}`);
 };
+
+export interface PriceDataPoint {
+  price: number | string;
+  timestamp: string;
+  is_gap: boolean;
+}
+
+export interface PriceHistoryResponse {
+  min_price: number | string | null;
+  max_price: number | string | null;
+  tracked_days: number;
+  data_points: PriceDataPoint[];
+}
+
+/**
+ * Lấy lịch sử biến động giá của sản phẩm và khoảng trống gap
+ */
+export const getPriceHistory = async (
+  productId: number,
+  days: number = 7,
+  gapThresholdMinutes: number = 30
+): Promise<PriceHistoryResponse> => {
+  const res = await apiClient.get<any, { message: string; data: PriceHistoryResponse }>(
+    `/watchlist/${productId}/history`,
+    {
+      params: {
+        days,
+        gap_threshold_minutes: gapThresholdMinutes,
+      },
+    }
+  );
+  return res.data;
+};
+

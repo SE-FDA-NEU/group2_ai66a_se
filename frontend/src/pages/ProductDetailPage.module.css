@@ -10,6 +10,7 @@
   font-family: var(--font-family-main);
   color: var(--text-primary);
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .loadingContainer {
@@ -155,6 +156,14 @@
   border-top: 1px solid var(--border-color);
 }
 
+.chartSection {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 24px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
 .btnUnfollow {
   background-color: var(--bg-surface);
   color: var(--status-error);
@@ -237,3 +246,13 @@
     font-size: 22px;
   }
 }
+
+@media (max-width: 375px) {
+  .pageContainer {
+    padding: 16px 10px;
+  }
+  .productCard {
+    padding: 14px 10px;
+  }
+}
+
