@@ -14,9 +14,9 @@ SM Sprint 3: @maimanhbel
 
 ## Sprint 3 (weeks 9–10)
 
-Goal: _
-Committed _ · Completed _ · Velocity _
-Not finished: - <#-id-issue> - issue. Move to Sprint 4.
+Goal: Deliver the core product flows through the UI with real data, including price history, target-price notifications, marketplace navigation, and a consistent responsive frontend.
+Committed: 17 issues · Completed: 17 issues · Recorded effort: 38 hours · Story-point velocity: not recorded.
+Not finished: None of the 17 listed issues. Three issues (#126, #144, #164) did not specify an hour estimate; story points should be confirmed from the Sprint 3 planning board.
 SM Sprint 4: @huydang2006
 
 ## Sprint 4 (weeks 11–12)
