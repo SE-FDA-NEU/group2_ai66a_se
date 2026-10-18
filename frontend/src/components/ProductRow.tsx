@@ -10,13 +10,15 @@ export interface ProductRowProps {
   name: string;
   currentPrice: number;
   currency: string;
+  targetPrice?: number | null;
   priceLow?: number;
   priceHigh?: number;
   starRating?: number;
   priceLabel?: string;
   isFakeDiscount?: boolean;
   notEnoughData?: boolean;
-  onRemove: (id: string) => void;
+  onRemove: (id: string) => void | Promise<void>;
+  isRemoving?: boolean;
   originalProduct?: WatchlistProduct;
 }
 
@@ -26,6 +28,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   name,
   currentPrice,
   currency,
+  targetPrice,
   priceLow,
   priceHigh,
   starRating,
@@ -33,6 +36,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   isFakeDiscount,
   notEnoughData,
   onRemove,
+  isRemoving = false,
   originalProduct
 }) => {
   const navigate = useNavigate();
@@ -91,7 +95,14 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
       {/* Cột 2: Giá hiện tại */}
       <div className={styles.colCenter}>
-        <span className={styles.currentPrice}>{formatVnd(currentPrice, currency)}</span>
+        <div className={styles.priceDetails}>
+          <span className={styles.currentPrice}>{formatVnd(currentPrice, currency)}</span>
+          {targetPrice != null && (
+            <span className={styles.targetPrice}>
+              Cảnh báo tại {formatVnd(targetPrice, currency)}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Cột 3: Khoảng giá */}
@@ -138,10 +149,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         <button
           className={styles.removeButton}
           onClick={handleRemoveClick}
-          aria-label="Xóa khỏi danh sách"
-          title="Xóa khỏi danh sách"
+          disabled={isRemoving}
+          aria-busy={isRemoving}
+          aria-label="Ngừng theo dõi sản phẩm"
+          title="Ngừng theo dõi sản phẩm"
         >
-          🗑️
+          {isRemoving ? 'Đang xử lý...' : 'Ngừng theo dõi'}
         </button>
       </div>
     </div>

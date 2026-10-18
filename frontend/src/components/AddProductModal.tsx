@@ -41,13 +41,19 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       return;
     }
 
+    const parsedTargetPrice = targetPrice.trim() ? Number(targetPrice) : null;
+    if (parsedTargetPrice !== null && (!Number.isFinite(parsedTargetPrice) || parsedTargetPrice <= 0)) {
+      setAddError('Giá mục tiêu phải lớn hơn 0.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setAddError(null);
       const newProd = await addProductToWatchlist({
         url: url.trim(),
-        target_price: targetPrice
-          ? convertFromVnd(Number(targetPrice), 'USD')
+        target_price: parsedTargetPrice !== null
+          ? convertFromVnd(parsedTargetPrice, 'USD')
           : null,
         buy_when_good: buyWhenGood,
       });
@@ -89,6 +95,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
             </label>
             <input
               type="number"
+              min="1"
+              step="1"
               placeholder="Ví dụ: 1500000"
               className={styles.formInput}
               value={targetPrice}

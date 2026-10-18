@@ -31,6 +31,7 @@ export const WatchlistPage: React.FC = () => {
     return 'default';
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [removingProductId, setRemovingProductId] = useState<string | null>(null);
 
   const handleSortChange = (newSort: SortOption) => {
     setSortBy(newSort);
@@ -69,15 +70,23 @@ export const WatchlistPage: React.FC = () => {
   }, [fetchProducts]);
 
   const handleRemove = async (id: string) => {
+    if (removingProductId !== null) return;
+
+    const product = products.find((item) => String(item.id) === id);
+    const productName = product?.name ?? 'sản phẩm này';
+    if (!window.confirm(`Bạn có chắc muốn ngừng theo dõi "${productName}"?`)) return;
+
+    setRemovingProductId(id);
     try {
       await removeProductFromWatchlist(Number(id));
       setProducts((prev) => prev.filter((p) => String(p.id) !== id));
     } catch (err: any) {
       console.error('Remove product error:', err);
       alert(err.message || 'Không thể xóa sản phẩm. Vui lòng thử lại.');
+    } finally {
+      setRemovingProductId(null);
     }
   };
-
 
   const displayedProducts = useMemo(() => {
     let result = products.filter((p) =>
@@ -191,10 +200,12 @@ export const WatchlistPage: React.FC = () => {
                 priceLow={product.price_low ? Number(product.price_low) : undefined}
                 priceHigh={product.price_high ? Number(product.price_high) : undefined}
                 starRating={product.product_rating ? Number(product.product_rating) : undefined}
+                targetPrice={product.target_price != null ? Number(product.target_price) : null}
                 priceLabel={product.price_label || undefined}
                 isFakeDiscount={product.fake_discount}
                 notEnoughData={product.price_label === 'Not enough data to assess'}
                 onRemove={handleRemove}
+                isRemoving={removingProductId === String(product.id)}
                 originalProduct={product}
               />
             ))
