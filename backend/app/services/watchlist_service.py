@@ -1,13 +1,10 @@
 from decimal import Decimal
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ErrorDetail
-from app.crud.product_crud import product_crud
-from app.crud.notification_crud import notification_crud
-from app.crud.tracked_product_crud import tracked_product_crud
+from app.crud import product_crud, notification_crud, tracked_product_crud, user_crud
 from app.helper.amazon_link_parser import parse_amazon_link
 from app.helper.rapidapi_client import rapidapi_client
 from app.models.product_model import Product as ProductModel
@@ -55,7 +52,7 @@ class WatchlistService:
         """Add one product to a user's watchlist, keeping product writes atomic."""
         try:
             # Serialize additions for this user so concurrent requests cannot pass BR8 together.
-            locked_user = await db.scalar(select(User).where(User.id == user.id).with_for_update())
+            locked_user = await user_crud.get_by_id(db, user.id, for_update=True)
             if locked_user is None:
                 raise ErrorDetail("USER_NOT_FOUND", 404, "User not found.").throw()
 
@@ -95,7 +92,7 @@ class WatchlistService:
                 else:
                     product = await product_crud.refresh_untracked(db, product, item)
             elif within_reuse_grace:
-                product.untracked_since = None
+                await product_crud.clear_untracked(db, product)
 
             tracking = await tracked_product_crud.create(
                 db,
@@ -116,8 +113,7 @@ class WatchlistService:
                         f"{request.target_price} {product.currency}."
                     ),
                 )
-            product.tracked_by_count += 1
-            db.add(product)
+            await product_crud.increment_tracked_count(db, product)
             await db.commit()
             await db.refresh(product)
             rows = await tracked_product_crud.list_with_product_statistics(db, user.id)
@@ -153,12 +149,8 @@ class WatchlistService:
             if tracking is None:
                 raise TRACKING_NOT_FOUND.throw()
 
-            await db.delete(tracking)
-            await db.flush()
-            product.tracked_by_count -= 1
-            if product.tracked_by_count == 0:
-                product.untracked_since = func.now()
-            db.add(product)
+            await tracked_product_crud.delete(db, tracking)
+            await product_crud.decrement_tracked_count_or_untrack(db, product)
             await db.commit()
         except Exception:
             await db.rollback()

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { verifyOTP, registerUser, login, OTPReason } from '../api/authApi';
+import { verifyOTP, registerUser, login, sendOTP, OTPReason } from '../api/authApi';
 import { getUserProfile } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
 import styles from './OTPPage.module.css';
@@ -24,7 +24,7 @@ const RESEND_COOLDOWN = 60; // seconds
 const OTPPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { saveToken } = useAuth();
+  const { saveToken, setUser } = useAuth();
 
   const state = location.state as OTPLocationState | null;
 
@@ -123,10 +123,9 @@ const OTPPage: React.FC = () => {
       // Auto-login after successful registration
       const loginRes = await login(email, password);
       saveToken(loginRes.access_token);
-      localStorage.setItem("access_token", loginRes.access_token);
       const user = await getUserProfile();
       if (user.data) {
-        localStorage.setItem("user_email", user.data.email);
+        setUser(user.data);
       }
 
       navigate('/watchlist', { replace: true });
@@ -153,7 +152,6 @@ const OTPPage: React.FC = () => {
     setIsResending(true);
     setApiError(undefined);
     try {
-      const { sendOTP } = await import('../api/authApi');
       await sendOTP(email, reason);
       setCooldown(RESEND_COOLDOWN);
       setOtp(Array(OTP_LENGTH).fill(''));

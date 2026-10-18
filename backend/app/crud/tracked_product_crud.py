@@ -1,3 +1,4 @@
+from decimal import Decimal
 from sqlalchemy import Date, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -71,7 +72,49 @@ class CRUDTrackedProduct:
         )
         db.add(tracking)
         await db.flush()
-        return tracking
+    async def delete(self, db: AsyncSession, tracking: TrackedProduct) -> None:
+        """Xóa một bản ghi theo dõi sản phẩm."""
+        await db.delete(tracking)
+        await db.flush()
+
+    async def list_pending_good_price_trackers(
+        self, db: AsyncSession, product_id: int, *, for_update: bool = False
+    ) -> list[TrackedProduct]:
+        """Lấy danh sách người theo dõi đang bật nhận thông báo giá tốt và chưa được thông báo."""
+        statement = select(TrackedProduct).where(
+            TrackedProduct.product_id == product_id,
+            TrackedProduct.buy_when_good.is_(True),
+            TrackedProduct.good_price_notified.is_(False),
+        )
+        if for_update:
+            statement = statement.with_for_update()
+        result = await db.scalars(statement)
+        return list(result)
+
+    async def list_pending_target_price_trackers(
+        self, db: AsyncSession, product_id: int, current_price: Decimal, *, for_update: bool = False
+    ) -> list[TrackedProduct]:
+        """Lấy danh sách người theo dõi có giá mục tiêu đã đạt và chưa được thông báo."""
+        statement = select(TrackedProduct).where(
+            TrackedProduct.product_id == product_id,
+            TrackedProduct.target_price.is_not(None),
+            TrackedProduct.target_price >= current_price,
+            TrackedProduct.target_price_notified.is_(False),
+        )
+        if for_update:
+            statement = statement.with_for_update()
+        result = await db.scalars(statement)
+        return list(result)
+
+    async def mark_good_price_notified(self, db: AsyncSession, tracker: TrackedProduct) -> None:
+        """Đánh dấu tracker đã được thông báo giá tốt."""
+        tracker.good_price_notified = True
+        db.add(tracker)
+
+    async def mark_target_price_notified(self, db: AsyncSession, tracker: TrackedProduct) -> None:
+        """Đánh dấu tracker đã được thông báo chạm giá mục tiêu."""
+        tracker.target_price_notified = True
+        db.add(tracker)
 
 
 tracked_product_crud = CRUDTrackedProduct()
