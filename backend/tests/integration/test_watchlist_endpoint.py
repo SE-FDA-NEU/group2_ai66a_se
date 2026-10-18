@@ -334,3 +334,113 @@ async def test_stream_price_history_returns_event_stream_when_authorized(
     assert response.status_code == 200
     assert "text/event-stream" in response.headers.get("content-type", "")
     assert "data: {\"product_id\": 31, \"price\": \"195.00\"}" in response.text
+
+
+@pytest.mark.asyncio
+async def test_stream_price_history_releases_db_session_before_streaming(
+    client, monkeypatch, current_user_override
+):
+    """GET /stream phải giải phóng (close) db session trước khi stream bắt đầu."""
+    from app.services.price_stream_service import price_stream_service
+    from app.core.database import get_db
+    from main import app
+
+    mock_db = AsyncMock()
+    app.dependency_overrides[get_db] = lambda: mock_db
+    try:
+        monkeypatch.setattr(
+            service_module.tracked_product_crud,
+            "get",
+            AsyncMock(return_value=SimpleNamespace(user_id=7, product_id=31)),
+        )
+
+        async def fake_stream(_product_id, _request=None):
+            # Tại thời điểm stream bắt đầu yield, db session phải đã được đóng!
+            assert mock_db.close.await_count == 1
+            yield "data: {\"product_id\": 31, \"price\": \"195.00\"}\n\n"
+
+        monkeypatch.setattr(price_stream_service, "subscribe_price_updates", fake_stream)
+
+        response = client.get("/api/v1/watchlist/31/stream")
+        assert response.status_code == 200
+        assert mock_db.close.await_count >= 1
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+
+@pytest.mark.asyncio
+async def test_put_target_price_returns_200_on_success(client, monkeypatch, current_user_override):
+    """PUT /target-price trả về 200 khi cập nhật thành công."""
+    product_res = _response_product()
+    product_res.target_price = Decimal("180.00")
+    update_mock = AsyncMock(return_value=product_res)
+    monkeypatch.setattr(service_module.watchlist_service, "update_target_price", update_mock)
+
+    response = client.put(
+        "/api/v1/watchlist/31/target-price",
+        json={"target_price": "180.00"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["message"] == "Target price updated successfully."
+    assert data["data"]["id"] == 31
+    assert data["data"]["target_price"] == "180.00"
+    update_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_put_target_price_returns_400_on_br1_violation(client, monkeypatch, current_user_override):
+    """PUT /target-price trả về 400 khi target_price >= current_price (BR1)."""
+    update_mock = AsyncMock(
+        side_effect=CustomAppException(
+            ErrorDetail("INVALID_TARGET_PRICE", 400, "Target must be lower than the current price 195.00 USD")
+        )
+    )
+    monkeypatch.setattr(service_module.watchlist_service, "update_target_price", update_mock)
+
+    response = client.put(
+        "/api/v1/watchlist/31/target-price",
+        json={"target_price": "200.00"},
+    )
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "INVALID_TARGET_PRICE"
+    assert "Target must be lower than the current price 195.00 USD" in response.json()["error"]["message"]
+
+
+@pytest.mark.asyncio
+async def test_put_target_price_returns_401_without_auth(client):
+    """PUT /target-price trả về 401 khi chưa xác thực."""
+    response = client.put(
+        "/api/v1/watchlist/31/target-price",
+        json={"target_price": "180.00"},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_put_target_price_returns_404_when_not_tracked(client, monkeypatch, current_user_override):
+    """PUT /target-price trả về 404 khi sản phẩm không thuộc watchlist của user."""
+    update_mock = AsyncMock(
+        side_effect=CustomAppException(
+            ErrorDetail("TRACKING_NOT_FOUND", 404, "Sản phẩm không nằm trong danh sách theo dõi của người dùng này.")
+        )
+    )
+    monkeypatch.setattr(service_module.watchlist_service, "update_target_price", update_mock)
+
+    response = client.put(
+        "/api/v1/watchlist/999/target-price",
+        json={"target_price": "180.00"},
+    )
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "TRACKING_NOT_FOUND"
+
+
+@pytest.mark.asyncio
+async def test_put_target_price_returns_422_on_invalid_payload(client, current_user_override):
+    """PUT /target-price trả về 422 khi target_price <= 0 hoặc không hợp lệ."""
+    response = client.put(
+        "/api/v1/watchlist/31/target-price",
+        json={"target_price": "-10.00"},
+    )
+    assert response.status_code == 422
+

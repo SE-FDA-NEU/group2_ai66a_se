@@ -9,6 +9,7 @@ from app.helper.amazon_link_parser import parse_amazon_link
 from app.helper.rapidapi_client import rapidapi_client
 from app.models.product_model import Product as ProductModel
 from app.models.user_model import User
+from app.schemas.notification_schema import NotificationKind
 from app.schemas.watchlist_schema import (
     PriceDataPoint,
     PriceHistoryResponse,
@@ -16,6 +17,7 @@ from app.schemas.watchlist_schema import (
     ProductCreate,
     ProductList,
 )
+from app.services.notification_service import enqueue_price_email
 
 
 WATCHLIST_LIMIT_REACHED = ErrorDetail(
@@ -32,6 +34,9 @@ TRACKING_NOT_FOUND = ErrorDetail(
 )
 DUPLICATE_TRACKING = ErrorDetail(
     "PRODUCT_ALREADY_TRACKED", 409, "This product is already in your watchlist."
+)
+INVALID_TARGET_PRICE = ErrorDetail(
+    "INVALID_TARGET_PRICE", 400, "Target must be lower than the current price."
 )
 
 
@@ -158,6 +163,78 @@ class WatchlistService:
             await tracked_product_crud.delete(db, tracking)
             await product_crud.decrement_tracked_count_or_untrack(db, product)
             await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
+
+    async def update_target_price(
+        self,
+        db: AsyncSession,
+        user: User,
+        product_id: int,
+        target_price: Decimal,
+    ) -> Product:
+        try:
+            product = await product_crud.get_by_id(db, product_id)
+            if product is None:
+                raise TRACKING_NOT_FOUND.throw()
+
+            tracking = await tracked_product_crud.get(
+                db, user.id, product_id, for_update=True
+            )
+            if tracking is None:
+                raise TRACKING_NOT_FOUND.throw()
+
+            if target_price >= product.current_price:
+                raise INVALID_TARGET_PRICE.throw(
+                    f"Target must be lower than the current price {product.current_price} {product.currency}"
+                )
+
+            await tracked_product_crud.update_target_price(db, tracking, target_price)
+
+            await notification_crud.create(
+                db,
+                user_id=user.id,
+                product_id=product.id,
+                kind="target_price_set",
+                title="Đã lưu giá mục tiêu",
+                message=(
+                    f"Đã đặt giá mục tiêu cho {product.name}: "
+                    f"{target_price} {product.currency}."
+                ),
+            )
+
+            await enqueue_price_email(
+                db,
+                user_id=user.id,
+                kind=NotificationKind.TARGET_PRICE_SET.value,
+                product_name=product.name,
+                current_price=product.current_price,
+                currency=product.currency,
+                product_url=product.url,
+                target_price=target_price,
+            )
+
+            await db.commit()
+            await db.refresh(product)
+
+            rows = await tracked_product_crud.list_with_product_statistics(db, user.id)
+            row = next((row for row in rows if row[0].id == product.id), None)
+            if row is None:
+                return self._to_summary_response(
+                    product,
+                    tracking.target_price,
+                    tracking.buy_when_good,
+                    0,
+                    None,
+                )
+            return self._to_summary_response(
+                product=row[0],
+                target_price=row[1],
+                buy_when_good=row[2],
+                distinct_days=row[3],
+                median_price=row[4],
+            )
         except Exception:
             await db.rollback()
             raise
