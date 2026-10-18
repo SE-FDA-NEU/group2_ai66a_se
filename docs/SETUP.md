@@ -75,6 +75,23 @@ After startup, the database contains:
 - 4 tables with all indexes and constraints
 - 1 admin user (`is_developer = true`)
 
+## Test Accounts (Tài khoản kiểm thử)
+
+Để người chấm hoặc kiểm thử viên có thể trải nghiệm toàn diện hệ thống trên giao diện mà không cần cấu hình phức tạp:
+
+1. **Tài khoản Quản trị / Người dùng kiểm thử có sẵn (Seeded Account):**
+   - **Email:** `ADMIN_EMAIL` theo giá trị bạn cấu hình trong file `.env` (ví dụ: `admin@trakora.com`)
+   - **Mật khẩu:** `ADMIN_PASSWORD` theo giá trị bạn cấu hình trong file `.env`
+   - *Tài khoản này được backend tự động khởi tạo khi container khởi chạy (xem `backend/admin.py`).*
+
+2. **Đăng nhập bằng Google OAuth:**
+   - Tại trang chủ `http://localhost:3000/`, nhấn trực tiếp vào nút **"Đăng nhập bằng Google"** để đăng nhập tức thì nếu `GOOGLE_CLIENT_ID` đã được cấu hình trong `.env`.
+
+3. **Tạo tài khoản kiểm thử mới qua Email:**
+   - Truy cập `http://localhost:3000/register`.
+   - Nhập Nickname, Email và Mật khẩu tùy ý.
+   - Nhận mã OTP 6 chữ số qua hòm thư điện tử (hoặc kiểm tra log Redis/Backend) để hoàn tất đăng ký và tự động chuyển hướng tới `/watchlist`.
+
 ## Running Tests
 
 ```bash

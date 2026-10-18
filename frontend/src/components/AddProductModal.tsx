@@ -63,18 +63,70 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       onClose();
     } catch (err: any) {
       console.error('Add product error:', err);
-      setAddError(err.message || err.detail || 'Không thể thêm sản phẩm. Vui lòng kiểm tra đường dẫn.');
+      const rawMsg = err.detail || err.message || '';
+      if (rawMsg.toLowerCase().includes('lower than the current price')) {
+        const match = rawMsg.match(/lower than the current price\s+([\d.,]+)\s*([A-Za-z]+)?/i);
+        if (match) {
+          const rawPrice = parseFloat(match[1].replace(/,/g, ''));
+          const cur = match[2] || 'USD';
+          const vnd = cur.toUpperCase() === 'USD' ? Math.round(rawPrice * USD_TO_VND_RATE) : Math.round(rawPrice);
+          setAddError(
+            `Target must be lower than the current price ${vnd.toLocaleString('vi-VN')} ₫ (${rawPrice} ${cur}). Vui lòng nhập mức giá nhỏ hơn.`
+          );
+        } else {
+          setAddError(rawMsg);
+        }
+      } else {
+        setAddError(rawMsg || 'Không thể thêm sản phẩm. Vui lòng kiểm tra đường dẫn hoặc thử lại sau.');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className={styles.modalOverlay} onClick={handleClose}>
+    <div className={styles.modalOverlay} onClick={isSubmitting ? undefined : handleClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <h2 className={styles.modalTitle}>Thêm sản phẩm cần theo dõi</h2>
 
-        {addError && <div className={styles.errorMessage} role="alert">{addError}</div>}
+        {isSubmitting && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 14px',
+              marginBottom: '14px',
+              backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '8px',
+              color: '#1d4ed8',
+              fontSize: '13px',
+              fontWeight: 500,
+            }}
+            role="status"
+          >
+            <div
+              style={{
+                width: 16,
+                height: 16,
+                border: '2px solid #1d4ed8',
+                borderTopColor: 'transparent',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite',
+                flexShrink: 0,
+              }}
+            />
+            <span>Đang lấy thông tin sản phẩm từ sàn thương mại điện tử... Vui lòng chờ trong giây lát.</span>
+          </div>
+        )}
+
+        {addError && (
+          <div className={styles.errorMessage} role="alert" style={{ marginBottom: 14 }}>
+            <strong>Lỗi: </strong>
+            <span>{addError}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
@@ -82,6 +134,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
             <input
               type="url"
               required
+              disabled={isSubmitting}
               placeholder="https://www.amazon.com/dp/..."
               className={styles.formInput}
               value={url}
@@ -97,12 +150,20 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               type="number"
               min="1"
               step="1"
-              placeholder="Ví dụ: 1500000"
+              placeholder="Ví dụ: 500000"
               className={styles.formInput}
               value={targetPrice}
-              disabled={buyWhenGood}
+              disabled={buyWhenGood || isSubmitting}
               onChange={(e) => setTargetPrice(e.target.value)}
             />
+            {targetPrice.trim() !== '' && Number(targetPrice) > 0 && (
+              <div style={{ fontSize: '12px', color: 'var(--primary-color)', marginTop: '4px', fontWeight: 600 }}>
+                ≈ {Number(targetPrice).toLocaleString('vi-VN')} ₫ (khoảng ${(Number(targetPrice) / USD_TO_VND_RATE).toFixed(2)} USD)
+              </div>
+            )}
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary, #6b7280)', marginTop: '4px', lineHeight: 1.4 }}>
+              💡 <em>Lưu ý (BR1): Giá mục tiêu phải thấp hơn giá bán hiện tại. Bạn có thể để trống để đặt sau khi theo dõi, hoặc tick chọn "Mua khi giá tốt".</em>
+            </div>
           </div>
 
           <div className={styles.formGroup} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -110,12 +171,13 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               type="checkbox"
               id="buyWhenGood"
               checked={buyWhenGood}
+              disabled={isSubmitting}
               onChange={(e) => {
                 setBuyWhenGood(e.target.checked);
                 if (e.target.checked) setTargetPrice('');
               }}
             />
-            <label htmlFor="buyWhenGood" className={styles.formLabel} style={{ margin: 0, cursor: 'pointer' }}>
+            <label htmlFor="buyWhenGood" className={styles.formLabel} style={{ margin: 0, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
               Mua khi giá tốt (thay cho giá mục tiêu)
             </label>
           </div>
@@ -130,7 +192,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               Hủy
             </button>
             <button type="submit" className={styles.btnSubmit} disabled={isSubmitting}>
-              {isSubmitting ? 'Đang thêm...' : 'Thêm vào danh sách'}
+              {isSubmitting ? 'Đang thêm sản phẩm...' : 'Thêm vào danh sách'}
             </button>
           </div>
         </form>

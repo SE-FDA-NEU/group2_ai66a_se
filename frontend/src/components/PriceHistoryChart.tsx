@@ -408,7 +408,25 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
 
       {/* Biểu đồ Recharts */}
       <div className={styles.chartWrapper}>
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
+        {isLoading ? (
+          <div className={styles.emptyContainer} data-testid="chart-loading">
+            <div className={styles.spinner} aria-hidden="true" />
+            <span>Đang tải dữ liệu biểu đồ...</span>
+          </div>
+        ) : error ? (
+          <div className={styles.emptyContainer} data-testid="chart-error">
+            <span className={styles.errorText}>{error}</span>
+            <button type="button" className={styles.btnRetry} onClick={fetchData}>
+              Thử lại
+            </button>
+          </div>
+        ) : chartData.length === 0 ? (
+          <div className={styles.emptyContainer} data-testid="chart-empty">
+            <span className={styles.emptyTitle}>Chưa có dữ liệu biến động giá</span>
+            <span>Hệ thống sẽ cập nhật tự động khi có quan sát giá mới.</span>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
           <LineChart data={chartData} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" vertical={false} />
             <XAxis
@@ -497,6 +515,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
             />
           </LineChart>
         </ResponsiveContainer>
+        )}
       </div>
 
       {/* Chú thích biểu đồ (Legend) */}

@@ -188,13 +188,17 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tableHeader {
   display: grid;
-  grid-template-columns: 3fr 1.5fr 1.5fr 1fr 1.5fr 80px;
+  grid-template-columns: minmax(200px, 2.5fr) minmax(120px, 1.2fr) minmax(140px, 1.3fr) minmax(75px, 0.7fr) minmax(210px, 2.2fr) 120px;
+  column-gap: 16px;
+  min-width: 900px;
   padding: 14px 24px;
+  align-items: center;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-surface);
   color: var(--text-secondary);
@@ -268,12 +272,6 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-@media (max-width: 1024px) {
-  .tableHeader {
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 60px;
-  }
 }
 
 @media (max-width: 768px) {

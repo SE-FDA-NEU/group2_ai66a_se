@@ -60,6 +60,11 @@ class PriceMonitorService:
                     db, product.id, for_update=True
                 )
                 for tracker in trackers:
+                    current_disp = f"{product.current_price} {product.currency}"
+                    if str(product.currency).upper() == "USD":
+                        vnd_curr = round(Decimal(str(product.current_price)) * Decimal("26000"))
+                        current_disp = f"{vnd_curr:,.0f} ₫ ({product.current_price} {product.currency})".replace(",", ".")
+
                     await notification_crud.create(
                         db,
                         user_id=tracker.user_id,
@@ -67,8 +72,8 @@ class PriceMonitorService:
                         kind="good_price",
                         title="Sản phẩm đang có giá tốt",
                         message=(
-                            f"{product.name} hiện có giá {product.current_price} "
-                            f"{product.currency}, thấp hơn hoặc bằng ngưỡng giá tốt."
+                            f"{product.name} hiện có giá {current_disp}, "
+                            f"thấp hơn hoặc bằng ngưỡng giá tốt."
                         ),
                     )
                     await tracked_product_crud.mark_good_price_notified(db, tracker)
@@ -77,6 +82,14 @@ class PriceMonitorService:
                 db, product.id, product.current_price, for_update=True
             )
             for tracker in target_trackers:
+                current_disp = f"{product.current_price} {product.currency}"
+                target_disp = f"{tracker.target_price} {product.currency}"
+                if str(product.currency).upper() == "USD":
+                    vnd_curr = round(Decimal(str(product.current_price)) * Decimal("26000"))
+                    current_disp = f"{vnd_curr:,.0f} ₫ ({product.current_price} {product.currency})".replace(",", ".")
+                    vnd_target = round(Decimal(str(tracker.target_price)) * Decimal("26000"))
+                    target_disp = f"{vnd_target:,.0f} ₫ ({tracker.target_price} {product.currency})".replace(",", ".")
+
                 await notification_crud.create(
                     db,
                     user_id=tracker.user_id,
@@ -84,9 +97,8 @@ class PriceMonitorService:
                     kind="target_price_reached",
                     title="Giá mục tiêu đã đạt",
                     message=(
-                        f"Sản phẩm {product.name} hiện có giá {product.current_price} "
-                        f"{product.currency}, đã chạm mức giá mục tiêu {tracker.target_price} "
-                        f"{product.currency} của bạn. Xem tại: {product.url}"
+                        f"Sản phẩm {product.name} hiện có giá {current_disp}, "
+                        f"đã chạm mức giá mục tiêu {target_disp} của bạn. Xem tại: {product.url}"
                     ),
                 )
                 await tracked_product_crud.mark_target_price_notified(db, tracker)
@@ -105,6 +117,14 @@ class PriceMonitorService:
                 db, product.id, product.current_price, for_update=True
             )
             for tracker in above_target_trackers:
+                current_disp = f"{product.current_price} {product.currency}"
+                target_disp = f"{tracker.target_price} {product.currency}"
+                if str(product.currency).upper() == "USD":
+                    vnd_curr = round(Decimal(str(product.current_price)) * Decimal("26000"))
+                    current_disp = f"{vnd_curr:,.0f} ₫ ({product.current_price} {product.currency})".replace(",", ".")
+                    vnd_target = round(Decimal(str(tracker.target_price)) * Decimal("26000"))
+                    target_disp = f"{vnd_target:,.0f} ₫ ({tracker.target_price} {product.currency})".replace(",", ".")
+
                 await notification_crud.create(
                     db,
                     user_id=tracker.user_id,
@@ -112,9 +132,8 @@ class PriceMonitorService:
                     kind="price_above_target",
                     title="Giá đã tăng trên mục tiêu",
                     message=(
-                        f"Sản phẩm {product.name} hiện có giá {product.current_price} "
-                        f"{product.currency}, đã vượt trên mức giá mục tiêu {tracker.target_price} "
-                        f"{product.currency} của bạn."
+                        f"Sản phẩm {product.name} hiện có giá {current_disp}, "
+                        f"đã vượt trên mức giá mục tiêu {target_disp} của bạn."
                     ),
                 )
                 await tracked_product_crud.reset_target_price_notified(db, tracker)

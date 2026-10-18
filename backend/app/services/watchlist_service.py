@@ -105,14 +105,27 @@ class WatchlistService:
             elif within_reuse_grace:
                 await product_crud.clear_untracked(db, product)
 
+            normalized_target_price = None
+            if request.target_price is not None:
+                normalized_target_price = round(Decimal(str(request.target_price)), 2)
+                if normalized_target_price >= product.current_price:
+                    raise INVALID_TARGET_PRICE.throw(
+                        f"Target must be lower than the current price {product.current_price} {product.currency}"
+                    )
+
             tracking = await tracked_product_crud.create(
                 db,
                 user_id=user.id,
                 product_id=product.id,
-                target_price=request.target_price,
+                target_price=normalized_target_price,
                 buy_when_good=request.buy_when_good,
             )
-            if request.target_price is not None:
+            if normalized_target_price is not None:
+                if str(product.currency).upper() == "USD":
+                    vnd_equiv = round(normalized_target_price * Decimal("26000"))
+                    formatted_target = f"{vnd_equiv:,.0f} ₫ ({normalized_target_price:.2f} USD)".replace(",", ".")
+                else:
+                    formatted_target = f"{normalized_target_price:.0f} {product.currency}"
                 await notification_crud.create(
                     db,
                     user_id=user.id,
@@ -121,7 +134,7 @@ class WatchlistService:
                     title="Đã lưu giá mục tiêu",
                     message=(
                         f"Đã đặt giá mục tiêu cho {product.name}: "
-                        f"{request.target_price} {product.currency}."
+                        f"{formatted_target}."
                     ),
                 )
             await product_crud.increment_tracked_count(db, product)
@@ -161,6 +174,7 @@ class WatchlistService:
                 raise TRACKING_NOT_FOUND.throw()
 
             await tracked_product_crud.delete(db, tracking)
+            await notification_crud.delete_for_user_product(db, user.id, product_id)
             await product_crud.decrement_tracked_count_or_untrack(db, product)
             await db.commit()
         except Exception:
@@ -185,13 +199,19 @@ class WatchlistService:
             if tracking is None:
                 raise TRACKING_NOT_FOUND.throw()
 
-            if target_price >= product.current_price:
+            normalized_target_price = round(Decimal(str(target_price)), 2)
+            if normalized_target_price >= product.current_price:
                 raise INVALID_TARGET_PRICE.throw(
                     f"Target must be lower than the current price {product.current_price} {product.currency}"
                 )
 
-            await tracked_product_crud.update_target_price(db, tracking, target_price)
+            await tracked_product_crud.update_target_price(db, tracking, normalized_target_price)
 
+            if str(product.currency).upper() == "USD":
+                vnd_equiv = round(normalized_target_price * Decimal("26000"))
+                formatted_target = f"{vnd_equiv:,.0f} ₫ ({normalized_target_price:.2f} USD)".replace(",", ".")
+            else:
+                formatted_target = f"{normalized_target_price:.0f} {product.currency}"
             await notification_crud.create(
                 db,
                 user_id=user.id,
@@ -200,7 +220,7 @@ class WatchlistService:
                 title="Đã lưu giá mục tiêu",
                 message=(
                     f"Đã đặt giá mục tiêu cho {product.name}: "
-                    f"{target_price} {product.currency}."
+                    f"{formatted_target}."
                 ),
             )
 
@@ -212,7 +232,7 @@ class WatchlistService:
                 current_price=product.current_price,
                 currency=product.currency,
                 product_url=product.url,
-                target_price=target_price,
+                target_price=normalized_target_price,
             )
 
             await db.commit()

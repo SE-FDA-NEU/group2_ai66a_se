@@ -272,6 +272,7 @@
 }
 
 /* UX States */
+.emptyContainer,
 .stateContainer {
   display: flex;
   flex-direction: column;

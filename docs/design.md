@@ -153,9 +153,13 @@ Composite PK `(user_id, product_id)` prevents duplicate tracking.
 
 | # | Method | Path | Auth | Input | Success | Errors |
 |---|--------|------|------|-------|---------|--------|
-| 10 | POST | `/api/v1/watchlist` | Bearer | JSON: `{url, target_price?, buy_when_good?}` | `201 ApiResponse<Product>` | `400 AMAZON_ONLY`, `400 INVALID_PRODUCT_LINK`, `400 WATCHLIST_LIMIT_REACHED`, `404 USER_NOT_FOUND`, `502 MARKETPLACE_PRODUCT_MISMATCH`, `502 MARKETPLACE_UPSTREAM_ERROR`, `503 MARKETPLACE_UNAVAILABLE` |
+| 10 | POST | `/api/v1/watchlist` | Bearer | JSON: `{url, target_price?, buy_when_good?}` | `201 ApiResponse<Product>` | `400 AMAZON_ONLY`, `400 INVALID_PRODUCT_LINK`, `400 WATCHLIST_LIMIT_REACHED`, `404 USER_NOT_FOUND`, `409 PRODUCT_ALREADY_TRACKED`, `502 MARKETPLACE_PRODUCT_MISMATCH`, `502 MARKETPLACE_UPSTREAM_ERROR`, `503 MARKETPLACE_UNAVAILABLE` |
 | 11 | GET | `/api/v1/watchlist` | Bearer | — | `200 ApiResponse<ProductList>` | `401 UNAUTHORIZED` |
 | 12 | DELETE | `/api/v1/watchlist/{product_id}` | Bearer | Path: `product_id` | `204 No Content` | `404 TRACKING_NOT_FOUND` |
+| 13 | GET | `/api/v1/watchlist/{product_id}/history` | Bearer | Query: `days=0..365` (0 = all), `gap_threshold_minutes=30` | `200 ApiResponse<PriceHistoryResponse>` | `404 TRACKING_NOT_FOUND`, `401 UNAUTHORIZED` |
+| 14 | PUT | `/api/v1/watchlist/{product_id}/target-price` | Bearer | JSON: `{target_price}` | `200 ApiResponse<Product>` | `400 INVALID_TARGET_PRICE`, `404 TRACKING_NOT_FOUND` |
+| 15 | GET | `/api/v1/watchlist/{product_id}/stream` | Bearer / Query `?token=` | Path: `product_id` | `200 text/event-stream` (SSE) | `401 UNAUTHORIZED`, `404 TRACKING_NOT_FOUND` |
+| 16 | GET | `/api/v1/watchlist/notifications` | Bearer | Query: `after_id=0` | `200 ApiResponse<NotificationList>` | `401 UNAUTHORIZED` |
 
 ### 3.5 Developer (`/api/v1/dev`)
 
