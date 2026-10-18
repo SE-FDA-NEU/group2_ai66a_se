@@ -61,6 +61,9 @@ class FakeSession:
     async def flush(self):
         return None
 
+    async def get(self, entity_class, ident):
+        return None
+
     async def commit(self):
         self.committed = True
 

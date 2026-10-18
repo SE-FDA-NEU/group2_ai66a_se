@@ -1,18 +1,21 @@
 from decimal import Decimal
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ErrorDetail
-from app.crud.product_crud import product_crud
-from app.crud.notification_crud import notification_crud
-from app.crud.tracked_product_crud import tracked_product_crud
+from app.crud import product_crud, notification_crud, tracked_product_crud, user_crud
 from app.helper.amazon_link_parser import parse_amazon_link
 from app.helper.rapidapi_client import rapidapi_client
 from app.models.product_model import Product as ProductModel
 from app.models.user_model import User
-from app.schemas.watchlist_schema import ProductList, Product, ProductCreate
+from app.schemas.watchlist_schema import (
+    PriceDataPoint,
+    PriceHistoryResponse,
+    Product,
+    ProductCreate,
+    ProductList,
+)
 
 
 WATCHLIST_LIMIT_REACHED = ErrorDetail(
@@ -55,7 +58,7 @@ class WatchlistService:
         """Add one product to a user's watchlist, keeping product writes atomic."""
         try:
             # Serialize additions for this user so concurrent requests cannot pass BR8 together.
-            locked_user = await db.scalar(select(User).where(User.id == user.id).with_for_update())
+            locked_user = await user_crud.get_by_id(db, user.id, for_update=True)
             if locked_user is None:
                 raise ErrorDetail("USER_NOT_FOUND", 404, "User not found.").throw()
 
@@ -95,7 +98,7 @@ class WatchlistService:
                 else:
                     product = await product_crud.refresh_untracked(db, product, item)
             elif within_reuse_grace:
-                product.untracked_since = None
+                await product_crud.clear_untracked(db, product)
 
             tracking = await tracked_product_crud.create(
                 db,
@@ -116,8 +119,7 @@ class WatchlistService:
                         f"{request.target_price} {product.currency}."
                     ),
                 )
-            product.tracked_by_count += 1
-            db.add(product)
+            await product_crud.increment_tracked_count(db, product)
             await db.commit()
             await db.refresh(product)
             rows = await tracked_product_crud.list_with_product_statistics(db, user.id)
@@ -153,12 +155,8 @@ class WatchlistService:
             if tracking is None:
                 raise TRACKING_NOT_FOUND.throw()
 
-            await db.delete(tracking)
-            await db.flush()
-            product.tracked_by_count -= 1
-            if product.tracked_by_count == 0:
-                product.untracked_since = func.now()
-            db.add(product)
+            await tracked_product_crud.delete(db, tracking)
+            await product_crud.decrement_tracked_count_or_untrack(db, product)
             await db.commit()
         except Exception:
             await db.rollback()
@@ -224,6 +222,74 @@ class WatchlistService:
             price_label=price_label,
             fake_discount=fake_discount,
             fake_discount_percent=fake_discount_percent,
+        )
+
+    async def get_price_history(
+        self,
+        db: AsyncSession,
+        user: User,
+        product_id: int,
+        *,
+        days: int = 7,
+        gap_threshold_minutes: int = 30,
+    ) -> PriceHistoryResponse:
+        tracking = await tracked_product_crud.get(db, user.id, product_id)
+        if tracking is None:
+            raise TRACKING_NOT_FOUND.throw()
+
+        # 1. Tính tổng số ngày dương lịch riêng biệt đã theo dõi (BR3, BR5)
+        tracked_days = await product_crud.get_history_distinct_days(db, product_id)
+
+        # 2. Lấy dữ liệu trong khung thời gian yêu cầu (mặc định 7 ngày gần nhất)
+        since = datetime.now(timezone.utc) - timedelta(days=days) if days > 0 else None
+        records = await product_crud.get_price_history(db, product_id, since=since)
+
+        if not records:
+            return PriceHistoryResponse(
+                min_price=None,
+                max_price=None,
+                tracked_days=tracked_days,
+                data_points=[],
+            )
+
+        # 3. Tính min_price và max_price trong khung thời gian biểu đồ
+        min_price = min(r.price for r in records)
+        max_price = max(r.price for r in records)
+
+        # 4. Thuật toán phát hiện Gap (BR15)
+        gap_threshold = timedelta(minutes=gap_threshold_minutes)
+        data_points: list[PriceDataPoint] = []
+
+        for i, record in enumerate(records):
+            is_gap = False
+            if i > 0:
+                dt_curr = (
+                    record.recorded_at
+                    if record.recorded_at.tzinfo is not None
+                    else record.recorded_at.replace(tzinfo=timezone.utc)
+                )
+                dt_prev = (
+                    records[i - 1].recorded_at
+                    if records[i - 1].recorded_at.tzinfo is not None
+                    else records[i - 1].recorded_at.replace(tzinfo=timezone.utc)
+                )
+                interval = dt_curr - dt_prev
+                if interval > gap_threshold:
+                    is_gap = True
+
+            data_points.append(
+                PriceDataPoint(
+                    price=record.price,
+                    timestamp=record.recorded_at,
+                    is_gap=is_gap,
+                )
+            )
+
+        return PriceHistoryResponse(
+            min_price=min_price,
+            max_price=max_price,
+            tracked_days=tracked_days,
+            data_points=data_points,
         )
 
 

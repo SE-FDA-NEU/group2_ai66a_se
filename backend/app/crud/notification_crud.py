@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -83,6 +84,13 @@ class CRUDPendingNotificationEmail:
             .limit(limit)
         )
         return list(result.all())
+
+    async def mark_sent(
+        self, db: AsyncSession, item: PendingNotificationEmail, sent_at: datetime
+    ) -> None:
+        """Đánh dấu email thông báo đã được gửi đi tại thời điểm sent_at."""
+        item.sent_at = sent_at
+        db.add(item)
 
 
 notification_settings_crud = CRUDNotificationSettings()

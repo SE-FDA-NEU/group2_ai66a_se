@@ -108,6 +108,14 @@ export const ProductDetailPage: React.FC = () => {
               </span>
             </div>
             <div className={styles.metaItem}>
+              <span className={styles.metaLabel}>Giá mục tiêu cảnh báo</span>
+              <span className={styles.metaValue}>
+                {product.target_price != null
+                  ? formatVnd(product.target_price, product.currency)
+                  : 'Chưa đặt'}
+              </span>
+            </div>
+            <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Nhãn giá hiện tại</span>
               <span className={styles.metaValue}>
                 {product.price_label || 'Not enough data to assess'}
@@ -120,6 +128,7 @@ export const ProductDetailPage: React.FC = () => {
               className={styles.btnUnfollow} 
               onClick={handleUnfollow}
               disabled={isRemoving}
+              aria-busy={isRemoving}
             >
               {isRemoving ? 'Đang ngừng theo dõi...' : 'Ngừng theo dõi (Unfollow)'}
             </button>
