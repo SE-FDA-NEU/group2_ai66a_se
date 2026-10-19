@@ -12,8 +12,8 @@ Scrum Master:   @maimanhbel  (Sprint 3)
 Repository:     https://github.com/SE-FDA-NEU/group2_ai66a_se.git;
 Project board:  https://github.com/orgs/SE-FDA-NEU/projects/19/views/1;
 Setup guide:    https://github.com/SE-FDA-NEU/group2_ai66a_se/blob/main/docs/SETUP.md
-Pull Request:   https://github.com/SE-FDA-NEU/group2_ai66a_se/pull/160
-Merge commit:   72634a7
+Pull Request:   https://github.com/SE-FDA-NEU/group2_ai66a_se/pull/169
+Merge commit:   7fd1bcbc5ffa208b55919bfd763c361e907b000b
 
 Submitted by:   Nguyen Trong Dai
 ```

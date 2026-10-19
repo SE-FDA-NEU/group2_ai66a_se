@@ -14,9 +14,9 @@ SM Sprint 3: @maimanhbel
 
 ## Sprint 3 (weeks 9–10)
 
-Goal: Deliver interactive and accessible UI for all P0 stories (US01–US05) through real DB interaction, robust error validation, dynamic price history chart with gap detection and target price dashed line milestones.
-Committed 31 · Completed 31 · Velocity 31.
-Not finished: None.
+Goal: Deliver the core product flows through the UI with real data, including price history, target-price notifications, marketplace navigation, and a consistent responsive frontend.
+Committed 46 · Completed 46 · Velocity: 46.
+Not finished: None. 
 SM Sprint 4: @huydang2006
 
 ## Sprint 4 (weeks 11–12)
