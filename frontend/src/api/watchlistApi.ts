@@ -21,6 +21,25 @@ export interface WatchlistProduct {
   price_label?: string | null;
   fake_discount: boolean;
   fake_discount_percent?: number | null;
+  shop_rating?: number | null;
+  shop_review_count?: number | null;
+  shop_trust_label?: string | null;
+  top_reviews?: CustomerReview[];
+  reviews?: CustomerReview[];
+}
+
+export interface CustomerReview {
+  id?: string | number;
+  rating?: number | string | null;
+  title?: string | null;
+  text?: string | null;
+  comment?: string | null;
+  body?: string | null;
+  content?: string | null;
+  author?: string | null;
+  reviewer?: string | null;
+  date?: string | null;
+  created_at?: string | null;
 }
 
 export interface WatchlistResponse {
