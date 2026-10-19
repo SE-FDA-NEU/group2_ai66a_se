@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import styles from './ProductRow.module.css';
 import { formatVnd } from '../utils/currency';
 import { WatchlistProduct } from '../api/watchlistApi';
+import { ShopTrustBadge } from './ShopTrustBadge';
+import { computeShopTrustLabel } from '../utils/trustLabel';
 
 export interface ProductRowProps {
   id: string;
@@ -21,6 +23,10 @@ export interface ProductRowProps {
   onRemove: (id: string) => void | Promise<void>;
   isRemoving?: boolean;
   originalProduct?: WatchlistProduct;
+  shopName?: string;
+  shopTrustLabel?: string | null;
+  shopRating?: number | null;
+  shopReviewCount?: number | null;
 }
 
 export const ProductRow: React.FC<ProductRowProps> = ({
@@ -38,9 +44,20 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   notEnoughData,
   onRemove,
   isRemoving = false,
-  originalProduct
+  originalProduct,
+  shopName,
+  shopTrustLabel,
+  shopRating,
+  shopReviewCount,
 }) => {
   const navigate = useNavigate();
+
+  const resolvedShopName = shopName || originalProduct?.shop_name;
+  const trustLabel = computeShopTrustLabel(
+    shopRating ?? originalProduct?.shop_rating ?? starRating,
+    shopReviewCount ?? originalProduct?.shop_review_count ?? originalProduct?.review_count,
+    shopTrustLabel ?? originalProduct?.shop_trust_label
+  );
 
   const handleRowClick = () => {
     if (originalProduct) {
@@ -82,7 +99,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         }
       }}
     >
-      {/* Cột 1: Sản phẩm (Ảnh + Tên) */}
+      {/* Cột 1: Sản phẩm (Ảnh + Tên + Cửa hàng) */}
       <div className={styles.productCol}>
         <div className={styles.imageContainer}>
           {image ? (
@@ -91,7 +108,15 @@ export const ProductRow: React.FC<ProductRowProps> = ({
             <div className={styles.imagePlaceholder} />
           )}
         </div>
-        <h3 className={styles.productName} title={name}>{name}</h3>
+        <div className={styles.productMetaWrapper}>
+          <h3 className={styles.productName} title={name}>{name}</h3>
+          {(resolvedShopName || trustLabel) && (
+            <div className={styles.shopMetaRow}>
+              {resolvedShopName && <span className={styles.shopNameText}>{resolvedShopName}</span>}
+              {trustLabel && <ShopTrustBadge label={trustLabel} size="small" />}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Cột 2: Giá hiện tại */}
@@ -129,8 +154,11 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         )}
       </div>
 
-      {/* Cột 5: Nhãn giá */}
+      {/* Cột 5: Nhãn giá & Shop Trust */}
       <div className={styles.badgesCol}>
+        {trustLabel && (
+          <ShopTrustBadge label={trustLabel} size="small" />
+        )}
         {notEnoughData && (
           <span className={`${styles.badge} ${styles.badgeWarning}`}>
             <AlertTriangle size={13} aria-hidden="true" /> {priceLabel || 'Not enough data to assess'}
