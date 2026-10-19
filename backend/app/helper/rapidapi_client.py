@@ -68,6 +68,13 @@ def _normalize_product(payload: dict[str, Any]) -> ProductMarketplace:
     raw_review_count = payload.get("product_num_ratings", 0)
     review_digits = re.sub(r"\D", "", str(raw_review_count))
 
+    curr_price = _optional_price(payload.get("product_price"))
+    orig_price = _optional_price(payload.get("product_original_price"))
+    if curr_price is None:
+        curr_price = orig_price
+    if curr_price is None:
+        raise ValueError(f"Sản phẩm {payload.get('asin')} không có thông tin giá từ sàn (hết hàng hoặc chưa chọn phiên bản).")
+
     return ProductMarketplace.model_validate(
         {
             "external_id": payload.get("asin"),
@@ -78,8 +85,8 @@ def _normalize_product(payload: dict[str, Any]) -> ProductMarketplace:
             "shop_name": _clean_text(buy_box.get("seller")),
             "product_rating": rating,
             "review_count": int(review_digits) if review_digits else 0,
-            "current_price": _optional_price(payload.get("product_price")),
-            "original_price": _optional_price(payload.get("product_original_price")),
+            "current_price": curr_price,
+            "original_price": orig_price,
             "currency": payload.get("currency") or "USD",
             "in_stock": in_stock,
             "top_reviews": _unescape_review(payload.get("top_reviews") or []),
@@ -87,11 +94,44 @@ def _normalize_product(payload: dict[str, Any]) -> ProductMarketplace:
     )
 
 
+def _find_demo_product(asin: str) -> ProductMarketplace | None:
+    try:
+        from seed.common import DEMO_PRODUCTS, STANDALONE_DEMO_PRODUCT
+        all_demos = list(DEMO_PRODUCTS) + [STANDALONE_DEMO_PRODUCT]
+        for item in all_demos:
+            raw_id = item["external_id"].replace("DEMO-", "").replace("SEED-", "")
+            if asin.upper() in (raw_id.upper(), item["external_id"].upper()):
+                return ProductMarketplace.model_validate(
+                    {
+                        "external_id": asin,
+                        "url": item.get("url") or f"https://www.amazon.com/dp/{asin}",
+                        "name": item["name"],
+                        "image_url": item["image_url"],
+                        "brand": item.get("brand"),
+                        "shop_name": item.get("shop_name"),
+                        "product_rating": item.get("product_rating"),
+                        "review_count": item.get("review_count", 0),
+                        "current_price": item["current_price"],
+                        "original_price": item.get("original_price"),
+                        "currency": item.get("currency", "USD"),
+                        "in_stock": item.get("in_stock", True),
+                        "top_reviews": item.get("top_reviews", []),
+                    }
+                )
+    except Exception:
+        pass
+    return None
+
+
 class RapidAPIClient:
     """Fetches a product by ASIN through the Real-Time Amazon Data API."""
 
     async def fetch_product(self, asin: str, country: str = "US") -> ProductMarketplace:
+        demo = _find_demo_product(asin)
+
         if not settings.RAPIDAPI_KEY:
+            if demo:
+                return demo
             raise MARKETPLACE_UNAVAILABLE.throw()
 
         try:
@@ -114,6 +154,8 @@ class RapidAPIClient:
                     raise ValueError("RapidAPI returned a different ASIN than requested.")
                 return normalized
         except (httpx.HTTPError, ValueError, ValidationError) as exc:
+            if demo:
+                return demo
             raise MARKETPLACE_UPSTREAM_ERROR.throw() from exc
 
 
