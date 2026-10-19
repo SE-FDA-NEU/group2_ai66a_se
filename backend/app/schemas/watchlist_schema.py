@@ -29,6 +29,9 @@ class Product(BaseModel):
     marketplace: str
     brand: str | None = None
     shop_name: str | None = None
+    shop_rating: Decimal | None = None
+    shop_review_count: int | None = None
+    shop_trust_label: str | None = None
     product_rating: Decimal | None = None
     review_count: int
     current_price: Decimal
@@ -42,6 +45,7 @@ class Product(BaseModel):
     price_label: str | None = None
     fake_discount: bool = False
     fake_discount_percent: Decimal | None = None
+    top_reviews: list[dict[str, Any]] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
