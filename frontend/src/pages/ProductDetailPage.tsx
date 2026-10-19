@@ -6,6 +6,8 @@ import styles from './ProductDetailPage.module.css';
 import { formatVnd } from '../utils/currency';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { ProductSettingsModal } from '../components/ProductSettingsModal';
+import { ShopTrustBadge } from '../components/ShopTrustBadge';
+import { computeShopTrustLabel } from '../utils/trustLabel';
 
 export const ProductDetailPage: React.FC = () => {
   const location = useLocation();
@@ -37,7 +39,7 @@ export const ProductDetailPage: React.FC = () => {
       }
     };
     fetchProduct();
-  }, [id, product]);
+  }, [id, product, navigate]);
 
   if (isLoading) {
     return (
@@ -74,6 +76,14 @@ export const ProductDetailPage: React.FC = () => {
     }
   };
 
+  const trustLabel = computeShopTrustLabel(
+    product.shop_rating ?? product.product_rating,
+    product.shop_review_count ?? product.review_count,
+    product.shop_trust_label
+  );
+
+  const recentReviews = (product.reviews || product.top_reviews || []).slice(0, 5);
+
   return (
     <div className={styles.pageContainer}>
       <button className={styles.backLink} onClick={() => navigate('/watchlist')}>
@@ -86,8 +96,14 @@ export const ProductDetailPage: React.FC = () => {
         </div>
         
         <div className={styles.productInfo}>
-          <div className={styles.brand}>{product.brand || product.marketplace || 'Amazon'}</div>
-          <h1 className={styles.title}>{product.name}</h1>
+          <div className={styles.brand} data-testid="product-brand">{product.brand || product.marketplace || 'Amazon'}</div>
+          <h1 className={styles.title} data-testid="product-name">{product.name}</h1>
+
+          <div className={styles.shopRow} data-testid="shop-details">
+            <span className={styles.shopLabel}>Cửa hàng:</span>
+            <span className={styles.shopName} data-testid="shop-name">{product.shop_name || 'Không xác định'}</span>
+            {trustLabel && <ShopTrustBadge label={trustLabel} size="medium" />}
+          </div>
           
           <div className={styles.priceSection}>
             <span className={styles.currentPrice}>{formatVnd(product.current_price, product.currency)}</span>
@@ -101,13 +117,28 @@ export const ProductDetailPage: React.FC = () => {
           <div className={styles.metaGrid}>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Cửa hàng</span>
-              <span className={styles.metaValue}>{product.shop_name || 'Không xác định'}</span>
+              <div className={styles.shopMetaBlock}>
+                <span className={styles.metaValue}>{product.shop_name || 'Không xác định'}</span>
+                {trustLabel && <ShopTrustBadge label={trustLabel} size="small" />}
+              </div>
             </div>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Đánh giá</span>
-              <span className={styles.metaValue}>
-                {product.product_rating ? <><Star size={15} fill="currentColor" aria-hidden="true" /> {product.product_rating}</> : 'Chưa có đánh giá'}
-              </span>
+              <div className={styles.ratingInfo} data-testid="product-rating-meta">
+                {product.product_rating ? (
+                  <>
+                    <span className={styles.ratingStars} data-testid="product-avg-rating">
+                      <Star size={15} fill="currentColor" aria-hidden="true" />
+                      <strong>{Number(product.product_rating).toFixed(1)}</strong>
+                    </span>
+                    <span className={styles.ratingCount} data-testid="product-total-ratings">
+                      ({(product.review_count ?? 0).toLocaleString()} đánh giá)
+                    </span>
+                  </>
+                ) : (
+                  <span className={styles.metaValue}>Chưa có đánh giá</span>
+                )}
+              </div>
             </div>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Giá thấp nhất (lịch sử)</span>
@@ -165,6 +196,66 @@ export const ProductDetailPage: React.FC = () => {
 
       <div className={styles.chartSection}>
         <PriceHistoryChart productId={product.id} currency={product.currency} />
+      </div>
+
+      {/* Customer Reviews Section (5 most recent reviews) */}
+      <div className={styles.reviewsSection} data-testid="customer-reviews-section">
+        <div className={styles.reviewsHeader}>
+          <h2 className={styles.reviewsSectionTitle}>Đánh giá từ khách hàng</h2>
+          {product.product_rating && (
+            <div className={styles.reviewsSummary} data-testid="reviews-summary">
+              <div className={styles.avgRatingBox}>
+                <Star size={18} fill="currentColor" className={styles.starIconYellow} aria-hidden="true" />
+                <span className={styles.avgRatingScore} data-testid="reviews-average-rating">
+                  {Number(product.product_rating).toFixed(1)}
+                </span>
+                <span className={styles.avgRatingScale}>/ 5.0</span>
+              </div>
+              <span className={styles.totalRatingsLabel} data-testid="reviews-total-ratings">
+                ({(product.review_count ?? 0).toLocaleString()} lượt đánh giá)
+              </span>
+            </div>
+          )}
+        </div>
+
+        {recentReviews.length > 0 ? (
+          <div className={styles.reviewsList} data-testid="reviews-list">
+            {recentReviews.map((review, idx) => {
+              const reviewRating = review.rating != null ? parseFloat(String(review.rating)) : null;
+              const reviewerName = review.author || review.reviewer || 'Khách hàng';
+              const reviewText = review.text || review.comment || review.body || review.content;
+              const reviewDate = review.date || review.created_at;
+
+              return (
+                <div key={review.id || idx} className={styles.reviewCard} data-testid="review-card">
+                  <div className={styles.reviewCardHeader}>
+                    <div className={styles.reviewerMeta}>
+                      <div className={styles.reviewerAvatar} aria-hidden="true">
+                        {reviewerName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className={styles.reviewerName}>{reviewerName}</div>
+                        {reviewDate && <div className={styles.reviewDate}>{reviewDate}</div>}
+                      </div>
+                    </div>
+                    {reviewRating !== null && (
+                      <div className={styles.reviewRatingStars} data-testid="review-rating" aria-label={`${reviewRating} trên 5 sao`}>
+                        <Star size={14} fill="currentColor" className={styles.starIconYellow} aria-hidden="true" />
+                        <span>{reviewRating.toFixed(1)}</span>
+                      </div>
+                    )}
+                  </div>
+                  {review.title && <h3 className={styles.reviewTitle}>{review.title}</h3>}
+                  {reviewText && <p className={styles.reviewBody}>{reviewText}</p>}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className={styles.emptyReviews} data-testid="empty-reviews">
+            <p>Chưa có đánh giá nào từ khách hàng cho sản phẩm này.</p>
+          </div>
+        )}
       </div>
 
       {/* Pop-up Modal Cài đặt theo dõi sản phẩm (US02) */}
