@@ -31,7 +31,22 @@ def _get_notification_html_content(
     safe_currency = html.escape(str(currency))
     current = html.escape(str(current_price))
     target = html.escape(str(target_price)) if target_price is not None else None
-    price_text = f"{current} {safe_currency}"
+
+    if str(currency).upper() == "USD":
+        try:
+            vnd_current = round(Decimal(str(current_price)) * Decimal("26000"))
+            price_text = f"{vnd_current:,.0f} ₫ ({current} USD)".replace(",", ".")
+            if target_price is not None:
+                vnd_target = round(Decimal(str(target_price)) * Decimal("26000"))
+                target_text = f"{vnd_target:,.0f} ₫ ({target} USD)".replace(",", ".")
+            else:
+                target_text = None
+        except Exception:
+            price_text = f"{current} {safe_currency}"
+            target_text = f"{target} {safe_currency}" if target is not None else None
+    else:
+        price_text = f"{current} {safe_currency}"
+        target_text = f"{target} {safe_currency}" if target is not None else None
 
     if kind == NotificationKind.TARGET_PRICE_SET:
         accent_color = "#1d4ed8"
@@ -41,10 +56,10 @@ def _get_notification_html_content(
         description = (
             f"Chúng tôi đã lưu giá mục tiêu cho sản phẩm "
             f"<strong>{safe_name}</strong> (giá hiện tại <strong>{price_text}</strong>) "
-            f"là <strong>{target} {safe_currency}</strong>."
+            f"là <strong>{target_text}</strong>."
         )
         highlight_label = "Giá mục tiêu"
-        highlight_value = f"{target} {safe_currency}"
+        highlight_value = target_text
         meta_text = "Chúng tôi sẽ thông báo ngay khi giá sản phẩm chạm mục tiêu!"
     elif kind == NotificationKind.TARGET_PRICE_REACHED:
         accent_color = "#15803d"
@@ -54,7 +69,7 @@ def _get_notification_html_content(
         description = (
             f"Giá sản phẩm <strong>{safe_name}</strong> đã giảm còn "
             f"<strong>{price_text}</strong>, đã chạm giá mục tiêu "
-            f"<strong>{target} {safe_currency}</strong> của bạn."
+            f"<strong>{target_text}</strong> của bạn."
         )
         highlight_label = "Giá hiện tại"
         highlight_value = price_text
@@ -67,7 +82,7 @@ def _get_notification_html_content(
         description = (
             f"Giá sản phẩm <strong>{safe_name}</strong> đã tăng lên "
             f"<strong>{price_text}</strong>, cao hơn giá mục tiêu "
-            f"<strong>{target} {safe_currency}</strong> của bạn."
+            f"<strong>{target_text}</strong> của bạn."
         )
         highlight_label = "Giá hiện tại"
         highlight_value = price_text

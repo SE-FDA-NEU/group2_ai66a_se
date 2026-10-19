@@ -228,8 +228,28 @@ export const WatchlistPage: React.FC = () => {
 
         <div className={combinedStyles.tableBody}>
           {isLoading ? (
-            <div className={combinedStyles.emptyState}>
-              <div className={combinedStyles.emptyStateTitle}>Đang tải dữ liệu từ máy chủ...</div>
+            <div className={combinedStyles.emptyState} data-testid="watchlist-loading" style={{ padding: '36px 16px' }}>
+              <div className={combinedStyles.spinner} aria-hidden="true" />
+              <div className={combinedStyles.emptyStateTitle}>Đang tải danh sách theo dõi...</div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '4px 0 20px' }}>
+                Hệ thống đang đồng bộ dữ liệu giá và trạng thái từ máy chủ, vui lòng chờ trong giây lát.
+              </p>
+              {/* Skeleton Placeholder Rows */}
+              <div style={{ width: '100%', maxWidth: '720px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    style={{
+                      height: '52px',
+                      background: 'linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)',
+                      backgroundSize: '200% 100%',
+                      animation: 'shimmer 1.5s infinite',
+                      borderRadius: '8px',
+                      opacity: 0.8,
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           ) : error ? (
             <div className={combinedStyles.emptyState}>

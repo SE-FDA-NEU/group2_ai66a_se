@@ -104,16 +104,19 @@ export interface PriceHistoryResponse {
 export const getPriceHistory = async (
   productId: number,
   days: number = 7,
-  gapThresholdMinutes: number = 30
+  gapThresholdMinutes: number = 30,
+  hours?: number
 ): Promise<PriceHistoryResponse> => {
+  const params: Record<string, any> = {
+    days,
+    gap_threshold_minutes: gapThresholdMinutes,
+  };
+  if (hours !== undefined && hours !== null) {
+    params.hours = hours;
+  }
   const res = await apiClient.get<any, { message: string; data: PriceHistoryResponse }>(
     `/watchlist/${productId}/history`,
-    {
-      params: {
-        days,
-        gap_threshold_minutes: gapThresholdMinutes,
-      },
-    }
+    { params }
   );
   return res.data;
 };

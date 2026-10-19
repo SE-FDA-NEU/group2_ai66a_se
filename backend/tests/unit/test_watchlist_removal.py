@@ -15,6 +15,9 @@ class FakeSession:
     async def delete(self, _value):
         return None
 
+    async def execute(self, _statement):
+        return None
+
     async def flush(self):
         return None
 

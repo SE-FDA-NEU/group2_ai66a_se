@@ -131,15 +131,13 @@ const OTPPage: React.FC = () => {
 
       navigate('/watchlist', { replace: true });
     } catch (err: any) {
-      const detail = err?.detail ?? err?.message ?? '';
-      if (detail.toLowerCase().includes('otp')) {
-        setApiError('Mã OTP không đúng hoặc đã hết hạn.');
-      } else if (detail.toLowerCase().includes('already') || detail.toLowerCase().includes('registered')) {
+      const detail = err?.error?.message ?? err?.detail ?? err?.message ?? '';
+      if (detail.toLowerCase().includes('already') || detail.toLowerCase().includes('registered')) {
         setApiError('Email này đã được đăng ký. Vui lòng đăng nhập.');
       } else if (detail.toLowerCase().includes('token')) {
         setApiError('Phiên xác thực đã hết hạn. Vui lòng thử lại từ đầu.');
       } else {
-        setApiError(detail || 'Có lỗi xảy ra. Vui lòng thử lại.');
+        setApiError(detail || 'Mã OTP không chính xác hoặc đã hết hạn.');
       }
     } finally {
       setIsLoading(false);

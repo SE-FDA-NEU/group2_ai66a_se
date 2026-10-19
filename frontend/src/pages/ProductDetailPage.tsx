@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Settings, Star } from 'lucide-react';
+import { AlertTriangle, Bell, Settings, Star } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { removeProductFromWatchlist, getWatchlist, WatchlistProduct } from '../api/watchlistApi';
 import styles from './ProductDetailPage.module.css';
@@ -8,6 +8,7 @@ import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { ProductSettingsModal } from '../components/ProductSettingsModal';
 import { ShopTrustBadge } from '../components/ShopTrustBadge';
 import { computeShopTrustLabel } from '../utils/trustLabel';
+import { getSafeMarketplaceUrl } from '../utils/marketplace';
 
 export const ProductDetailPage: React.FC = () => {
   const location = useLocation();
@@ -21,7 +22,7 @@ export const ProductDetailPage: React.FC = () => {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      if (product || !id) return;
+      if (!id) return;
       try {
         const res = await getWatchlist();
         const found = res.products?.find((p) => String(p.id) === id);
@@ -83,6 +84,7 @@ export const ProductDetailPage: React.FC = () => {
   );
 
   const recentReviews = (product.reviews || product.top_reviews || []).slice(0, 5);
+  const marketplaceUrl = getSafeMarketplaceUrl(product.url);
 
   return (
     <div className={styles.pageContainer}>
@@ -141,13 +143,13 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             </div>
             <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Giá thấp nhất (lịch sử)</span>
+              <span className={styles.metaLabel}>Giá thấp nhất (lịch sử):</span>
               <span className={styles.metaValue}>
-                {product.price_low ? `${formatVnd(product.price_low, product.currency)}` : 'Chưa có dữ liệu'}
+                {product.price_low ? formatVnd(product.price_low, product.currency) : 'Chưa có dữ liệu'}
               </span>
             </div>
             <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Giá mục tiêu cảnh báo</span>
+              <span className={styles.metaLabel}>Giá mục tiêu cảnh báo:</span>
               <span className={styles.metaValue}>
                 {product.target_price != null
                   ? formatVnd(product.target_price, product.currency)
@@ -155,9 +157,29 @@ export const ProductDetailPage: React.FC = () => {
               </span>
             </div>
             <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Nhãn giá hiện tại</span>
+              <span className={styles.metaLabel}>Nhãn giá hiện tại:</span>
               <span className={styles.metaValue}>
-                {product.price_label || 'Not enough data to assess'}
+                <span className={`${styles.badge} ${
+                  product.price_label === 'Good price'
+                    ? styles.badgeSuccess
+                    : product.price_label === 'Expensive' || product.fake_discount
+                    ? styles.badgeWarning
+                    : styles.badgeNeutral
+                }`}>
+                  {product.fake_discount ? (
+                    <>
+                      <AlertTriangle size={13} aria-hidden="true" />
+                      <span>Giảm giá ảo {product.fake_discount_percent ? `(${product.fake_discount_percent}% trên giá thường)` : ''}</span>
+                    </>
+                  ) : (
+                    <>
+                      {product.price_label !== 'Good price' && product.price_label !== 'Normal' && (
+                        <AlertTriangle size={13} aria-hidden="true" />
+                      )}
+                      <span>{product.price_label || 'Not enough data to assess'}</span>
+                    </>
+                  )}
+                </span>
               </span>
             </div>
           </div>
@@ -182,20 +204,26 @@ export const ProductDetailPage: React.FC = () => {
             >
               {isRemoving ? 'Đang ngừng theo dõi...' : 'Ngừng theo dõi (Unfollow)'}
             </button>
-            <a 
-              href={product.url}
-              target="_blank"
-              rel="noreferrer"
-              className={styles.btnPrimary}
-            >
-              Xem trên {product.marketplace || 'cửa hàng'}
-            </a>
+            {marketplaceUrl && (
+              <a
+                href={marketplaceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.btnPrimary}
+              >
+                Xem trên {product.marketplace || 'cửa hàng'}
+              </a>
+            )}
           </div>
         </div>
       </div>
 
       <div className={styles.chartSection}>
-        <PriceHistoryChart productId={product.id} currency={product.currency} />
+        <PriceHistoryChart
+          productId={product.id}
+          currency={product.currency}
+          targetPrice={product.target_price}
+        />
       </div>
 
       {/* Customer Reviews Section (5 most recent reviews) */}

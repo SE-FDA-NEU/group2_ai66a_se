@@ -3,6 +3,7 @@ import { AlertTriangle, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProductRow.module.css';
 import { formatVnd } from '../utils/currency';
+import { getSafeMarketplaceUrl } from '../utils/marketplace';
 import { WatchlistProduct } from '../api/watchlistApi';
 import { ShopTrustBadge } from './ShopTrustBadge';
 import { computeShopTrustLabel } from '../utils/trustLabel';
@@ -51,6 +52,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   shopReviewCount,
 }) => {
   const navigate = useNavigate();
+  const marketplaceUrl = getSafeMarketplaceUrl(originalProduct?.url);
 
   const resolvedShopName = shopName || originalProduct?.shop_name;
   const trustLabel = computeShopTrustLabel(
@@ -72,11 +74,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       current_price: currentPrice,
       price_low: priceLow,
       price_high: priceHigh,
+      target_price: targetPrice,
       product_rating: starRating,
       price_label: priceLabel || '',
       is_fake_discount: isFakeDiscount || false,
-      currency: 'VND',
-      marketplace: 'Mock Market',
+      currency: currency || 'USD',
+      marketplace: 'Amazon',
       url: '#'
     };
     navigate(`/detail/${id}`, { state: { product: productData } });
@@ -146,7 +149,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       <div className={styles.colCenter}>
         {starRating ? (
           <div className={styles.rating}>
-            <Star className={styles.starIcon} size={14} fill="currentColor" aria-hidden="true" />
+            <Star className={styles.starIcon} size={14} fill="#f59e0b" color="#f59e0b" aria-hidden="true" />
             <span className={styles.ratingNumber}>{starRating}</span>
           </div>
         ) : (
@@ -176,6 +179,18 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
       {/* Cột 6: Thao tác */}
       <div className={styles.actionCol}>
+        {marketplaceUrl && (
+          <a
+            className={styles.marketplaceLink}
+            href={marketplaceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            Xem trên marketplace
+          </a>
+        )}
         <button
           className={styles.removeButton}
           onClick={handleRemoveClick}
