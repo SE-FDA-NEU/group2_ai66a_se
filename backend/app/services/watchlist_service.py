@@ -308,6 +308,22 @@ class WatchlistService:
         if not enough_data:
             price_label = "Not enough data to assess"
 
+        # Shop trust label logic (BR10)
+        shop_rating = getattr(product, "shop_rating", None) or product.product_rating
+        shop_review_count = getattr(product, "shop_review_count", None) or product.review_count
+        shop_trust_label = None
+        if shop_rating is not None and shop_review_count is not None:
+            r = Decimal(str(shop_rating))
+            c = int(shop_review_count)
+            if r >= Decimal("4.7") and c >= 500:
+                shop_trust_label = "Trusted"
+            elif r < Decimal("4.3") or c < 50:
+                shop_trust_label = "Risky: few ratings"
+            else:
+                shop_trust_label = "Needs caution"
+
+        top_reviews = getattr(product, "top_reviews", None) or []
+
         return Product(
             id=product.id,
             name=product.name,
@@ -316,6 +332,9 @@ class WatchlistService:
             marketplace=product.marketplace,
             brand=product.brand,
             shop_name=product.shop_name,
+            shop_rating=getattr(product, "shop_rating", None),
+            shop_review_count=getattr(product, "shop_review_count", None),
+            shop_trust_label=shop_trust_label,
             product_rating=product.product_rating,
             review_count=product.review_count,
             current_price=product.current_price,
@@ -329,6 +348,7 @@ class WatchlistService:
             price_label=price_label,
             fake_discount=fake_discount,
             fake_discount_percent=fake_discount_percent,
+            top_reviews=top_reviews,
         )
 
     async def get_price_history(

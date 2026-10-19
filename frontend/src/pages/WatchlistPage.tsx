@@ -281,6 +281,10 @@ export const WatchlistPage: React.FC = () => {
                 onRemove={handleRemove}
                 isRemoving={removingProductId === String(product.id)}
                 originalProduct={product}
+                shopName={product.shop_name || undefined}
+                shopTrustLabel={product.shop_trust_label || undefined}
+                shopRating={product.shop_rating != null ? Number(product.shop_rating) : undefined}
+                shopReviewCount={product.shop_review_count != null ? Number(product.shop_review_count) : undefined}
               />
             ))
           ) : (
