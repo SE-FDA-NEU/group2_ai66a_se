@@ -258,6 +258,7 @@ export const WatchlistPage: React.FC = () => {
                 priceLabel={product.price_label || undefined}
                 isFakeDiscount={product.fake_discount}
                 notEnoughData={product.price_label === 'Not enough data to assess'}
+                shopTrustLabel={product.shop_trust_label ?? null}
                 onRemove={handleRemove}
                 isRemoving={removingProductId === String(product.id)}
                 originalProduct={product}
