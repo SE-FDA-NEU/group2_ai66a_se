@@ -56,6 +56,38 @@ class CRUDTrackedProduct:
         result = await db.execute(statement)
         return result.all()
 
+    async def get_with_product_statistics(
+        self, db: AsyncSession, user_id: int, product_id: int
+    ):
+        history_stats = (
+            select(
+                PriceHistory.product_id.label("product_id"),
+                func.count(func.distinct(func.cast(PriceHistory.recorded_at, Date))).label(
+                    "distinct_days"
+                ),
+                func.percentile_cont(0.5)
+                .within_group(PriceHistory.price)
+                .label("median_price"),
+            )
+            .where(PriceHistory.product_id == product_id)
+            .group_by(PriceHistory.product_id)
+            .subquery()
+        )
+        statement = (
+            select(
+                Product,
+                TrackedProduct.target_price,
+                TrackedProduct.buy_when_good,
+                func.coalesce(history_stats.c.distinct_days, 0).label("distinct_days"),
+                history_stats.c.median_price,
+            )
+            .join(Product, Product.id == TrackedProduct.product_id)
+            .outerjoin(history_stats, history_stats.c.product_id == Product.id)
+            .where(TrackedProduct.user_id == user_id, TrackedProduct.product_id == product_id)
+        )
+        result = await db.execute(statement)
+        return result.first()
+
     async def create(
         self,
         db: AsyncSession,

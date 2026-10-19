@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Star } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, ShieldAlert, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProductRow.module.css';
 import { formatVnd } from '../utils/currency';
@@ -19,6 +19,7 @@ export interface ProductRowProps {
   priceLabel?: string;
   isFakeDiscount?: boolean;
   notEnoughData?: boolean;
+  shopTrustLabel?: string | null;
   onRemove: (id: string) => void | Promise<void>;
   isRemoving?: boolean;
   originalProduct?: WatchlistProduct;
@@ -37,6 +38,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   priceLabel,
   isFakeDiscount,
   notEnoughData,
+  shopTrustLabel,
   onRemove,
   isRemoving = false,
   originalProduct
@@ -132,8 +134,34 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         )}
       </div>
 
-      {/* Cột 5: Nhãn giá */}
+      {/* Cột 5: Nhãn giá + Trust */}
       <div className={styles.badgesCol}>
+        {/* Shop trust label */}
+        {shopTrustLabel === 'Trusted' && (
+          <span
+            className={`${styles.badge} ${styles.badgePrimary}`}
+            data-testid={`trust-label-${id}`}
+          >
+            <ShieldCheck size={11} aria-hidden="true" /> Trusted
+          </span>
+        )}
+        {shopTrustLabel === 'Risky: few ratings' && (
+          <span
+            className={`${styles.badge} ${styles.badgeWarning}`}
+            data-testid={`trust-label-${id}`}
+          >
+            <ShieldAlert size={11} aria-hidden="true" /> Risky: few ratings
+          </span>
+        )}
+        {shopTrustLabel === 'Needs caution' && (
+          <span
+            className={`${styles.badge} ${styles.badgeNeutral}`}
+            data-testid={`trust-label-${id}`}
+          >
+            <AlertTriangle size={11} aria-hidden="true" /> Needs caution
+          </span>
+        )}
+        {/* Price label badges */}
         {notEnoughData && (
           <span className={`${styles.badge} ${styles.badgeWarning}`}>
             <AlertTriangle size={13} aria-hidden="true" /> {priceLabel || 'Not enough data to assess'}

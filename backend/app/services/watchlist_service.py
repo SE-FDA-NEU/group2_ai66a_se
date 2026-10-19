@@ -57,6 +57,23 @@ class WatchlistService:
         ]
         return ProductList(total=len(products), products=products)
 
+    async def get_product(
+        self, db: AsyncSession, user: User, product_id: int
+    ) -> Product:
+        row = await tracked_product_crud.get_with_product_statistics(
+            db, user.id, product_id
+        )
+        if row is None:
+            raise TRACKING_NOT_FOUND.throw()
+
+        return self._to_summary_response(
+            product=row[0],
+            target_price=row[1],
+            buy_when_good=row[2],
+            distinct_days=row[3],
+            median_price=row[4],
+        )
+
     async def add_product(
         self, db: AsyncSession, user: User, request: ProductCreate
     ) -> Product:
@@ -308,14 +325,34 @@ class WatchlistService:
         if not enough_data:
             price_label = "Not enough data to assess"
 
+        # Shop trust label logic (BR10)
+        shop_rating = getattr(product, "shop_rating", None) or product.product_rating
+        shop_review_count = getattr(product, "shop_review_count", None) or product.review_count
+        shop_trust_label = None
+        if shop_rating is not None and shop_review_count is not None:
+            r = Decimal(str(shop_rating))
+            c = int(shop_review_count)
+            if r >= Decimal("4.7") and c >= 500:
+                shop_trust_label = "Trusted"
+            elif r < Decimal("4.3") or c < 50:
+                shop_trust_label = "Risky: few ratings"
+            else:
+                shop_trust_label = "Needs caution"
+
+        top_reviews = (getattr(product, "top_reviews", None) or [])[:5]
+
         return Product(
             id=product.id,
             name=product.name,
+            product_name=product.name,
             url=product.url,
             image_url=product.image_url,
             marketplace=product.marketplace,
             brand=product.brand,
             shop_name=product.shop_name,
+            shop_rating=getattr(product, "shop_rating", None),
+            shop_review_count=getattr(product, "shop_review_count", None),
+            shop_trust_label=shop_trust_label,
             product_rating=product.product_rating,
             review_count=product.review_count,
             current_price=product.current_price,
@@ -329,6 +366,7 @@ class WatchlistService:
             price_label=price_label,
             fake_discount=fake_discount,
             fake_discount_percent=fake_discount_percent,
+            top_reviews=top_reviews,
         )
 
     async def get_price_history(

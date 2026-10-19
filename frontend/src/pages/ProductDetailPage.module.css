@@ -305,6 +305,195 @@
   to { transform: rotate(360deg); }
 }
 
+/* ── Meta grid ──────────────────────────────────────────────────────────── */
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 24px;
+  margin-bottom: 4px;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metaLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.metaValue {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.currentPrice {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+/* ── Brand row ───────────────────────────────────────────────────────────── */
+.brandSep {
+  margin: 0 4px;
+  color: var(--text-tertiary);
+}
+
+/* ── Trust label ─────────────────────────────────────────────────────────── */
+.trustRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.trustBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border-width: 1px;
+  border-style: solid;
+  white-space: nowrap;
+}
+
+.trustTrusted {
+  background-color: var(--status-success-bg);
+  color: var(--status-success);
+  border-color: var(--status-success);
+}
+
+.trustRisky {
+  background-color: var(--status-error-bg);
+  color: var(--status-error);
+  border-color: var(--status-error);
+}
+
+.trustCaution {
+  background-color: var(--status-warning-bg);
+  color: var(--status-warning);
+  border-color: var(--status-warning);
+}
+
+.shopRatingText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.shopStar {
+  color: #fbbf24;
+}
+
+.shopReviewCount {
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+/* ── Customer Reviews section ─────────────────────────────────────────────── */
+.reviewsSection {
+  margin-top: 28px;
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.reviewsTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reviewsList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reviewCard {
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  transition: border-color 0.2s ease;
+}
+
+.reviewCard:hover {
+  border-color: var(--primary-color);
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reviewMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reviewAuthor {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.reviewStars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  color: #fbbf24;
+}
+
+.reviewDate {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.reviewTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.reviewBody {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
 @media (max-width: 768px) {
   .pageContainer {
     padding: 24px 16px;
