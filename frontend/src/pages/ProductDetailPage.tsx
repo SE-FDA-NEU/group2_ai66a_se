@@ -21,11 +21,13 @@ export const ProductDetailPage: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   useEffect(() => {
+    if (product) return;
+
     const fetchProduct = async () => {
       if (!id) return;
       try {
         const res = await getWatchlist();
-        const found = res.products?.find((p) => String(p.id) === id);
+        const found = res?.products?.find((p) => String(p.id) === id);
         if (found) {
           setProduct(found);
         }
@@ -40,7 +42,7 @@ export const ProductDetailPage: React.FC = () => {
       }
     };
     fetchProduct();
-  }, [id, product, navigate]);
+  }, [id, navigate]);
 
   if (isLoading) {
     return (
@@ -134,7 +136,7 @@ export const ProductDetailPage: React.FC = () => {
                       <strong>{Number(product.product_rating).toFixed(1)}</strong>
                     </span>
                     <span className={styles.ratingCount} data-testid="product-total-ratings">
-                      ({(product.review_count ?? 0).toLocaleString()} đánh giá)
+                      ({(product.review_count ?? 0).toLocaleString('en-US')} đánh giá)
                     </span>
                   </>
                 ) : (
@@ -240,7 +242,7 @@ export const ProductDetailPage: React.FC = () => {
                 <span className={styles.avgRatingScale}>/ 5.0</span>
               </div>
               <span className={styles.totalRatingsLabel} data-testid="reviews-total-ratings">
-                ({(product.review_count ?? 0).toLocaleString()} lượt đánh giá)
+                ({(product.review_count ?? 0).toLocaleString('en-US')} lượt đánh giá)
               </span>
             </div>
           )}
