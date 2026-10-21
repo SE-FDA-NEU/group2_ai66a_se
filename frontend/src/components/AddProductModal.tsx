@@ -162,7 +162,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               </div>
             )}
             <div style={{ fontSize: '12px', color: 'var(--text-secondary, #6b7280)', marginTop: '4px', lineHeight: 1.4 }}>
-              💡 <em>Lưu ý (BR1): Giá mục tiêu phải thấp hơn giá bán hiện tại. Bạn có thể để trống để đặt sau khi theo dõi, hoặc tick chọn "Mua khi giá tốt".</em>
+              💡 <em>Lưu ý: Giá mục tiêu phải thấp hơn giá bán hiện tại. Bạn có thể để trống để đặt sau khi theo dõi, hoặc tick chọn "Mua khi giá tốt".</em>
             </div>
           </div>
 

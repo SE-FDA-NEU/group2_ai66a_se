@@ -1,8 +1,11 @@
 #!/bin/sh
 set -e
 
-echo "=== [1/2] Tự động cập nhật cấu trúc Database (Alembic Migration)... ==="
+echo "=== [1/3] Kiem tra ket noi Database... ==="
+python wait_db.py
+
+echo "=== [2/3] Tu dong cap nhat cau truc Database (Alembic Migration)... ==="
 alembic upgrade head
 
-echo "=== [2/2] Khởi chạy ứng dụng FastAPI... ==="
+echo "=== [3/3] Khoi chay ung dung FastAPI... ==="
 exec "$@"

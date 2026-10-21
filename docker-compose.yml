@@ -25,6 +25,7 @@ services:
     ports:
       - "${HOST_PORT_BACKEND:-8000}:8000"
     environment:
+      - PYTHONPATH=/app
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db-postgre:5432/${POSTGRES_DB:-web_base}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-}@redis:6379/0
     volumes:

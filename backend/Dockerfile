@@ -3,6 +3,7 @@ FROM python:3.11-slim-bookworm
 # Biến môi trường giúp Python không tạo .pyc và print log ngay lập tức
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH /app
 
 WORKDIR /app
 
