@@ -38,11 +38,26 @@ const OTPPage: React.FC = () => {
 
   const { email = '', nickname = '', password = '', reason = 'verify-email' } = state ?? {};
 
+  const getInitialCooldown = () => {
+    if (!email) return RESEND_COOLDOWN;
+    const storageKey = `otp_cooldown_${reason}_${email.trim().toLowerCase()}`;
+    const stored = sessionStorage.getItem(storageKey);
+    if (stored) {
+      const remaining = Math.ceil((parseInt(stored, 10) - Date.now()) / 1000);
+      if (remaining > 0) return remaining;
+      return 0;
+    }
+    const newExpiry = Date.now() + RESEND_COOLDOWN * 1000;
+    sessionStorage.setItem(storageKey, newExpiry.toString());
+    return RESEND_COOLDOWN;
+  };
+
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | undefined>();
-  const [cooldown, setCooldown] = useState(RESEND_COOLDOWN);
+  const [cooldown, setCooldown] = useState<number>(getInitialCooldown);
   const [isResending, setIsResending] = useState(false);
+  const [resendSuccessMsg, setResendSuccessMsg] = useState<string | undefined>();
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -150,13 +165,30 @@ const OTPPage: React.FC = () => {
     if (cooldown > 0 || isResending) return;
     setIsResending(true);
     setApiError(undefined);
+    setResendSuccessMsg(undefined);
     try {
       await sendOTP(email, reason);
+      const storageKey = `otp_cooldown_${reason}_${email.trim().toLowerCase()}`;
+      sessionStorage.setItem(storageKey, (Date.now() + RESEND_COOLDOWN * 1000).toString());
       setCooldown(RESEND_COOLDOWN);
       setOtp(Array(OTP_LENGTH).fill(''));
+      setResendSuccessMsg('Mã OTP mới đã được gửi thành công!');
       inputRefs.current[0]?.focus();
-    } catch {
-      setApiError('Không thể gửi lại OTP. Vui lòng thử lại.');
+      setTimeout(() => {
+        setResendSuccessMsg(undefined);
+      }, 4000);
+    } catch (err: any) {
+      const detail = err?.error?.message ?? err?.detail ?? err?.message ?? '';
+      if (err?.error?.code === 'OTP_COOLDOWN_ACTIVE' || detail.toLowerCase().includes('đợi') || detail.toLowerCase().includes('giây')) {
+        const match = detail.match(/(\d+)\s*giây/);
+        if (match) {
+          const rem = parseInt(match[1], 10);
+          setCooldown(rem);
+          const storageKey = `otp_cooldown_${reason}_${email.trim().toLowerCase()}`;
+          sessionStorage.setItem(storageKey, (Date.now() + rem * 1000).toString());
+        }
+      }
+      setApiError(detail || 'Không thể gửi lại OTP. Vui lòng thử lại.');
     } finally {
       setIsResending(false);
     }
@@ -232,24 +264,30 @@ const OTPPage: React.FC = () => {
           </form>
 
           {/* Resend */}
-          <p className={styles.resendRow}>
-            Không nhận được mã?{' '}
-            {cooldown > 0 ? (
-              <span className={styles.cooldownText}>Gửi lại sau {cooldown}s</span>
-            ) : (
+          <div className={styles.resendContainer}>
+            <p className={styles.resendRow}>
+              Không nhận được mã?{' '}
               <button
+                type="button"
                 className={styles.resendBtn}
                 onClick={handleResend}
-                disabled={isResending}
+                disabled={cooldown > 0 || isResending || isLoading}
               >
-                {isResending ? 'Đang gửi...' : 'Gửi lại OTP'}
+                {isResending ? 'Đang gửi...' : cooldown > 0 ? `Gửi lại mã (${cooldown}s)` : 'Gửi lại OTP'}
               </button>
+            </p>
+
+            {resendSuccessMsg && (
+              <div className={styles.toastSuccess}>
+                ✓ {resendSuccessMsg}
+              </div>
             )}
-          </p>
+          </div>
 
           <button
+            type="button"
             className={styles.backBtn}
-            onClick={() => navigate('/register')}
+            onClick={() => navigate('/register', { state: { email, fullName: nickname } })}
           >
             ← Quay lại đăng ký
           </button>
