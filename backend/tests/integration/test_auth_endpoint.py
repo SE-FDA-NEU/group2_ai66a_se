@@ -261,3 +261,50 @@ async def test_reset_password_blocked_for_google_only_account(client: AsyncClien
     assert res_json["error"]["code"] == "GOOGLE_ACCOUNT_NO_PASSWORD"
 
 
+@pytest.mark.asyncio
+async def test_otp_send_cooldown_60s(client: AsyncClient):
+    """Test cơ chế chặn gửi lại mã OTP trong vòng 60 giây (Cooldown)"""
+    email = "cooldown@test.com"
+    # Gửi OTP lần 1 -> Thành công (200)
+    response1 = await client.post("/api/v1/otp/send", json={"email": email, "reason": OTPReason.VERIFY_EMAIL.value})
+    assert response1.status_code == 200
+
+    # Gửi lại ngay lập tức -> Bị chặn 429 OTP_COOLDOWN_ACTIVE
+    response2 = await client.post("/api/v1/otp/send", json={"email": email, "reason": OTPReason.VERIFY_EMAIL.value})
+    assert response2.status_code == 429
+    res_json = response2.json()
+    assert res_json["error"]["code"] == "OTP_COOLDOWN_ACTIVE"
+    assert "Vui lòng đợi" in res_json["error"]["message"]
+
+
+@pytest.mark.asyncio
+async def test_otp_hourly_rate_limit(client: AsyncClient):
+    """Test cơ chế giới hạn tối đa 5 lần gửi OTP trong vòng 1 giờ"""
+    email = "hourly@test.com"
+    # Gửi thành công 5 lần (giả lập xóa cooldown giữa các lần để kiểm tra hạn ngạch 1 giờ)
+    for _ in range(5):
+        FAKE_REDIS_DB.pop(f"otp-cooldown:{email}", None)
+        response = await client.post("/api/v1/otp/send", json={"email": email, "reason": OTPReason.VERIFY_EMAIL.value})
+        assert response.status_code == 200
+
+    # Lần thứ 6 -> Bị chặn 429 OTP_MAX_REQUESTS_EXCEEDED
+    FAKE_REDIS_DB.pop(f"otp-cooldown:{email}", None)
+    response_blocked = await client.post("/api/v1/otp/send", json={"email": email, "reason": OTPReason.VERIFY_EMAIL.value})
+    assert response_blocked.status_code == 429
+    res_json = response_blocked.json()
+    assert res_json["error"]["code"] == "OTP_MAX_REQUESTS_EXCEEDED"
+    assert "quá 5 lần" in res_json["error"]["message"]
+
+
+@pytest.mark.asyncio
+async def test_otp_send_smtp_failure_rollback(client: AsyncClient):
+    """Test rollback dữ liệu trong Redis khi gửi mail qua SMTP thất bại"""
+    email = "smtp_fail@test.com"
+    with patch("app.services.auth_service.send_email", side_effect=Exception("SMTP Connection Error")):
+        response = await client.post("/api/v1/otp/send", json={"email": email, "reason": OTPReason.VERIFY_EMAIL.value})
+        assert response.status_code == 500
+        # Kiểm tra Redis: key OTP và cooldown không được lưu lại để người dùng không bị kẹt cooldown
+        assert f"otp:{OTPReason.VERIFY_EMAIL.value}:{email}" not in FAKE_REDIS_DB
+        assert f"otp-cooldown:{email}" not in FAKE_REDIS_DB
+
+
