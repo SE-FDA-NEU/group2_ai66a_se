@@ -83,6 +83,11 @@ class WatchlistService:
             if await tracked_product_crud.count_for_user(db, user.id) >= 10:
                 raise WATCHLIST_LIMIT_REACHED.throw()
 
+            is_demo = product is not None and (
+                str(product.marketplace) == "demo"
+                or str(product.external_id).startswith(("DEMO-", "SEED-"))
+            )
+
             within_reuse_grace = False
             if product is not None and product.tracked_by_count == 0 and product.untracked_since is not None:
                 untracked_since = product.untracked_since
@@ -92,7 +97,11 @@ class WatchlistService:
                     days=self.MIN_DAYS_FOR_ASSESSMENT
                 )
 
-            if product is None or (product.tracked_by_count == 0 and not within_reuse_grace):
+            should_fetch_marketplace = not is_demo and (
+                product is None or (product.tracked_by_count == 0 and not within_reuse_grace)
+            )
+
+            if should_fetch_marketplace:
                 item = await rapidapi_client.fetch_product(parsed_link.asin, country="US")
                 if item.external_id != parsed_link.asin:
                     raise MARKETPLACE_PRODUCT_MISMATCH.throw()
@@ -102,17 +111,31 @@ class WatchlistService:
                     product = await product_crud.create_with_first_price(db, "amazon", item)
                 else:
                     product = await product_crud.refresh_untracked(db, product, item)
-            elif within_reuse_grace:
-                await product_crud.clear_untracked(db, product)
+            elif product is not None:
+                if within_reuse_grace or product.untracked_since is not None:
+                    await product_crud.clear_untracked(db, product)
+
+            normalized_target_price = None
+            if request.target_price is not None:
+                normalized_target_price = round(Decimal(str(request.target_price)), 2)
+                if normalized_target_price >= product.current_price:
+                    raise INVALID_TARGET_PRICE.throw(
+                        f"Target must be lower than the current price {product.current_price} {product.currency}"
+                    )
 
             tracking = await tracked_product_crud.create(
                 db,
                 user_id=user.id,
                 product_id=product.id,
-                target_price=request.target_price,
+                target_price=normalized_target_price,
                 buy_when_good=request.buy_when_good,
             )
-            if request.target_price is not None:
+            if normalized_target_price is not None:
+                if str(product.currency).upper() == "USD":
+                    vnd_equiv = round(normalized_target_price * Decimal("26000"))
+                    formatted_target = f"{vnd_equiv:,.0f} ₫ ({normalized_target_price:.2f} USD)".replace(",", ".")
+                else:
+                    formatted_target = f"{normalized_target_price:.0f} {product.currency}"
                 await notification_crud.create(
                     db,
                     user_id=user.id,
@@ -121,7 +144,7 @@ class WatchlistService:
                     title="Đã lưu giá mục tiêu",
                     message=(
                         f"Đã đặt giá mục tiêu cho {product.name}: "
-                        f"{request.target_price} {product.currency}."
+                        f"{formatted_target}."
                     ),
                 )
             await product_crud.increment_tracked_count(db, product)
@@ -161,6 +184,7 @@ class WatchlistService:
                 raise TRACKING_NOT_FOUND.throw()
 
             await tracked_product_crud.delete(db, tracking)
+            await notification_crud.delete_for_user_product(db, user.id, product_id)
             await product_crud.decrement_tracked_count_or_untrack(db, product)
             await db.commit()
         except Exception:
@@ -185,13 +209,19 @@ class WatchlistService:
             if tracking is None:
                 raise TRACKING_NOT_FOUND.throw()
 
-            if target_price >= product.current_price:
+            normalized_target_price = round(Decimal(str(target_price)), 2)
+            if normalized_target_price >= product.current_price:
                 raise INVALID_TARGET_PRICE.throw(
                     f"Target must be lower than the current price {product.current_price} {product.currency}"
                 )
 
-            await tracked_product_crud.update_target_price(db, tracking, target_price)
+            await tracked_product_crud.update_target_price(db, tracking, normalized_target_price)
 
+            if str(product.currency).upper() == "USD":
+                vnd_equiv = round(normalized_target_price * Decimal("26000"))
+                formatted_target = f"{vnd_equiv:,.0f} ₫ ({normalized_target_price:.2f} USD)".replace(",", ".")
+            else:
+                formatted_target = f"{normalized_target_price:.0f} {product.currency}"
             await notification_crud.create(
                 db,
                 user_id=user.id,
@@ -200,7 +230,7 @@ class WatchlistService:
                 title="Đã lưu giá mục tiêu",
                 message=(
                     f"Đã đặt giá mục tiêu cho {product.name}: "
-                    f"{target_price} {product.currency}."
+                    f"{formatted_target}."
                 ),
             )
 
@@ -212,7 +242,7 @@ class WatchlistService:
                 current_price=product.current_price,
                 currency=product.currency,
                 product_url=product.url,
-                target_price=target_price,
+                target_price=normalized_target_price,
             )
 
             await db.commit()
@@ -278,6 +308,22 @@ class WatchlistService:
         if not enough_data:
             price_label = "Not enough data to assess"
 
+        # Shop trust label logic (BR10)
+        shop_rating = getattr(product, "shop_rating", None) or product.product_rating
+        shop_review_count = getattr(product, "shop_review_count", None) or product.review_count
+        shop_trust_label = None
+        if shop_rating is not None and shop_review_count is not None:
+            r = Decimal(str(shop_rating))
+            c = int(shop_review_count)
+            if r >= Decimal("4.7") and c >= 500:
+                shop_trust_label = "Trusted"
+            elif r < Decimal("4.3") or c < 50:
+                shop_trust_label = "Risky: few ratings"
+            else:
+                shop_trust_label = "Needs caution"
+
+        top_reviews = getattr(product, "top_reviews", None) or []
+
         return Product(
             id=product.id,
             name=product.name,
@@ -286,6 +332,9 @@ class WatchlistService:
             marketplace=product.marketplace,
             brand=product.brand,
             shop_name=product.shop_name,
+            shop_rating=getattr(product, "shop_rating", None),
+            shop_review_count=getattr(product, "shop_review_count", None),
+            shop_trust_label=shop_trust_label,
             product_rating=product.product_rating,
             review_count=product.review_count,
             current_price=product.current_price,
@@ -299,6 +348,7 @@ class WatchlistService:
             price_label=price_label,
             fake_discount=fake_discount,
             fake_discount_percent=fake_discount_percent,
+            top_reviews=top_reviews,
         )
 
     async def get_price_history(
@@ -308,6 +358,7 @@ class WatchlistService:
         product_id: int,
         *,
         days: int = 7,
+        hours: float | None = None,
         gap_threshold_minutes: int = 30,
     ) -> PriceHistoryResponse:
         tracking = await tracked_product_crud.get(db, user.id, product_id)
@@ -317,8 +368,13 @@ class WatchlistService:
         # 1. Tính tổng số ngày dương lịch riêng biệt đã theo dõi (BR3, BR5)
         tracked_days = await product_crud.get_history_distinct_days(db, product_id)
 
-        # 2. Lấy dữ liệu trong khung thời gian yêu cầu (mặc định 7 ngày gần nhất)
-        since = datetime.now(timezone.utc) - timedelta(days=days) if days > 0 else None
+        # 2. Lấy dữ liệu trong khung thời gian yêu cầu (hỗ trợ theo giờ hoặc ngày)
+        if hours is not None and hours > 0:
+            since = datetime.now(timezone.utc) - timedelta(hours=hours)
+        elif days > 0:
+            since = datetime.now(timezone.utc) - timedelta(days=days)
+        else:
+            since = None
         records = await product_crud.get_price_history(db, product_id, since=since)
 
         if not records:

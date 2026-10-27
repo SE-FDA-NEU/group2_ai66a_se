@@ -36,3 +36,8 @@ class UserErrors:
     EMAIL_ALREADY_EXISTS = ErrorDetail("EMAIL_ALREADY_EXISTS", 400, "Email này đã tồn tại.")
     USER_NOT_FOUND = ErrorDetail("USER_NOT_FOUND", 404, "Không tìm thấy người dùng này.")
     INVALID_OLD_PASSWORD = ErrorDetail("INVALID_OLD_PASSWORD", 400, "Mật khẩu cũ không chính xác.")
+    GOOGLE_ACCOUNT_NO_PASSWORD = ErrorDetail(
+        "GOOGLE_ACCOUNT_NO_PASSWORD",
+        400,
+        "Tài khoản này được đăng ký bằng Google và không có mật khẩu ứng dụng để đặt lại."
+    )

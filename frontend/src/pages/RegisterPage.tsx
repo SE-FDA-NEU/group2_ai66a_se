@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AlertCircle, Bell, ShoppingCart, TrendingUp } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { sendOTP, loginWithGoogle } from '../api/authApi';
 import { getUserProfile } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
@@ -102,11 +102,13 @@ const PasswordStrengthBar: React.FC<PasswordStrengthBarProps> = ({ strength }) =
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const navState = location.state as { email?: string; fullName?: string } | null;
   const { saveToken } = useAuth();
 
   const [values, setValues] = useState<FormValues>({
-    fullName: '',
-    email: '',
+    fullName: navState?.fullName || '',
+    email: navState?.email || '',
     password: '',
     confirmPassword: '',
   });
@@ -195,6 +197,8 @@ const RegisterPage: React.FC = () => {
     setApiError(undefined);
     try {
       await sendOTP(values.email, 'verify-email');
+      const storageKey = `otp_cooldown_verify-email_${values.email.trim().toLowerCase()}`;
+      sessionStorage.setItem(storageKey, (Date.now() + 60000).toString());
       navigate('/otp', {
         state: {
           email: values.email,
@@ -204,7 +208,28 @@ const RegisterPage: React.FC = () => {
         },
       });
     } catch (err: any) {
-      const detail = err?.detail ?? err?.message ?? '';
+      const detail = err?.error?.message ?? err?.detail ?? err?.message ?? '';
+      if (
+        err?.error?.code === 'OTP_COOLDOWN_ACTIVE' ||
+        detail.toLowerCase().includes('đợi') ||
+        detail.toLowerCase().includes('giây')
+      ) {
+        // Mã OTP đã được gửi gần đây -> Đồng bộ thời gian và chuyển sang trang OTP để người dùng tiếp tục
+        const match = detail.match(/(\d+)\s*giây/);
+        const rem = match ? parseInt(match[1], 10) : 60;
+        const storageKey = `otp_cooldown_verify-email_${values.email.trim().toLowerCase()}`;
+        sessionStorage.setItem(storageKey, (Date.now() + rem * 1000).toString());
+
+        navigate('/otp', {
+          state: {
+            email: values.email,
+            nickname: values.fullName,
+            password: values.password,
+            reason: 'verify-email',
+          },
+        });
+        return;
+      }
       if (detail.toLowerCase().includes('already') || detail.toLowerCase().includes('registered')) {
         setApiError('Email này đã được đăng ký. Vui lòng đăng nhập.');
       } else {

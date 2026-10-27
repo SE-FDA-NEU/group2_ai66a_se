@@ -102,6 +102,8 @@ const ForgotPasswordPage: React.FC = () => {
     try {
       await sendOTP(trimmed, 'reset-password');
 
+      const storageKey = `otp_cooldown_reset-password_${trimmed.toLowerCase()}`;
+      sessionStorage.setItem(storageKey, (Date.now() + RESEND_COOLDOWN * 1000).toString());
       setCooldown(RESEND_COOLDOWN);
       setOtp(Array(OTP_LENGTH).fill(''));
       setOtpError(undefined);
@@ -109,6 +111,27 @@ const ForgotPasswordPage: React.FC = () => {
     } catch (err: any) {
       const detail = getErrorMessage(err);
       if (
+        err?.error?.code === 'OTP_COOLDOWN_ACTIVE' ||
+        detail.toLowerCase().includes('đợi') ||
+        detail.toLowerCase().includes('giây')
+      ) {
+        const match = detail.match(/(\d+)\s*giây/);
+        const rem = match ? parseInt(match[1], 10) : 60;
+        const storageKey = `otp_cooldown_reset-password_${trimmed.toLowerCase()}`;
+        sessionStorage.setItem(storageKey, (Date.now() + rem * 1000).toString());
+        setCooldown(rem);
+        setOtp(Array(OTP_LENGTH).fill(''));
+        setOtpError(undefined);
+        setCurrentStep(2);
+        return;
+      }
+      if (
+        detail.toLowerCase().includes('google') ||
+        err?.error?.code === 'GOOGLE_ACCOUNT_NO_PASSWORD' ||
+        detail.toLowerCase().includes('sign in with google')
+      ) {
+        setApiError('Tài khoản này được đăng ký bằng Google và không có mật khẩu ứng dụng. Vui lòng đăng nhập trực tiếp bằng Google.');
+      } else if (
         detail.toLowerCase().includes('not found') ||
         detail.toLowerCase().includes('tồn tại') ||
         detail.toLowerCase().includes('không tìm thấy')
@@ -183,6 +206,8 @@ const ForgotPasswordPage: React.FC = () => {
     try {
       await sendOTP(email, 'reset-password');
 
+      const storageKey = `otp_cooldown_reset-password_${email.trim().toLowerCase()}`;
+      sessionStorage.setItem(storageKey, (Date.now() + RESEND_COOLDOWN * 1000).toString());
       setCooldown(RESEND_COOLDOWN);
       setOtp(Array(OTP_LENGTH).fill(''));
       setOtpError(undefined);
@@ -194,6 +219,19 @@ const ForgotPasswordPage: React.FC = () => {
       }, 4000);
     } catch (err: any) {
       const detail = getErrorMessage(err);
+      if (
+        err?.error?.code === 'OTP_COOLDOWN_ACTIVE' ||
+        detail.toLowerCase().includes('đợi') ||
+        detail.toLowerCase().includes('giây')
+      ) {
+        const match = detail.match(/(\d+)\s*giây/);
+        if (match) {
+          const rem = parseInt(match[1], 10);
+          setCooldown(rem);
+          const storageKey = `otp_cooldown_reset-password_${email.trim().toLowerCase()}`;
+          sessionStorage.setItem(storageKey, (Date.now() + rem * 1000).toString());
+        }
+      }
       setApiError(detail || 'Không thể gửi lại mã OTP. Vui lòng thử lại sau.');
     } finally {
       setIsResending(false);
@@ -230,10 +268,11 @@ const ForgotPasswordPage: React.FC = () => {
         detail.toLowerCase().includes('không chính xác') ||
         detail.toLowerCase().includes('hết hạn') ||
         detail.toLowerCase().includes('expired') ||
-        detail.toLowerCase().includes('invalid')
+        detail.toLowerCase().includes('invalid') ||
+        detail.toLowerCase().includes('thử')
       ) {
-        setOtpError('Mã OTP không đúng hoặc đã hết hạn.');
-        setApiError(detail || 'Mã OTP không chính xác hoặc đã hết hạn. Vui lòng kiểm tra lại.');
+        setOtpError(detail || 'Mã OTP không chính xác hoặc đã hết hạn.');
+        setApiError(undefined);
       } else {
         setApiError(detail || 'Xác thực OTP thất bại. Vui lòng thử lại.');
       }
@@ -499,18 +538,14 @@ const ForgotPasswordPage: React.FC = () => {
                 {/* Resend OTP Row */}
                 <div className={styles.resendSection}>
                   <span>Chưa nhận được mã?</span>
-                  {cooldown > 0 ? (
-                    <span className={styles.countdownBadge}>Gửi lại sau {cooldown}s</span>
-                  ) : (
-                    <button
-                      type="button"
-                      className={styles.resendBtn}
-                      onClick={handleResendOtp}
-                      disabled={isResending || isLoading}
-                    >
-                      {isResending ? 'Đang gửi...' : 'Gửi lại mã'}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={styles.resendBtn}
+                    onClick={handleResendOtp}
+                    disabled={cooldown > 0 || isResending || isLoading}
+                  >
+                    {isResending ? 'Đang gửi...' : cooldown > 0 ? `Gửi lại mã (${cooldown}s)` : 'Gửi lại mã'}
+                  </button>
                 </div>
 
                 {resendSuccessMsg && (

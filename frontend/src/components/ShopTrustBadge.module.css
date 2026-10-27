@@ -1,0 +1,60 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 9999px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.sizeSmall {
+  font-size: 11px;
+  padding: 3px 8px;
+  gap: 4px;
+}
+
+.sizeMedium {
+  font-size: 12px;
+  padding: 4px 10px;
+  gap: 5px;
+}
+
+.sizeLarge {
+  font-size: 13px;
+  padding: 6px 14px;
+  gap: 6px;
+}
+
+/* Trusted: Green */
+.trusted {
+  background-color: var(--status-success-bg, #d1fae5);
+  color: var(--status-success, #10b981);
+  border-color: #a7f3d0;
+}
+
+/* Needs caution: Yellow / Amber */
+.caution {
+  background-color: var(--status-warning-bg, #fef3c7);
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+/* Risky: few ratings: Red */
+.risky {
+  background-color: var(--status-error-bg, #fee2e2);
+  color: var(--status-error, #ef4444);
+  border-color: #fca5a5;
+}
+
+.unknown {
+  background-color: var(--status-neutral-bg, #f3f4f6);
+  color: var(--status-neutral, #6b7280);
+  border-color: var(--border-color, #e5e7eb);
+}
+
+.icon {
+  flex-shrink: 0;
+}

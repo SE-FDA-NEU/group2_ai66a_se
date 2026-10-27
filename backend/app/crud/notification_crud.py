@@ -1,9 +1,9 @@
 from datetime import datetime
-from sqlalchemy import select
+from sqlalchemy import delete, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.product_model import (
-    NotificationPreference, PendingNotificationEmail, UserNotification,
+    NotificationPreference, PendingNotificationEmail, TrackedProduct, UserNotification,
 )
 
 
@@ -36,13 +36,35 @@ class CRUDNotification:
         after_id: int = 0,
         limit: int = 50,
     ) -> list[UserNotification]:
+        # Chỉ lấy thông báo của những sản phẩm người dùng đang thực sự theo dõi (hoặc thông báo hệ thống chung)
+        tracked_subquery = select(TrackedProduct.product_id).where(
+            TrackedProduct.user_id == user_id
+        )
         result = await db.scalars(
             select(UserNotification)
-            .where(UserNotification.user_id == user_id, UserNotification.id > after_id)
+            .where(
+                UserNotification.user_id == user_id,
+                UserNotification.id > after_id,
+                or_(
+                    UserNotification.product_id.is_(None),
+                    UserNotification.product_id.in_(tracked_subquery),
+                ),
+            )
             .order_by(UserNotification.id)
             .limit(limit)
         )
         return list(result.all())
+
+    async def delete_for_user_product(
+        self, db: AsyncSession, user_id: int, product_id: int
+    ) -> None:
+        """Xóa toàn bộ thông báo liên quan đến một sản phẩm khi người dùng hủy theo dõi."""
+        await db.execute(
+            delete(UserNotification).where(
+                UserNotification.user_id == user_id,
+                UserNotification.product_id == product_id,
+            )
+        )
 
 
 notification_crud = CRUDNotification()

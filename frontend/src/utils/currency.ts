@@ -7,7 +7,10 @@ export const convertToVnd = (amount: number, currency: string): number => {
 };
 
 export const convertFromVnd = (amount: number, currency: string): number => {
-  return currency.toUpperCase() === 'USD' ? amount / USD_TO_VND_RATE : amount;
+  if (currency.toUpperCase() === 'USD') {
+    return Math.round((amount / USD_TO_VND_RATE) * 100) / 100;
+  }
+  return Math.round(amount);
 };
 
 export const formatVnd = (amount: number, currency: string): string => {

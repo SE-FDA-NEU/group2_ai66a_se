@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bookmark, LayoutDashboard, LogOut, Settings, X } from 'lucide-react';
+import { Bookmark, LayoutDashboard, LogOut, User as UserIcon, X } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import styles from './Sidebar.module.css';
@@ -48,12 +48,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/settings"
+          to="/profile"
           onClick={onClose}
           className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
         >
-          <Settings className={styles.icon} aria-hidden="true" />
-          <span>Cài đặt</span>
+          <UserIcon className={styles.icon} aria-hidden="true" />
+          <span>Hồ sơ cá nhân</span>
         </NavLink>
       </nav>
 

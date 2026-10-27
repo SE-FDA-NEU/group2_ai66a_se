@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     RAPIDAPI_HOST: str = "real-time-amazon-data.p.rapidapi.com"
     RAPIDAPI_PRODUCT_ENDPOINT: str = "https://real-time-amazon-data.p.rapidapi.com/product-details"
 
+    # 6. Cấu hình OTP & Chống Spam
+    OTP_EXPIRE_SECONDS: int = 300
+    OTP_RESEND_COOLDOWN_SECONDS: int = 60
+    OTP_MAX_ATTEMPTS: int = 5
+    OTP_MAX_REQUESTS_PER_HOUR: int = 5
+
     @property
     def get_redis_url(self) -> str:
         if self.REDIS_URL:

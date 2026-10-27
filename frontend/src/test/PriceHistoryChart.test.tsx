@@ -216,6 +216,38 @@ describe('PriceHistoryChart Component', () => {
     await waitFor(() => {
       expect(watchlistApi.getPriceHistory).toHaveBeenCalledWith(42, 30);
     });
+
+    // Switch to Tất cả (all time)
+    const buttonAll = screen.getByRole('button', { name: 'Tất cả' });
+    fireEvent.click(buttonAll);
+
+    await waitFor(() => {
+      expect(watchlistApi.getPriceHistory).toHaveBeenCalledWith(42, 0);
+    });
+
+    // Switch to 1 ngày
+    const button1d = screen.getByRole('button', { name: '1 ngày' });
+    fireEvent.click(button1d);
+
+    await waitFor(() => {
+      expect(watchlistApi.getPriceHistory).toHaveBeenCalledWith(42, 1);
+    });
+
+    // Switch to 1 giờ
+    const button1h = screen.getByRole('button', { name: '1 giờ' });
+    fireEvent.click(button1h);
+
+    await waitFor(() => {
+      expect(watchlistApi.getPriceHistory).toHaveBeenCalledWith(42, 0, 30, 1);
+    });
+
+    // Switch to 30 phút
+    const button30m = screen.getByRole('button', { name: '30 phút' });
+    fireEvent.click(button30m);
+
+    await waitFor(() => {
+      expect(watchlistApi.getPriceHistory).toHaveBeenCalledWith(42, 0, 30, 0.5);
+    });
   });
 
   it('has overflow-x hidden container ensuring no horizontal scrolling on mobile', async () => {
@@ -236,5 +268,27 @@ describe('PriceHistoryChart Component', () => {
 
     const card = screen.getByTestId('price-history-chart');
     expect(card.className).toMatch(/chartCard/);
+  });
+
+  it('renders target price in statsGrid and legend when targetPrice prop is provided', async () => {
+    vi.mocked(watchlistApi.getPriceHistory).mockResolvedValue({
+      min_price: 120000,
+      max_price: 250000,
+      tracked_days: 7,
+      data_points: [
+        { price: 200000, timestamp: '2026-10-18T10:00:00Z', is_gap: false },
+      ],
+    });
+
+    render(<PriceHistoryChart productId={10} currency="VND" targetPrice={180000} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('price-history-chart')).toBeInTheDocument();
+    });
+
+    const targetStat = screen.getByTestId('stat-target-price');
+    expect(targetStat).toBeInTheDocument();
+    expect(targetStat).toHaveTextContent(/180\.000/);
+    expect(screen.getAllByText('Mục tiêu').length).toBeGreaterThanOrEqual(2);
   });
 });

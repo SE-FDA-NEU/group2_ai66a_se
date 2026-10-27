@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ArrowUpDown, Plus, RotateCw, Search } from 'lucide-react';
+import { AlertTriangle, ArrowUpDown, Plus, RotateCw, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProductRow } from '../components/ProductRow';
 import { AddProductModal } from '../components/AddProductModal';
@@ -25,6 +25,7 @@ export const WatchlistPage: React.FC = () => {
 
   const [products, setProducts] = useState<WatchlistProduct[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>(() => {
     try {
       const saved = localStorage.getItem(WATCHLIST_SORT_KEY) as SortOption | null;
@@ -127,12 +128,59 @@ export const WatchlistPage: React.FC = () => {
         </div>
         <button
           className={combinedStyles.addButton}
-          disabled={products.length >= 10}
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => {
+            if (products.length >= 10) {
+              setLimitMessage('You have reached the limit of 10 tracked products');
+              return;
+            }
+            setLimitMessage(null);
+            setIsAddModalOpen(true);
+          }}
+          data-testid="btn-add-product"
         >
           <Plus size={16} aria-hidden="true" /> Thêm sản phẩm
         </button>
       </header>
+
+      {limitMessage && (
+        <div
+          style={{
+            backgroundColor: 'var(--status-warning-bg)',
+            border: '1px solid var(--status-warning)',
+            color: 'var(--status-warning)',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '14px',
+            fontWeight: 500,
+          }}
+          role="alert"
+          data-testid="limit-message"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertTriangle size={16} aria-hidden="true" />
+            <span>{limitMessage} (Bạn đã đạt giới hạn tối đa 10 sản phẩm theo dõi).</span>
+          </div>
+          <button
+            onClick={() => setLimitMessage(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'inherit',
+              padding: '2px 6px',
+              fontSize: '18px',
+              lineHeight: 1,
+            }}
+            aria-label="Đóng cảnh báo giới hạn"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <div className={combinedStyles.toolbar}>
         <div className={combinedStyles.toolbarLeft}>
@@ -180,8 +228,28 @@ export const WatchlistPage: React.FC = () => {
 
         <div className={combinedStyles.tableBody}>
           {isLoading ? (
-            <div className={combinedStyles.emptyState}>
-              <div className={combinedStyles.emptyStateTitle}>Đang tải dữ liệu từ máy chủ...</div>
+            <div className={combinedStyles.emptyState} data-testid="watchlist-loading" style={{ padding: '36px 16px' }}>
+              <div className={combinedStyles.spinner} aria-hidden="true" />
+              <div className={combinedStyles.emptyStateTitle}>Đang tải danh sách theo dõi...</div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '4px 0 20px' }}>
+                Hệ thống đang đồng bộ dữ liệu giá và trạng thái từ máy chủ, vui lòng chờ trong giây lát.
+              </p>
+              {/* Skeleton Placeholder Rows */}
+              <div style={{ width: '100%', maxWidth: '720px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    style={{
+                      height: '52px',
+                      background: 'linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)',
+                      backgroundSize: '200% 100%',
+                      animation: 'shimmer 1.5s infinite',
+                      borderRadius: '8px',
+                      opacity: 0.8,
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           ) : error ? (
             <div className={combinedStyles.emptyState}>
@@ -213,6 +281,10 @@ export const WatchlistPage: React.FC = () => {
                 onRemove={handleRemove}
                 isRemoving={removingProductId === String(product.id)}
                 originalProduct={product}
+                shopName={product.shop_name || undefined}
+                shopTrustLabel={product.shop_trust_label || undefined}
+                shopRating={product.shop_rating != null ? Number(product.shop_rating) : undefined}
+                shopReviewCount={product.shop_review_count != null ? Number(product.shop_review_count) : undefined}
               />
             ))
           ) : (

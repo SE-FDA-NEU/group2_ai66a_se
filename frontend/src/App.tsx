@@ -27,9 +27,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        {import.meta.env.DEV && new URLSearchParams(window.location.search).has('mockNotification') && (
-          <NotificationCenter mockOnly />
-        )}
+        <NotificationCenter />
         <Routes>
           {/* Public / Auth routes (Only for unauthenticated users) */}
           <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
@@ -50,7 +48,7 @@ function App() {
             }
           />
           <Route
-            path="/settings"
+            path="/profile"
             element={
               <ProtectedRoute>
                 <Layout>
@@ -59,6 +57,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* Tương thích ngược: tự động chuyển hướng /settings sang /profile */}
+          <Route path="/settings" element={<Navigate to="/profile" replace />} />
           <Route
             path="/detail/:id"
             element={

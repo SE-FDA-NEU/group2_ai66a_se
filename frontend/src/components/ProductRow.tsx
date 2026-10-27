@@ -3,7 +3,10 @@ import { AlertTriangle, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProductRow.module.css';
 import { formatVnd } from '../utils/currency';
+import { getSafeMarketplaceUrl } from '../utils/marketplace';
 import { WatchlistProduct } from '../api/watchlistApi';
+import { ShopTrustBadge } from './ShopTrustBadge';
+import { computeShopTrustLabel } from '../utils/trustLabel';
 
 export interface ProductRowProps {
   id: string;
@@ -21,6 +24,10 @@ export interface ProductRowProps {
   onRemove: (id: string) => void | Promise<void>;
   isRemoving?: boolean;
   originalProduct?: WatchlistProduct;
+  shopName?: string;
+  shopTrustLabel?: string | null;
+  shopRating?: number | null;
+  shopReviewCount?: number | null;
 }
 
 export const ProductRow: React.FC<ProductRowProps> = ({
@@ -38,9 +45,21 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   notEnoughData,
   onRemove,
   isRemoving = false,
-  originalProduct
+  originalProduct,
+  shopName,
+  shopTrustLabel,
+  shopRating,
+  shopReviewCount,
 }) => {
   const navigate = useNavigate();
+  const marketplaceUrl = getSafeMarketplaceUrl(originalProduct?.url);
+
+  const resolvedShopName = shopName || originalProduct?.shop_name;
+  const trustLabel = computeShopTrustLabel(
+    shopRating ?? originalProduct?.shop_rating ?? starRating,
+    shopReviewCount ?? originalProduct?.shop_review_count ?? originalProduct?.review_count,
+    shopTrustLabel ?? originalProduct?.shop_trust_label
+  );
 
   const handleRowClick = () => {
     if (originalProduct) {
@@ -55,11 +74,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       current_price: currentPrice,
       price_low: priceLow,
       price_high: priceHigh,
+      target_price: targetPrice,
       product_rating: starRating,
       price_label: priceLabel || '',
       is_fake_discount: isFakeDiscount || false,
-      currency: 'VND',
-      marketplace: 'Mock Market',
+      currency: currency || 'USD',
+      marketplace: 'Amazon',
       url: '#'
     };
     navigate(`/detail/${id}`, { state: { product: productData } });
@@ -82,7 +102,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         }
       }}
     >
-      {/* Cột 1: Sản phẩm (Ảnh + Tên) */}
+      {/* Cột 1: Sản phẩm (Ảnh + Tên + Cửa hàng) */}
       <div className={styles.productCol}>
         <div className={styles.imageContainer}>
           {image ? (
@@ -91,7 +111,15 @@ export const ProductRow: React.FC<ProductRowProps> = ({
             <div className={styles.imagePlaceholder} />
           )}
         </div>
-        <h3 className={styles.productName} title={name}>{name}</h3>
+        <div className={styles.productMetaWrapper}>
+          <h3 className={styles.productName} title={name}>{name}</h3>
+          {(resolvedShopName || trustLabel) && (
+            <div className={styles.shopMetaRow}>
+              {resolvedShopName && <span className={styles.shopNameText}>{resolvedShopName}</span>}
+              {trustLabel && <ShopTrustBadge label={trustLabel} size="small" />}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Cột 2: Giá hiện tại */}
@@ -121,7 +149,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       <div className={styles.colCenter}>
         {starRating ? (
           <div className={styles.rating}>
-            <Star className={styles.starIcon} size={14} fill="currentColor" aria-hidden="true" />
+            <Star className={styles.starIcon} size={14} fill="#f59e0b" color="#f59e0b" aria-hidden="true" />
             <span className={styles.ratingNumber}>{starRating}</span>
           </div>
         ) : (
@@ -129,8 +157,11 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         )}
       </div>
 
-      {/* Cột 5: Nhãn giá */}
+      {/* Cột 5: Nhãn giá & Shop Trust */}
       <div className={styles.badgesCol}>
+        {trustLabel && (
+          <ShopTrustBadge label={trustLabel} size="small" />
+        )}
         {notEnoughData && (
           <span className={`${styles.badge} ${styles.badgeWarning}`}>
             <AlertTriangle size={13} aria-hidden="true" /> {priceLabel || 'Not enough data to assess'}
@@ -148,6 +179,18 @@ export const ProductRow: React.FC<ProductRowProps> = ({
 
       {/* Cột 6: Thao tác */}
       <div className={styles.actionCol}>
+        {marketplaceUrl && (
+          <a
+            className={styles.marketplaceLink}
+            href={marketplaceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            Xem trên marketplace
+          </a>
+        )}
         <button
           className={styles.removeButton}
           onClick={handleRemoveClick}
