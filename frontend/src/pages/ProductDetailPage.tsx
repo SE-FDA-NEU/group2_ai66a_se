@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Bell, Settings, Star } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { removeProductFromWatchlist, getWatchlist, WatchlistProduct } from '../api/watchlistApi';
@@ -10,44 +10,72 @@ import { ShopTrustBadge } from '../components/ShopTrustBadge';
 import { computeShopTrustLabel } from '../utils/trustLabel';
 import { getSafeMarketplaceUrl } from '../utils/marketplace';
 
+type DetailLocationState = { product?: WatchlistProduct };
+
 export const ProductDetailPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
+  const routeProduct = (location.state as DetailLocationState | null)?.product;
+  const matchingRouteProduct = routeProduct && String(routeProduct.id) === id ? routeProduct : undefined;
 
-  const [product, setProduct] = useState<WatchlistProduct | undefined>(location.state?.product);
+  const [product, setProduct] = useState<WatchlistProduct | undefined>(matchingRouteProduct);
   const [isRemoving, setIsRemoving] = useState(false);
-  const [isLoading, setIsLoading] = useState(!location.state?.product);
+  const [isLoading, setIsLoading] = useState(!matchingRouteProduct);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   useEffect(() => {
-    if (product) return;
+    let isCurrentRequest = true;
+
+    if (matchingRouteProduct) {
+      setProduct(matchingRouteProduct);
+      setLoadError(null);
+      setIsLoading(false);
+      return () => {
+        isCurrentRequest = false;
+      };
+    }
+
+    setProduct(undefined);
+    setLoadError(null);
+    setIsLoading(true);
 
     const fetchProduct = async () => {
-      if (!id) return;
+      if (!id) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const res = await getWatchlist();
-        const found = res?.products?.find((p) => String(p.id) === id);
-        if (found) {
-          setProduct(found);
-        }
-      } catch (err: any) {
-        console.error('Failed to fetch watchlist', err);
-        if (err?.status === 401 || err?.error_code === 'UNAUTHORIZED' || err === 'Unauthorized') {
+        const response = await getWatchlist();
+        if (!isCurrentRequest) return;
+        const foundProduct = response?.products?.find((item) => String(item.id) === id);
+        setProduct(foundProduct);
+      } catch (error: any) {
+        if (!isCurrentRequest) return;
+        console.error('Failed to fetch product details', error);
+        if (error?.status === 401 || error?.error_code === 'UNAUTHORIZED' || error === 'Unauthorized') {
           navigate('/login', { replace: true });
           return;
         }
+        setLoadError(error?.detail || error?.message || 'Không thể tải thông tin sản phẩm.');
       } finally {
-        setIsLoading(false);
+        if (isCurrentRequest) setIsLoading(false);
       }
     };
-    fetchProduct();
-  }, [id, navigate]);
+
+    void fetchProduct();
+    return () => {
+      isCurrentRequest = false;
+    };
+  }, [id, matchingRouteProduct, navigate, retryCount]);
 
   if (isLoading) {
     return (
       <div className={styles.pageContainer}>
-        <div className={styles.loadingContainer}>
+        <div className={styles.loadingContainer} role="status" aria-live="polite">
           <div className={styles.spinner} aria-hidden="true" />
           <span>Đang tải thông tin sản phẩm...</span>
         </div>
@@ -55,13 +83,35 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className={styles.pageContainer}>
+        <section className={styles.stateCard} role="alert">
+          <h1 className={styles.stateTitle}>Không tải được sản phẩm</h1>
+          <p>{loadError}</p>
+          <div className={styles.stateActions}>
+            <button className={styles.btnPrimary} onClick={() => setRetryCount((count) => count + 1)}>
+              Thử lại
+            </button>
+            <button className={styles.btnSecondary} onClick={() => navigate('/watchlist')}>
+              Quay lại danh sách
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   if (!product) {
     return (
       <div className={styles.pageContainer}>
-        <div className={styles.productCard}>
-          <p>Không tìm thấy thông tin sản phẩm. Vui lòng quay lại danh sách theo dõi.</p>
-          <button className={styles.btnPrimary} onClick={() => navigate('/watchlist')}>Quay lại</button>
-        </div>
+        <section className={styles.stateCard}>
+          <h1 className={styles.stateTitle}>Không tìm thấy sản phẩm</h1>
+          <p>Sản phẩm này không có trong danh sách theo dõi của bạn.</p>
+          <button className={styles.btnPrimary} onClick={() => navigate('/watchlist')}>
+            Quay lại danh sách
+          </button>
+        </section>
       </div>
     );
   }
@@ -96,9 +146,15 @@ export const ProductDetailPage: React.FC = () => {
 
       <div className={styles.productCard}>
         <div className={styles.imageContainer}>
-          <img src={product.image_url} alt={product.name} className={styles.productImage} />
+          {product.image_url ? (
+            <img src={product.image_url} alt={product.name} className={styles.productImage} />
+          ) : (
+            <div className={styles.imagePlaceholder} role="img" aria-label="Không có ảnh sản phẩm">
+              Chưa có ảnh
+            </div>
+          )}
         </div>
-        
+
         <div className={styles.productInfo}>
           <div className={styles.brand} data-testid="product-brand">{product.brand || product.marketplace || 'Amazon'}</div>
           <h1 className={styles.title} data-testid="product-name">{product.name}</h1>
@@ -108,9 +164,14 @@ export const ProductDetailPage: React.FC = () => {
             <span className={styles.shopName} data-testid="shop-name">{product.shop_name || 'Không xác định'}</span>
             {trustLabel && <ShopTrustBadge label={trustLabel} size="medium" />}
           </div>
-          
+
           <div className={styles.priceSection}>
             <span className={styles.currentPrice}>{formatVnd(product.current_price, product.currency)}</span>
+            {product.original_price != null && product.original_price > product.current_price && (
+              <span className={styles.originalPrice}>
+                Giá gốc {formatVnd(product.original_price, product.currency)}
+              </span>
+            )}
             {product.target_price != null && (
               <span className={styles.alertBadge} data-testid="alert-status-badge">
                 <Bell size={13} aria-hidden="true" /> Alert at {formatVnd(product.target_price, product.currency)}
@@ -151,6 +212,12 @@ export const ProductDetailPage: React.FC = () => {
               </span>
             </div>
             <div className={styles.metaItem}>
+              <span className={styles.metaLabel}>Giá cao nhất (lịch sử):</span>
+              <span className={styles.metaValue}>
+                {product.price_high != null ? formatVnd(product.price_high, product.currency) : 'Chưa có dữ liệu'}
+              </span>
+            </div>
+            <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Giá mục tiêu cảnh báo:</span>
               <span className={styles.metaValue}>
                 {product.target_price != null
@@ -184,6 +251,14 @@ export const ProductDetailPage: React.FC = () => {
                 </span>
               </span>
             </div>
+            <div className={styles.metaItem}>
+              <span className={styles.metaLabel}>Tình trạng:</span>
+              <span className={styles.metaValue}>{product.in_stock ? 'Còn hàng' : 'Hết hàng'}</span>
+            </div>
+            <div className={styles.metaItem}>
+              <span className={styles.metaLabel}>Theo dõi giá tốt:</span>
+              <span className={styles.metaValue}>{product.buy_when_good ? 'Đang bật' : 'Đang tắt'}</span>
+            </div>
           </div>
 
           <div className={styles.actions}>
@@ -198,8 +273,8 @@ export const ProductDetailPage: React.FC = () => {
               <Settings size={16} aria-hidden="true" />
               <span>Cài đặt</span>
             </button>
-            <button 
-              className={styles.btnUnfollow} 
+            <button
+              className={styles.btnUnfollow}
               onClick={handleUnfollow}
               disabled={isRemoving}
               aria-busy={isRemoving}
