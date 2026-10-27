@@ -101,7 +101,9 @@ def test_update_target_price_success(monkeypatch):
         notification_mock = AsyncMock()
         monkeypatch.setattr(service_module.notification_crud, "create", notification_mock)
         email_mock = AsyncMock()
-        monkeypatch.setattr(service_module, "enqueue_price_email", email_mock)
+        monkeypatch.setattr(
+            "app.services.notification_service.enqueue_price_email", email_mock
+        )
 
         stats_row = (product, Decimal("180.00"), False, 10, Decimal("192.00"))
         monkeypatch.setattr(
@@ -126,10 +128,8 @@ def test_update_target_price_success(monkeypatch):
         assert n_kwargs["product_id"] == 31
         assert "180.00 USD" in n_kwargs["message"]
 
-        email_mock.assert_awaited_once()
-        e_kwargs = email_mock.await_args.kwargs
-        assert e_kwargs["kind"] == "target_price_set"
-        assert e_kwargs["target_price"] == Decimal("180.00")
+        # Per issue 185: setting target price must NOT send an email
+        email_mock.assert_not_called()
 
         assert result.target_price == Decimal("180.00")
 
