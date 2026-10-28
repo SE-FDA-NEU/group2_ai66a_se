@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { getNotifications } from '../api/notificationApi';
+import { getUnseenNotifications, markNotificationsSeen } from '../api/notificationApi';
 import { getWatchlist, UserNotification } from '../api/watchlistApi';
 import { useAuth } from '../context/AuthContext';
 import { formatVnd } from '../utils/currency';
@@ -66,22 +66,10 @@ interface NotificationCenterProps {
 }
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly = false }) => {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
   const [visible, setVisible] = useState<VisibleNotification[]>([]);
 
-  const storageKey = user?.id ? `trakora_last_seen_notif_${user.id}` : 'trakora_last_seen_notif';
-  const getInitialLastSeen = (): number => {
-    try {
-      const v = localStorage.getItem(storageKey);
-      return v ? Number(v) : 0;
-    } catch {
-      return 0;
-    }
-  };
-
-  const lastSeenIdRef = useRef<number>(getInitialLastSeen());
-  const isInitialSyncRef = useRef<boolean>(true);
   const timersRef = useRef<Map<number, number>>(new Map());
 
   const dismiss = useCallback((id: number) => {
@@ -111,31 +99,23 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
 
         let notifications: UserNotification[] = [];
         if (mockNotification) {
-          notifications = mockNotification.id > lastSeenIdRef.current ? [mockNotification] : [];
+          notifications = [mockNotification];
         } else if (!mockOnly) {
-          notifications = await getNotifications(lastSeenIdRef.current);
+          notifications = await getUnseenNotifications();
         }
 
-        if (!active || notifications.length === 0) {
-          isInitialSyncRef.current = false;
-          return;
-        }
+        if (!active || notifications.length === 0) return;
 
-        const isFirstVisitWithoutStoredId = lastSeenIdRef.current === 0;
-        const maxId = Math.max(...notifications.map((n) => n.id));
-        lastSeenIdRef.current = Math.max(lastSeenIdRef.current, maxId);
-        try {
-          localStorage.setItem(storageKey, String(lastSeenIdRef.current));
-        } catch {
-          // Ignore localStorage write error
+        // Server-side seen: mark everything unseen as seen so reload/reopen
+        // never floods the user with the same toasts again.
+        if (!mockNotification && !mockOnly && notifications.length > 0) {
+          try {
+            await markNotificationsSeen(notifications.map((n) => n.id));
+          } catch (error) {
+            console.error('Could not mark notifications as seen:', error);
+          }
         }
-
-        // Lần đầu tải trang: Chỉ đồng bộ maxId vào bộ nhớ đệm nếu chưa từng lưu lastSeenId và không trong test/mock
-        if (isInitialSyncRef.current && !mockNotification && isFirstVisitWithoutStoredId && import.meta.env.MODE !== 'test') {
-          isInitialSyncRef.current = false;
-          return;
-        }
-        isInitialSyncRef.current = false;
+        if (!active) return;
 
         // Chỉ hiển thị popup Toast cho các cảnh báo giá thời gian thực, bỏ qua thông báo cấu hình giá mục tiêu
         const actionableAlerts = notifications.filter(
@@ -188,7 +168,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
       timers.forEach((timer) => window.clearTimeout(timer));
       timers.clear();
     };
-  }, [dismiss, isLoggedIn, mockOnly, storageKey]);
+  }, [dismiss, isLoggedIn, mockOnly]);
 
   if (visible.length === 0) return null;
 
