@@ -39,7 +39,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
+    min-height: 60px;
+    padding: 10px 16px;
     background-color: var(--bg-sidebar);
     border-bottom: 1px solid var(--border-color);
     position: sticky;
@@ -53,18 +54,25 @@
     font-size: 24px;
     color: var(--text-primary);
     cursor: pointer;
-    padding: 4px;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .mobileTitle {
     margin: 0;
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 17px;
+    font-weight: 700;
     color: var(--text-primary);
   }
   
   .mainContent {
     margin-left: 0;
+    width: 100%;
+    min-width: 0;
   }
 
   .overlay {

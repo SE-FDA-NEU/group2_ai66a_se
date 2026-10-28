@@ -178,6 +178,7 @@
 @media (max-width: 576px) {
   .sidebar {
     width: 260px;
+    max-width: 86vw;
     transform: translateX(-100%);
   }
 
@@ -193,6 +194,7 @@
   
   .navItem {
     justify-content: flex-start;
+    min-height: 44px;
   }
 
   .logoContainer {
