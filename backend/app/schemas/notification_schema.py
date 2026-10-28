@@ -24,6 +24,10 @@ class NotificationErrors:
     )
 
 
+class NotificationSeenRequest(BaseModel):
+    ids: list[int] = Field(min_length=1, max_length=200)
+
+
 class NotificationPreferenceUpdate(BaseModel):
     email_enabled: bool | None = None
     quiet_hours_enabled: bool | None = None
