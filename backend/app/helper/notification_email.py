@@ -32,7 +32,19 @@ def _get_notification_html_content(
     current = html.escape(str(current_price))
     target = html.escape(str(target_price)) if target_price is not None else None
 
-    if str(currency).upper() == "USD":
+    if str(currency).upper() == "VND":
+        try:
+            curr_val = int(round(Decimal(str(current_price))))
+            price_text = f"{curr_val:,} ₫".replace(",", ".")
+            if target_price is not None:
+                target_val = int(round(Decimal(str(target_price))))
+                target_text = f"{target_val:,} ₫".replace(",", ".")
+            else:
+                target_text = None
+        except Exception:
+            price_text = f"{current} VND"
+            target_text = f"{target} VND" if target is not None else None
+    elif str(currency).upper() == "USD":
         try:
             vnd_current = round(Decimal(str(current_price)) * Decimal("26000"))
             price_text = f"{vnd_current:,.0f} ₫ ({current} USD)".replace(",", ".")
