@@ -61,6 +61,10 @@
   color: #047857;
   cursor: pointer;
   font-size: 22px;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 4px;
 }
 
 .viewLink {

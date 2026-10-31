@@ -315,6 +315,32 @@
   transition: all 0.15s ease;
 }
 
+@media (max-width: 480px) {
+  .modalOverlay {
+    align-items: flex-end;
+    padding: 8px;
+  }
+
+  .modalContent {
+    max-height: calc(100vh - 16px);
+    border-radius: 12px 12px 8px 8px;
+  }
+
+  .modalHeader {
+    padding: 16px;
+  }
+
+  .modalFooter {
+    flex-direction: column-reverse;
+    padding: 14px 16px;
+  }
+
+  .modalFooter > button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
 .btnCancel:hover {
   background: var(--border-light);
   color: var(--text-primary);
@@ -369,4 +395,3 @@
     padding-right: 16px;
   }
 }
-
