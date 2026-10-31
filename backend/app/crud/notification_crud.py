@@ -1,5 +1,5 @@
-from datetime import datetime
-from sqlalchemy import delete, select, or_
+from datetime import datetime, timezone
+from sqlalchemy import delete, select, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.product_model import (
@@ -54,6 +54,37 @@ class CRUDNotification:
             .limit(limit)
         )
         return list(result.all())
+
+    async def list_unseen(
+        self,
+        db: AsyncSession,
+        user_id: int,
+        limit: int = 50,
+    ) -> list[UserNotification]:
+        result = await db.scalars(
+            select(UserNotification)
+            .where(
+                UserNotification.user_id == user_id,
+                UserNotification.seen_at.is_(None),
+            )
+            .order_by(UserNotification.id)
+            .limit(limit)
+        )
+        return list(result.all())
+
+    async def mark_seen(
+        self, db: AsyncSession, user_id: int, ids: list[int]
+    ) -> int:
+        result = await db.execute(
+            update(UserNotification)
+            .where(
+                UserNotification.user_id == user_id,
+                UserNotification.id.in_(ids),
+                UserNotification.seen_at.is_(None),
+            )
+            .values(seen_at=datetime.now(timezone.utc))
+        )
+        return result.rowcount or 0
 
     async def delete_for_user_product(
         self, db: AsyncSession, user_id: int, product_id: int

@@ -76,6 +76,7 @@ class UserNotification(Base):
     title = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    seen_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class NotificationPreference(Base):
