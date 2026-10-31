@@ -6,7 +6,7 @@ import { formatVnd } from '../utils/currency';
 import { getSafeMarketplaceUrl } from '../utils/marketplace';
 import { WatchlistProduct } from '../api/watchlistApi';
 import { ShopTrustBadge } from './ShopTrustBadge';
-import { computeShopTrustLabel } from '../utils/trustLabel';
+import { computeShopTrustLabel, formatPriceLabel } from '../utils/trustLabel';
 
 export interface ProductRowProps {
   id: string;
@@ -164,12 +164,12 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         )}
         {notEnoughData && (
           <span className={`${styles.badge} ${styles.badgeWarning}`}>
-            <AlertTriangle size={13} aria-hidden="true" /> {priceLabel || 'Not enough data to assess'}
+            <AlertTriangle size={13} aria-hidden="true" /> {formatPriceLabel(priceLabel)}
           </span>
         )}
         {!notEnoughData && priceLabel && (
-          <span className={`${styles.badge} ${priceLabel === 'Good price' ? styles.badgePrimary : styles.badgeNeutral}`}>
-            {priceLabel}
+          <span className={`${styles.badge} ${priceLabel === 'Good price' || priceLabel === 'Giá tốt' ? styles.badgePrimary : styles.badgeNeutral}`}>
+            {formatPriceLabel(priceLabel)}
           </span>
         )}
         {isFakeDiscount && (

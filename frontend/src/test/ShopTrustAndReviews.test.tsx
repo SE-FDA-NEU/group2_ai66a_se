@@ -63,21 +63,21 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
     it('renders "Trusted" with appropriate class and icon', () => {
       render(<ShopTrustBadge label="Trusted" />);
       const badge = screen.getByTestId('shop-trust-badge');
-      expect(badge).toHaveTextContent('Trusted');
+      expect(badge).toHaveTextContent('Đáng tin cậy');
       expect(badge).toHaveAttribute('data-trust-status', 'trusted');
     });
 
     it('renders "Risky: few ratings" with appropriate class and icon', () => {
       render(<ShopTrustBadge label="Risky: few ratings" />);
       const badge = screen.getByTestId('shop-trust-badge');
-      expect(badge).toHaveTextContent('Risky: few ratings');
+      expect(badge).toHaveTextContent('Rủi ro: ít đánh giá');
       expect(badge).toHaveAttribute('data-trust-status', 'risky');
     });
 
     it('renders "Needs caution" with appropriate class and icon', () => {
       render(<ShopTrustBadge label="Needs caution" />);
       const badge = screen.getByTestId('shop-trust-badge');
-      expect(badge).toHaveTextContent('Needs caution');
+      expect(badge).toHaveTextContent('Cần thận trọng');
       expect(badge).toHaveAttribute('data-trust-status', 'caution');
     });
   });
@@ -125,7 +125,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       // Shop trust label "Trusted"
       const trustBadges = screen.getAllByTestId('shop-trust-badge');
       expect(trustBadges.length).toBeGreaterThanOrEqual(1);
-      expect(trustBadges[0]).toHaveTextContent('Trusted');
+      expect(trustBadges[0]).toHaveTextContent('Đáng tin cậy');
       expect(trustBadges[0]).toHaveAttribute('data-trust-status', 'trusted');
     });
 
@@ -146,7 +146,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       );
 
       const trustBadges = screen.getAllByTestId('shop-trust-badge');
-      expect(trustBadges[0]).toHaveTextContent('Risky: few ratings');
+      expect(trustBadges[0]).toHaveTextContent('Rủi ro: ít đánh giá');
       expect(trustBadges[0]).toHaveAttribute('data-trust-status', 'risky');
     });
 
@@ -167,7 +167,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       );
 
       const trustBadges = screen.getAllByTestId('shop-trust-badge');
-      expect(trustBadges[0]).toHaveTextContent('Needs caution');
+      expect(trustBadges[0]).toHaveTextContent('Cần thận trọng');
       expect(trustBadges[0]).toHaveAttribute('data-trust-status', 'caution');
     });
 
@@ -268,7 +268,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
 
       const trustBadges = screen.getAllByTestId('shop-trust-badge');
       expect(trustBadges.length).toBeGreaterThanOrEqual(1);
-      expect(trustBadges[0]).toHaveTextContent('Trusted');
+      expect(trustBadges[0]).toHaveTextContent('Đáng tin cậy');
       expect(trustBadges[0]).toHaveAttribute('data-trust-status', 'trusted');
     });
 
@@ -291,7 +291,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
 
       const trustBadges = screen.getAllByTestId('shop-trust-badge');
       expect(trustBadges.length).toBeGreaterThanOrEqual(1);
-      expect(trustBadges[0]).toHaveTextContent('Risky: few ratings');
+      expect(trustBadges[0]).toHaveTextContent('Rủi ro: ít đánh giá');
       expect(trustBadges[0]).toHaveAttribute('data-trust-status', 'risky');
     });
   });

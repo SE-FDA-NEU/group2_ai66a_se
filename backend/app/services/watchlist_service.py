@@ -7,6 +7,7 @@ from app.core.exceptions import ErrorDetail
 from app.crud import product_crud, notification_crud, tracked_product_crud, user_crud
 from app.helper.amazon_link_parser import parse_amazon_link
 from app.helper.rapidapi_client import rapidapi_client
+from app.services.exchange_rate_service import exchange_rate_service
 from app.models.product_model import Product as ProductModel
 from app.models.user_model import User
 from app.schemas.notification_schema import NotificationKind
@@ -21,22 +22,22 @@ from app.services.notification_service import enqueue_price_email
 
 
 WATCHLIST_LIMIT_REACHED = ErrorDetail(
-    "WATCHLIST_LIMIT_REACHED", 400, "You can track at most 10 products."
+    "WATCHLIST_LIMIT_REACHED", 400, "Bạn chỉ có thể theo dõi tối đa 10 sản phẩm."
 )
 INVALID_PRODUCT_LINK = ErrorDetail(
-    "INVALID_PRODUCT_LINK", 400, "A supported product link with a product ID is required."
+    "INVALID_PRODUCT_LINK", 400, "Cần có một liên kết sản phẩm hợp lệ kèm mã sản phẩm."
 )
 MARKETPLACE_PRODUCT_MISMATCH = ErrorDetail(
-    "MARKETPLACE_PRODUCT_MISMATCH", 502, "Marketplace returned a different product than requested."
+    "MARKETPLACE_PRODUCT_MISMATCH", 502, "Sàn thương mại điện tử trả về sản phẩm khác với yêu cầu."
 )
 TRACKING_NOT_FOUND = ErrorDetail(
     "TRACKING_NOT_FOUND", 404, "Sản phẩm không nằm trong danh sách theo dõi của người dùng này."
 )
 DUPLICATE_TRACKING = ErrorDetail(
-    "PRODUCT_ALREADY_TRACKED", 409, "This product is already in your watchlist."
+    "PRODUCT_ALREADY_TRACKED", 409, "Sản phẩm này đã có trong danh sách theo dõi của bạn."
 )
 INVALID_TARGET_PRICE = ErrorDetail(
-    "INVALID_TARGET_PRICE", 400, "Target must be lower than the current price."
+    "INVALID_TARGET_PRICE", 400, "Giá mục tiêu phải thấp hơn giá hiện tại."
 )
 
 
@@ -65,7 +66,7 @@ class WatchlistService:
             # Serialize additions for this user so concurrent requests cannot pass BR8 together.
             locked_user = await user_crud.get_by_id(db, user.id, for_update=True)
             if locked_user is None:
-                raise ErrorDetail("USER_NOT_FOUND", 404, "User not found.").throw()
+                raise ErrorDetail("USER_NOT_FOUND", 404, "Không tìm thấy người dùng.").throw()
 
             parsed_link = await parse_amazon_link(request.url)
             if not parsed_link.asin:
@@ -106,6 +107,7 @@ class WatchlistService:
                 if item.external_id != parsed_link.asin:
                     raise MARKETPLACE_PRODUCT_MISMATCH.throw()
                 item = item.model_copy(update={"url": parsed_link.url})
+                item = await exchange_rate_service.convert_marketplace_product_to_vnd(item)
 
                 if product is None:
                     product = await product_crud.create_with_first_price(db, "amazon", item)
@@ -117,10 +119,15 @@ class WatchlistService:
 
             normalized_target_price = None
             if request.target_price is not None:
-                normalized_target_price = round(Decimal(str(request.target_price)), 2)
+                normalized_target_price = round(Decimal(str(request.target_price)))
                 if normalized_target_price >= product.current_price:
+                    formatted_curr = (
+                        f"{int(product.current_price):,} ₫".replace(",", ".")
+                        if str(product.currency).upper() == "VND"
+                        else f"{product.current_price} {product.currency}"
+                    )
                     raise INVALID_TARGET_PRICE.throw(
-                        f"Target must be lower than the current price {product.current_price} {product.currency}"
+                        f"Giá mục tiêu phải thấp hơn giá hiện tại ({formatted_curr})."
                     )
 
             tracking = await tracked_product_crud.create(
@@ -131,7 +138,9 @@ class WatchlistService:
                 buy_when_good=request.buy_when_good,
             )
             if normalized_target_price is not None:
-                if str(product.currency).upper() == "USD":
+                if str(product.currency).upper() == "VND":
+                    formatted_target = f"{int(normalized_target_price):,} ₫".replace(",", ".")
+                elif str(product.currency).upper() == "USD":
                     vnd_equiv = round(normalized_target_price * Decimal("26000"))
                     formatted_target = f"{vnd_equiv:,.0f} ₫ ({normalized_target_price:.2f} USD)".replace(",", ".")
                 else:
@@ -209,15 +218,22 @@ class WatchlistService:
             if tracking is None:
                 raise TRACKING_NOT_FOUND.throw()
 
-            normalized_target_price = round(Decimal(str(target_price)), 2)
+            normalized_target_price = round(Decimal(str(target_price)))
             if normalized_target_price >= product.current_price:
+                formatted_curr = (
+                    f"{int(product.current_price):,} ₫".replace(",", ".")
+                    if str(product.currency).upper() == "VND"
+                    else f"{product.current_price} {product.currency}"
+                )
                 raise INVALID_TARGET_PRICE.throw(
-                    f"Target must be lower than the current price {product.current_price} {product.currency}"
+                    f"Giá mục tiêu phải thấp hơn giá hiện tại ({formatted_curr})."
                 )
 
             await tracked_product_crud.update_target_price(db, tracking, normalized_target_price)
 
-            if str(product.currency).upper() == "USD":
+            if str(product.currency).upper() == "VND":
+                formatted_target = f"{int(normalized_target_price):,} ₫".replace(",", ".")
+            elif str(product.currency).upper() == "USD":
                 vnd_equiv = round(normalized_target_price * Decimal("26000"))
                 formatted_target = f"{vnd_equiv:,.0f} ₫ ({normalized_target_price:.2f} USD)".replace(",", ".")
             else:

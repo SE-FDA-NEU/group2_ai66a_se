@@ -9,6 +9,42 @@ export interface TrustLabelInput {
 }
 
 /**
+ * Format price label to Vietnamese
+ */
+export function formatPriceLabel(label?: string | null): string {
+  if (!label) return 'Chưa đủ dữ liệu đánh giá';
+  const trimmed = label.trim().toLowerCase();
+  if (trimmed === 'good price' || trimmed === 'giá tốt') return 'Giá tốt';
+  if (
+    trimmed === 'expensive - wait' ||
+    trimmed === 'expensive' ||
+    trimmed === 'giá cao' ||
+    trimmed === 'giá đắt - nên chờ' ||
+    trimmed === 'giá cao - nên chờ'
+  ) {
+    return 'Giá cao - nên chờ';
+  }
+  if (trimmed === 'normal' || trimmed === 'bình thường') return 'Bình thường';
+  if (trimmed === 'not enough data to assess' || trimmed === 'chưa đủ dữ liệu đánh giá') {
+    return 'Chưa đủ dữ liệu đánh giá';
+  }
+  return label;
+}
+
+/**
+ * Format shop trust label to Vietnamese
+ */
+export function formatShopTrustDisplay(label?: string | null): string {
+  if (!label) return '';
+  const trimmed = label.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower.includes('trusted') || lower.includes('đáng tin cậy')) return 'Đáng tin cậy';
+  if (lower.includes('risk') || lower.includes('rủi ro')) return 'Rủi ro: ít đánh giá';
+  if (lower.includes('caution') || lower.includes('thận trọng')) return 'Cần thận trọng';
+  return trimmed;
+}
+
+/**
  * Computes shop trust label according to BR10:
  * - "Trusted" when >= 4.7★ and >= 500 ratings
  * - "Risky: few ratings" when < 4.3★ or < 50 ratings
@@ -21,11 +57,21 @@ export function computeShopTrustLabel(
 ): ShopTrustLabel | null {
   if (explicitLabel) {
     const trimmed = explicitLabel.trim();
-    if (trimmed === 'Trusted') return 'Trusted';
-    if (trimmed === 'Risky: few ratings' || trimmed.toLowerCase().includes('risk')) {
+    if (trimmed === 'Trusted' || trimmed === 'Đáng tin cậy') return 'Trusted';
+    if (
+      trimmed === 'Risky: few ratings' ||
+      trimmed === 'Rủi ro: ít đánh giá' ||
+      trimmed.toLowerCase().includes('risk') ||
+      trimmed.toLowerCase().includes('rủi ro')
+    ) {
       return 'Risky: few ratings';
     }
-    if (trimmed === 'Needs caution' || trimmed.toLowerCase().includes('caution')) {
+    if (
+      trimmed === 'Needs caution' ||
+      trimmed === 'Cần thận trọng' ||
+      trimmed.toLowerCase().includes('caution') ||
+      trimmed.toLowerCase().includes('thận trọng')
+    ) {
       return 'Needs caution';
     }
     return trimmed as ShopTrustLabel;

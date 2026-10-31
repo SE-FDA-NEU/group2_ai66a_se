@@ -56,7 +56,7 @@ async def get_notification_settings(
 ):
     settings = await notification_settings_crud.get_or_create(db, current_user.id)
     await db.commit()
-    return ApiResponse(message="Notification settings loaded.", data=settings)
+    return ApiResponse(message="Đã tải cài đặt thông báo.", data=settings)
 
 
 @router.patch(
@@ -78,4 +78,4 @@ async def update_notification_settings(
         from fastapi import HTTPException
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     await db.commit()
-    return ApiResponse(message="Notification settings saved.", data=settings)
+    return ApiResponse(message="Đã lưu cài đặt thông báo.", data=settings)

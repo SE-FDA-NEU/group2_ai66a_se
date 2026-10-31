@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Bell, CheckCircle2, Moon, Settings, Tag, X, Zap } from 'lucide-react';
 import { updateTargetPrice, WatchlistProduct } from '../api/watchlistApi';
-import { convertToVnd, convertFromVnd, formatVnd } from '../utils/currency';
+import { formatVnd, parseVndInput } from '../utils/currency';
 import styles from './ProductSettingsModal.module.css';
 
 interface ProductSettingsModalProps {
@@ -17,11 +17,11 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
   product,
   onTargetPriceUpdated,
 }) => {
-  const currentPriceVnd = Math.round(convertToVnd(Number(product.current_price), product.currency));
+  const currentPriceVnd = Math.round(Number(product.current_price));
   const currentPriceFormatted = formatVnd(product.current_price, product.currency);
 
   const initialTargetVnd = product.target_price != null
-    ? String(Math.round(convertToVnd(Number(product.target_price), product.currency)))
+    ? String(Math.round(Number(product.target_price)))
     : '';
 
   const [targetPriceInput, setTargetPriceInput] = useState<string>(initialTargetVnd);
@@ -38,7 +38,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       const initVnd = product.target_price != null
-        ? String(Math.round(convertToVnd(Number(product.target_price), product.currency)))
+        ? String(Math.round(Number(product.target_price)))
         : '';
       setTargetPriceInput(initVnd);
       setValidationError(null);
@@ -61,14 +61,14 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
       return;
     }
 
-    const num = Number(trimmed);
-    if (!Number.isFinite(num) || num <= 0) {
+    const num = parseVndInput(trimmed);
+    if (num === null || num <= 0) {
       setValidationError('Giá mục tiêu phải lớn hơn 0.');
       return;
     }
 
     if (num >= currentPriceVnd) {
-      setValidationError(`Target must be lower than the current price ${currentPriceFormatted}`);
+      setValidationError(`Giá mục tiêu phải thấp hơn giá hiện tại (${currentPriceFormatted})`);
       return;
     }
 
@@ -83,9 +83,14 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
       return;
     }
 
-    const num = Number(trimmed);
+    const num = parseVndInput(trimmed);
+    if (num === null || num <= 0) {
+      setValidationError('Giá mục tiêu phải lớn hơn 0.');
+      return;
+    }
+
     if (num >= currentPriceVnd) {
-      setValidationError(`Target must be lower than the current price ${currentPriceFormatted}`);
+      setValidationError(`Giá mục tiêu phải thấp hơn giá hiện tại (${currentPriceFormatted})`);
       return;
     }
 
@@ -94,8 +99,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
     setSuccessMessage(null);
 
     try {
-      const priceInOriginalCurrency = convertFromVnd(num, product.currency);
-      const updatedProduct = await updateTargetPrice(product.id, priceInOriginalCurrency);
+      const updatedProduct = await updateTargetPrice(product.id, num);
       onTargetPriceUpdated(updatedProduct);
       setSuccessMessage(`Đã cập nhật cảnh báo tại ${formatVnd(num, 'VND')}`);
       setTimeout(() => {
@@ -104,8 +108,8 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
     } catch (err: any) {
       console.error('Update target price error:', err);
       const detail = err?.detail || err?.message || '';
-      if (detail.toLowerCase().includes('lower than')) {
-        setValidationError(`Target must be lower than the current price ${currentPriceFormatted}`);
+      if (detail.toLowerCase().includes('lower than') || detail.toLowerCase().includes('thấp hơn')) {
+        setValidationError(`Giá mục tiêu phải thấp hơn giá hiện tại (${currentPriceFormatted})`);
       } else {
         setValidationError(detail || 'Không thể lưu giá mục tiêu. Vui lòng thử lại.');
       }
@@ -157,22 +161,12 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
                 <span className={styles.priceInfoLabel}>Giá hiện tại</span>
                 <span className={styles.priceInfoValue}>
                   {currentPriceFormatted}
-                  {product.currency?.toUpperCase() !== 'VND' && (
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', fontWeight: 400 }}>
-                      (~${Number(product.current_price).toFixed(2)} {product.currency})
-                    </span>
-                  )}
                 </span>
               </div>
               <div className={styles.priceInfoItem} style={{ textAlign: 'right' }}>
                 <span className={styles.priceInfoLabel}>Mục tiêu hiện tại</span>
                 <span className={styles.priceInfoValue}>
                   {product.target_price != null ? formatVnd(product.target_price, product.currency) : 'Chưa đặt'}
-                  {product.target_price != null && product.currency?.toUpperCase() !== 'VND' && (
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', fontWeight: 400 }}>
-                      (~${Number(product.target_price).toFixed(2)} {product.currency})
-                    </span>
-                  )}
                 </span>
               </div>
             </div>
@@ -184,9 +178,8 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
               <div className={styles.inputWrapper}>
                 <input
                   id="targetPriceInput"
-                  type="number"
-                  step="1"
-                  min="1"
+                  type="text"
+                  inputMode="numeric"
                   placeholder={`Ví dụ: ${Math.round(currentPriceVnd * 0.9)}`}
                   className={`${styles.formInput} ${validationError ? styles.formInputError : ''}`}
                   value={targetPriceInput}
@@ -197,12 +190,9 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
                 />
               </div>
 
-              {targetPriceInput.trim() !== '' && Number(targetPriceInput) > 0 && !validationError && (
+              {targetPriceInput.trim() !== '' && parseVndInput(targetPriceInput) !== null && !validationError && (
                 <div style={{ fontSize: '12px', color: 'var(--primary-color)', marginTop: '4px', fontWeight: 500 }}>
-                  ≈ {formatVnd(Number(targetPriceInput), 'VND')}
-                  {product.currency?.toUpperCase() !== 'VND' && (
-                    <span> (khoảng ${convertFromVnd(Number(targetPriceInput), product.currency).toFixed(2)} {product.currency})</span>
-                  )}
+                  ≈ {formatVnd(parseVndInput(targetPriceInput)!)}
                 </div>
               )}
 

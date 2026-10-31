@@ -34,7 +34,7 @@ async def test_rejects_two_links():
     with pytest.raises(CustomAppException) as exc_info:
         await parse_amazon_link("https://amazon.com/dp/B012345678 https://amzn.to/3Example")
 
-    assert exc_info.value.detail == "Paste one link at a time"
+    assert exc_info.value.detail == "Vui lòng chỉ dán một đường dẫn tại một thời điểm."
     assert exc_info.value.code == "MULTIPLE_LINKS"
     print(f"Rejected multiple links: {exc_info.value.code} - {exc_info.value.detail}")
 
@@ -43,7 +43,7 @@ async def test_rejects_non_amazon_domain():
     with pytest.raises(CustomAppException) as exc_info:
         await parse_amazon_link("https://shopee.vn/product/123")
 
-    assert exc_info.value.detail == "Amazon only"
+    assert exc_info.value.detail == "Chỉ hỗ trợ liên kết sản phẩm từ sàn Amazon."
     assert exc_info.value.code == "AMAZON_ONLY"
     print(f"Rejected unsupported domain: {exc_info.value.code} - {exc_info.value.detail}")
 
@@ -52,6 +52,6 @@ async def test_rejects_text_without_a_link():
     with pytest.raises(CustomAppException) as exc_info:
         await parse_amazon_link("This text does not contain a link")
 
-    assert exc_info.value.detail == "A valid Amazon product link is required"
+    assert exc_info.value.detail == "Yêu cầu một đường dẫn sản phẩm Amazon hợp lệ."
     assert exc_info.value.code == "INVALID_AMAZON_LINK"
     print(f"Rejected invalid input: {exc_info.value.code} - {exc_info.value.detail}")
