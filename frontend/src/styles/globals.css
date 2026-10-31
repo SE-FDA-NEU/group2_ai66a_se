@@ -64,8 +64,29 @@ button {
   cursor: pointer;
 }
 
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
 input {
   font-family: inherit;
+}
+
+@media (max-width: 576px) {
+  body {
+    min-width: 320px;
+  }
+
+  button,
+  a,
+  select,
+  input:not([type="checkbox"]):not([type="radio"]) {
+    min-height: 44px;
+  }
 }
 
 @keyframes spin {
