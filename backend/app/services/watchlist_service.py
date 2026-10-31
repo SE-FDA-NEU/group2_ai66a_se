@@ -22,22 +22,22 @@ from app.services.notification_service import enqueue_price_email
 
 
 WATCHLIST_LIMIT_REACHED = ErrorDetail(
-    "WATCHLIST_LIMIT_REACHED", 400, "You can track at most 10 products."
+    "WATCHLIST_LIMIT_REACHED", 400, "Bạn chỉ có thể theo dõi tối đa 10 sản phẩm."
 )
 INVALID_PRODUCT_LINK = ErrorDetail(
-    "INVALID_PRODUCT_LINK", 400, "A supported product link with a product ID is required."
+    "INVALID_PRODUCT_LINK", 400, "Cần có một liên kết sản phẩm hợp lệ kèm mã sản phẩm."
 )
 MARKETPLACE_PRODUCT_MISMATCH = ErrorDetail(
-    "MARKETPLACE_PRODUCT_MISMATCH", 502, "Marketplace returned a different product than requested."
+    "MARKETPLACE_PRODUCT_MISMATCH", 502, "Sàn thương mại điện tử trả về sản phẩm khác với yêu cầu."
 )
 TRACKING_NOT_FOUND = ErrorDetail(
     "TRACKING_NOT_FOUND", 404, "Sản phẩm không nằm trong danh sách theo dõi của người dùng này."
 )
 DUPLICATE_TRACKING = ErrorDetail(
-    "PRODUCT_ALREADY_TRACKED", 409, "This product is already in your watchlist."
+    "PRODUCT_ALREADY_TRACKED", 409, "Sản phẩm này đã có trong danh sách theo dõi của bạn."
 )
 INVALID_TARGET_PRICE = ErrorDetail(
-    "INVALID_TARGET_PRICE", 400, "Target must be lower than the current price."
+    "INVALID_TARGET_PRICE", 400, "Giá mục tiêu phải thấp hơn giá hiện tại."
 )
 
 
@@ -66,7 +66,7 @@ class WatchlistService:
             # Serialize additions for this user so concurrent requests cannot pass BR8 together.
             locked_user = await user_crud.get_by_id(db, user.id, for_update=True)
             if locked_user is None:
-                raise ErrorDetail("USER_NOT_FOUND", 404, "User not found.").throw()
+                raise ErrorDetail("USER_NOT_FOUND", 404, "Không tìm thấy người dùng.").throw()
 
             parsed_link = await parse_amazon_link(request.url)
             if not parsed_link.asin:
@@ -127,7 +127,7 @@ class WatchlistService:
                         else f"{product.current_price} {product.currency}"
                     )
                     raise INVALID_TARGET_PRICE.throw(
-                        f"Target must be lower than the current price {formatted_curr}"
+                        f"Giá mục tiêu phải thấp hơn giá hiện tại ({formatted_curr})."
                     )
 
             tracking = await tracked_product_crud.create(
@@ -226,7 +226,7 @@ class WatchlistService:
                     else f"{product.current_price} {product.currency}"
                 )
                 raise INVALID_TARGET_PRICE.throw(
-                    f"Target must be lower than the current price {formatted_curr}"
+                    f"Giá mục tiêu phải thấp hơn giá hiện tại ({formatted_curr})."
                 )
 
             await tracked_product_crud.update_target_price(db, tracking, normalized_target_price)

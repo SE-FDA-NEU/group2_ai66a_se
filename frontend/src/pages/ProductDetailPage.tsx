@@ -7,7 +7,7 @@ import { formatVnd } from '../utils/currency';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { ProductSettingsModal } from '../components/ProductSettingsModal';
 import { ShopTrustBadge } from '../components/ShopTrustBadge';
-import { computeShopTrustLabel } from '../utils/trustLabel';
+import { computeShopTrustLabel, formatPriceLabel } from '../utils/trustLabel';
 import { getSafeMarketplaceUrl } from '../utils/marketplace';
 
 type DetailLocationState = { product?: WatchlistProduct };
@@ -174,7 +174,7 @@ export const ProductDetailPage: React.FC = () => {
             )}
             {product.target_price != null && (
               <span className={styles.alertBadge} data-testid="alert-status-badge">
-                <Bell size={13} aria-hidden="true" /> Alert at {formatVnd(product.target_price, product.currency)}
+                <Bell size={13} aria-hidden="true" /> Cảnh báo tại {formatVnd(product.target_price, product.currency)}
               </span>
             )}
           </div>
@@ -245,7 +245,7 @@ export const ProductDetailPage: React.FC = () => {
                       {product.price_label !== 'Good price' && product.price_label !== 'Normal' && (
                         <AlertTriangle size={13} aria-hidden="true" />
                       )}
-                      <span>{product.price_label || 'Not enough data to assess'}</span>
+                      <span>{formatPriceLabel(product.price_label)}</span>
                     </>
                   )}
                 </span>

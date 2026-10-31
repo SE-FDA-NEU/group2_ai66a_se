@@ -21,19 +21,23 @@ export const ShopTrustBadge: React.FC<ShopTrustBadgeProps> = ({
 
   let variantClass = styles.unknown;
   let statusKey = 'unknown';
+  let displayLabel = normalized;
   let Icon = AlertCircle;
 
-  if (lower.includes('trusted')) {
+  if (lower.includes('trusted') || lower.includes('đáng tin cậy')) {
     variantClass = styles.trusted;
     statusKey = 'trusted';
+    displayLabel = 'Đáng tin cậy';
     Icon = ShieldCheck;
-  } else if (lower.includes('risk')) {
+  } else if (lower.includes('risk') || lower.includes('rủi ro')) {
     variantClass = styles.risky;
     statusKey = 'risky';
+    displayLabel = 'Rủi ro: ít đánh giá';
     Icon = AlertTriangle;
-  } else if (lower.includes('caution')) {
+  } else if (lower.includes('caution') || lower.includes('thận trọng')) {
     variantClass = styles.caution;
     statusKey = 'caution';
+    displayLabel = 'Cần thận trọng';
     Icon = AlertCircle;
   }
 
@@ -51,11 +55,11 @@ export const ShopTrustBadge: React.FC<ShopTrustBadgeProps> = ({
       className={`${styles.badge} ${sizeClass} ${variantClass} ${className}`.trim()}
       data-testid="shop-trust-badge"
       data-trust-status={statusKey}
-      title={`Shop Trust Status: ${normalized}`}
-      aria-label={`Shop trust status: ${normalized}`}
+      title={`Độ tin cậy cửa hàng: ${displayLabel}`}
+      aria-label={`Độ tin cậy cửa hàng: ${displayLabel}`}
     >
       <Icon size={iconSize} className={styles.icon} aria-hidden="true" />
-      <span>{normalized}</span>
+      <span>{displayLabel}</span>
     </span>
   );
 };

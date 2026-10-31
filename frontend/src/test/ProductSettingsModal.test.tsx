@@ -56,7 +56,7 @@ describe('ProductSettingsModal (US02 - Target Price & Settings)', () => {
     fireEvent.change(input, { target: { value: '200000' } });
 
     expect(
-      screen.getByText('Target must be lower than the current price 200.000 ₫')
+      screen.getByText('Giá mục tiêu phải thấp hơn giá hiện tại (200.000 ₫)')
     ).toBeInTheDocument();
     expect(submitBtn).toBeDisabled();
 
@@ -64,7 +64,7 @@ describe('ProductSettingsModal (US02 - Target Price & Settings)', () => {
     fireEvent.change(input, { target: { value: '250000' } });
 
     expect(
-      screen.getByText('Target must be lower than the current price 200.000 ₫')
+      screen.getByText('Giá mục tiêu phải thấp hơn giá hiện tại (200.000 ₫)')
     ).toBeInTheDocument();
     expect(submitBtn).toBeDisabled();
   });
@@ -85,7 +85,7 @@ describe('ProductSettingsModal (US02 - Target Price & Settings)', () => {
     fireEvent.change(input, { target: { value: '150000' } });
 
     expect(
-      screen.queryByText(/Target must be lower than the current price/i)
+      screen.queryByText(/Giá mục tiêu phải thấp hơn giá hiện tại/i)
     ).not.toBeInTheDocument();
     expect(submitBtn).not.toBeDisabled();
 
@@ -113,7 +113,7 @@ describe('ProductSettingsModal (US02 - Target Price & Settings)', () => {
     fireEvent.change(input, { target: { value: '160.000' } });
 
     expect(
-      screen.queryByText(/Target must be lower than the current price/i)
+      screen.queryByText(/Giá mục tiêu phải thấp hơn giá hiện tại/i)
     ).not.toBeInTheDocument();
     expect(submitBtn).not.toBeDisabled();
 

@@ -8,17 +8,17 @@ from app.core.exceptions import CustomAppException, ErrorDetail
 AMAZON_ONLY_ERROR = ErrorDetail(
     "AMAZON_ONLY",
     400,
-    "Amazon only",
+    "Chỉ hỗ trợ liên kết sản phẩm từ sàn Amazon.",
 )
 MULTIPLE_LINKS_ERROR = ErrorDetail(
     "MULTIPLE_LINKS",
     400,
-    "Paste one link at a time",
+    "Vui lòng chỉ dán một đường dẫn tại một thời điểm.",
 )
 INVALID_LINK_ERROR = ErrorDetail(
     "INVALID_AMAZON_LINK",
     400,
-    "A valid Amazon product link is required",
+    "Yêu cầu một đường dẫn sản phẩm Amazon hợp lệ.",
 )
 
 # Match URLs with or without a scheme, including shortened links and common

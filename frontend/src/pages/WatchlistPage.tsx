@@ -130,7 +130,7 @@ export const WatchlistPage: React.FC = () => {
           className={combinedStyles.addButton}
           onClick={() => {
             if (products.length >= 10) {
-              setLimitMessage('You have reached the limit of 10 tracked products');
+              setLimitMessage('Bạn đã đạt giới hạn tối đa 10 sản phẩm theo dõi.');
               return;
             }
             setLimitMessage(null);
@@ -162,7 +162,7 @@ export const WatchlistPage: React.FC = () => {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <AlertTriangle size={16} aria-hidden="true" />
-            <span>{limitMessage} (Bạn đã đạt giới hạn tối đa 10 sản phẩm theo dõi).</span>
+            <span>{limitMessage}</span>
           </div>
           <button
             onClick={() => setLimitMessage(null)}

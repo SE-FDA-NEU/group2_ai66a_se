@@ -12,10 +12,10 @@ from app.schemas.watchlist_schema import ProductMarketplace
 
 
 MARKETPLACE_UNAVAILABLE = ErrorDetail(
-    "MARKETPLACE_UNAVAILABLE", 503, "Marketplace lookup is not configured."
+    "MARKETPLACE_UNAVAILABLE", 503, "Dịch vụ tra cứu sàn thương mại điện tử chưa được cấu hình."
 )
 MARKETPLACE_UPSTREAM_ERROR = ErrorDetail(
-    "MARKETPLACE_UPSTREAM_ERROR", 502, "Marketplace could not return product information."
+    "MARKETPLACE_UPSTREAM_ERROR", 502, "Không thể lấy thông tin sản phẩm từ sàn thương mại điện tử."
 )
 
 

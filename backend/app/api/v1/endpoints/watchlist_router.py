@@ -36,7 +36,7 @@ async def list_notifications(
     current_user: User = Depends(get_current_user),
 ):
     result = await notification_service.list_for_user(db, current_user.id, after_id)
-    return ApiResponse(message="Notifications loaded successfully.", data=result)
+    return ApiResponse(message="Đã tải danh sách thông báo thành công.", data=result)
 
 
 @router.post(
@@ -51,7 +51,7 @@ async def add_to_watchlist(
     current_user: User = Depends(get_current_user),
 ):
     product = await watchlist_service.add_product(db, current_user, request)
-    return ApiResponse(message="Product added to watchlist.", data=product)
+    return ApiResponse(message="Đã thêm sản phẩm vào danh sách theo dõi.", data=product)
 
 
 @router.get(
@@ -65,7 +65,7 @@ async def list_watchlist(
     current_user: User = Depends(get_current_user),
 ):
     product_list = await watchlist_service.list_products(db, current_user)
-    return ApiResponse(message="Watchlist loaded successfully.", data=product_list)
+    return ApiResponse(message="Đã tải danh sách theo dõi thành công.", data=product_list)
 
 
 @router.delete(
@@ -109,7 +109,7 @@ async def get_product_price_history(
         hours=hours,
         gap_threshold_minutes=gap_threshold_minutes,
     )
-    return ApiResponse(message="Price history loaded successfully.", data=result)
+    return ApiResponse(message="Đã tải lịch sử giá thành công.", data=result)
 
 
 @router.get(
@@ -170,5 +170,5 @@ async def update_target_price(
     product = await watchlist_service.update_target_price(
         db, current_user, product_id, request.target_price
     )
-    return ApiResponse(message="Target price updated successfully.", data=product)
+    return ApiResponse(message="Đã cập nhật giá mục tiêu thành công.", data=product)
 

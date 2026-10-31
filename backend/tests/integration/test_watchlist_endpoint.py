@@ -89,7 +89,7 @@ async def test_post_watchlist_returns_created_product(client, monkeypatch, curre
 async def test_post_watchlist_returns_409_for_duplicate_product(client, monkeypatch, current_user_override):
     add_product = AsyncMock(
         side_effect=CustomAppException(
-            ErrorDetail("PRODUCT_ALREADY_TRACKED", 409, "This product is already in your watchlist.")
+            ErrorDetail("PRODUCT_ALREADY_TRACKED", 409, "Sản phẩm này đã có trong danh sách theo dõi của bạn.")
         )
     )
     monkeypatch.setattr(service_module.watchlist_service, "add_product", add_product)
@@ -382,7 +382,7 @@ async def test_put_target_price_returns_200_on_success(client, monkeypatch, curr
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["message"] == "Target price updated successfully."
+    assert data["message"] == "Đã cập nhật giá mục tiêu thành công."
     assert data["data"]["id"] == 31
     assert data["data"]["target_price"] == "180.00"
     update_mock.assert_awaited_once()
@@ -393,7 +393,7 @@ async def test_put_target_price_returns_400_on_br1_violation(client, monkeypatch
     """PUT /target-price trả về 400 khi target_price >= current_price (BR1)."""
     update_mock = AsyncMock(
         side_effect=CustomAppException(
-            ErrorDetail("INVALID_TARGET_PRICE", 400, "Target must be lower than the current price 195.00 USD")
+            ErrorDetail("INVALID_TARGET_PRICE", 400, "Giá mục tiêu phải thấp hơn giá hiện tại (195.00 USD).")
         )
     )
     monkeypatch.setattr(service_module.watchlist_service, "update_target_price", update_mock)
@@ -404,7 +404,7 @@ async def test_put_target_price_returns_400_on_br1_violation(client, monkeypatch
     )
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "INVALID_TARGET_PRICE"
-    assert "Target must be lower than the current price 195.00 USD" in response.json()["error"]["message"]
+    assert "Giá mục tiêu phải thấp hơn giá hiện tại (195.00 USD)." in response.json()["error"]["message"]
 
 
 @pytest.mark.asyncio

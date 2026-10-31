@@ -55,13 +55,20 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    detail = exc.detail
+    if detail == "Not Found":
+        detail = "Không tìm thấy tài nguyên yêu cầu."
+    elif detail == "Method Not Allowed":
+        detail = "Phương thức HTTP không được hỗ trợ."
+    elif detail in ("Unauthorized", "Could not validate credentials"):
+        detail = "Phiên đăng nhập hết hạn hoặc không hợp lệ."
     return JSONResponse(
         status_code=exc.status_code,
         content={
             "success": False,
             "error": {
                 "code": "HTTP_EXCEPTION",
-                "message": exc.detail
+                "message": detail
             }
         }
     )

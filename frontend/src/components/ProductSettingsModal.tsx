@@ -68,7 +68,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
     }
 
     if (num >= currentPriceVnd) {
-      setValidationError(`Target must be lower than the current price ${currentPriceFormatted}`);
+      setValidationError(`Giá mục tiêu phải thấp hơn giá hiện tại (${currentPriceFormatted})`);
       return;
     }
 
@@ -90,7 +90,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
     }
 
     if (num >= currentPriceVnd) {
-      setValidationError(`Target must be lower than the current price ${currentPriceFormatted}`);
+      setValidationError(`Giá mục tiêu phải thấp hơn giá hiện tại (${currentPriceFormatted})`);
       return;
     }
 
@@ -108,8 +108,8 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
     } catch (err: any) {
       console.error('Update target price error:', err);
       const detail = err?.detail || err?.message || '';
-      if (detail.toLowerCase().includes('lower than')) {
-        setValidationError(`Target must be lower than the current price ${currentPriceFormatted}`);
+      if (detail.toLowerCase().includes('lower than') || detail.toLowerCase().includes('thấp hơn')) {
+        setValidationError(`Giá mục tiêu phải thấp hơn giá hiện tại (${currentPriceFormatted})`);
       } else {
         setValidationError(detail || 'Không thể lưu giá mục tiêu. Vui lòng thử lại.');
       }

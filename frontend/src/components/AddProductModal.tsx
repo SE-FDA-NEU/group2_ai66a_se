@@ -62,8 +62,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     } catch (err: any) {
       console.error('Add product error:', err);
       const rawMsg = err.detail || err.message || '';
-      if (rawMsg.toLowerCase().includes('lower than the current price')) {
-        setAddError(rawMsg + '. Vui lòng nhập mức giá nhỏ hơn.');
+      if (rawMsg.toLowerCase().includes('lower than the current price') || rawMsg.toLowerCase().includes('thấp hơn giá hiện tại')) {
+        setAddError(rawMsg + ' Vui lòng nhập mức giá nhỏ hơn.');
       } else {
         setAddError(rawMsg || 'Không thể thêm sản phẩm. Vui lòng kiểm tra đường dẫn hoặc thử lại sau.');
       }
