@@ -113,7 +113,7 @@ async def seed_demo_products() -> list[Product]:
                     # Thiết lập mức giá mục tiêu thấp hơn khoảng 10% so với giá hiện tại
                     target_price = (
                         Decimal(product.current_price) * Decimal("0.90")
-                    ).quantize(Decimal("0.01"))
+                    ).quantize(Decimal("1"))
 
                     # Luân phiên bật tính năng buy_when_good để người dùng test đủ 2 loại thông báo
                     buy_when_good = True
