@@ -2,49 +2,38 @@
 
 Tài liệu này hướng dẫn chi tiết từng bước thiết lập và khởi chạy hệ thống Trakora trên một máy tính mới hoàn toàn (clean machine). Thời gian thực hiện ước tính: **5–10 phút**.
 
-## Chạy kiểm thử tự động trên bản clone mới (không cần server)
+## Chạy kiểm thử tự động trên bản clone mới (không cần server / Automated Tests)
 
-Phần này độc lập với hướng dẫn chạy ứng dụng bằng Docker bên dưới. Cần **Python 3.12+**, **Node.js 20+** và npm. Không cần `.env`, Docker, PostgreSQL, Redis, SMTP hay khóa Google/RapidAPI thật để chạy kiểm thử.
+Phần này hoàn toàn độc lập với hướng dẫn chạy ứng dụng bằng Docker bên dưới. Không cần file `.env`, Docker, PostgreSQL, Redis, SMTP hay khóa Google/RapidAPI thật để chạy kiểm thử.
+
+### Yêu cầu cài đặt môi trường test:
+Chỉ cần **Python 3.11+** (Node.js 20+ là tùy chọn cho riêng các ca Vitest React).
 
 Từ thư mục gốc repository, tạo môi trường Python riêng và cài thư viện:
 
+```bash
+# Trên Linux/macOS:
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+
+# Chạy toàn bộ kiểm thử tự động (Milestone 4):
+pytest -v
+
+# Hoặc chạy riêng bộ 28 ca kiểm thử P0 stories (US01–US05):
+pytest tests/test_p0_stories.py -v
+```
+
 ```powershell
+# Trên Windows PowerShell:
 python -m venv .venv
-# Windows PowerShell (không cần đổi ExecutionPolicy):
-.\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
-npm ci --prefix frontend
-.\.venv\Scripts\python.exe -m pytest
+.\.venv\Scripts\pip.exe install -r backend/requirements.txt
+
+# Chạy kiểm thử:
+.\.venv\Scripts\pytest.exe -v
 ```
 
-Trên Linux/macOS, dùng `.venv/bin/python` thay cho `.\.venv\Scripts\python.exe`. Nếu môi trường Python đã được kích hoạt và cài đủ thư viện, lệnh chung là:
-
-```bash
-pytest
-```
-
-Lệnh này chạy backend và các ca giao diện của issue #185. Pytest gọi Vitest thật bằng subprocess; không mô phỏng lại React bằng Python. Bộ test cố định cấu hình giả trong `conftest.py`, dùng mock hoặc SQLite trong bộ nhớ, và chặn HTTP/Redis/PostgreSQL/SMTP thật cho issue #185. Không cần tạo hay chỉnh tay file `.env`.
-
-Để chạy riêng các ca xác thực US04 (OTP, đăng ký, đăng nhập và khôi phục mật
-khẩu), từ thư mục gốc repository chạy:
-
-```bash
-python -m pytest backend/tests/integration/test_auth_endpoint.py -q
-```
-
-Các ca này dùng test client trong tiến trình, fake Redis/user storage và mock
-dịch vụ email/Google; không cần bật backend server hay database thật.
-
-```bash
-# Chỉ issue #185, gồm các ca React có mã truy vết:
-pytest -m issue185 -q
-# Toàn bộ test frontend và kiểm tra bản build:
-npm test --prefix frontend
-npm run build --prefix frontend
-# Tự kiểm tra bản sao sạch + lỗi cố tình đưa vào bản sao:
-python scripts/verify_issue185_clean.py
-```
-
-Lệnh cuối sao chép file đang làm (kể cả chưa commit) sang thư mục tạm, không sao chép `.env`/`.git`/`node_modules`, chạy `npm ci`, `pytest`, build và kiểm tra mutation 6 giây. Môi trường Python dùng thư viện đã cài từ requirements, không phải một máy tính hay Python venv mới hoàn toàn. Kết quả được tạo tại `docs/testing/evidence` khi chạy lệnh kiểm tra bản sao sạch.
+Bộ test sử dụng cấu hình giả lập an toàn trong `conftest.py`, dùng in-memory fakes và mocks, thực thi toàn bộ trong tiến trình (~2-4 giây) mà không mở bất kỳ cổng mạng hay kết nối database ngoài nào.
 
 ---
 

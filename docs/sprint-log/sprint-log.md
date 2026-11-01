@@ -21,9 +21,9 @@ SM Sprint 4: @huydang2006
 
 ## Sprint 4 (weeks 11–12)
 
-Goal: _
-Committed _ · Completed _ · Velocity _
-Not finished: - <#-id-issue> - issue. Move to Sprint 5.
+Goal: Prove that every P0 story is checked by automated tests that a machine can run in seconds, after every change, and deliver automated test coverage for core business rules, notifications, and price history.
+Committed 33 · Completed 33 · Velocity: 33.
+Not finished: None.
 SM Sprint 5: @Dai-Nguyen1506
 
 ## Sprint 5 (weeks 13–14)

@@ -21,7 +21,6 @@ export interface ProductRowProps {
   priceLabel?: string;
   isFakeDiscount?: boolean;
   notEnoughData?: boolean;
-  shopTrustLabel?: string | null;
   onRemove: (id: string) => void | Promise<void>;
   isRemoving?: boolean;
   originalProduct?: WatchlistProduct;
@@ -44,7 +43,6 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   priceLabel,
   isFakeDiscount,
   notEnoughData,
-  shopTrustLabel,
   onRemove,
   isRemoving = false,
   originalProduct,
