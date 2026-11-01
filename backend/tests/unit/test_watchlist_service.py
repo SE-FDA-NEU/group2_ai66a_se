@@ -153,6 +153,7 @@ def test_setting_target_price_creates_confirmation_notification(monkeypatch):
     asyncio.run(scenario())
 
 
+# US01-TC-001: valid product link for a product not yet stored.
 def test_new_product_is_fetched_and_created_with_initial_price(monkeypatch):
     async def scenario():
         _common_mocks(monkeypatch, product=None)
@@ -200,6 +201,7 @@ def test_untracked_product_is_refreshed_before_tracking(monkeypatch):
     asyncio.run(scenario())
 
 
+# US01-TC-002: reject an addition when the user already tracks 10 products.
 def test_tracking_limit_is_enforced_by_backend(monkeypatch):
     async def scenario():
         _common_mocks(monkeypatch, product=None, count=10)
@@ -214,6 +216,27 @@ def test_tracking_limit_is_enforced_by_backend(monkeypatch):
         assert session.commits == 0
         assert session.rollbacks == 1
         print("Tracking limit response:", {"code": error.value.code, "status_code": error.value.status_code})
+
+    asyncio.run(scenario())
+
+
+# US01-TC-003: allow the tenth product when the user currently tracks nine.
+def test_tracking_limit_allows_tenth_product(monkeypatch):
+    async def scenario():
+        product = _product(tracked_by_count=0)
+        _common_mocks(monkeypatch, product=product, count=9)
+        marketplace = AsyncMock()
+        monkeypatch.setattr(service_module, "rapidapi_client", marketplace)
+        session = FakeSession()
+
+        result = await service_module.watchlist_service.add_product(
+            session, SimpleNamespace(id=7), ProductCreate(url="https://amazon.com/dp/B012345678")
+        )
+
+        assert result.id == product.id
+        service_module.tracked_product_crud.create.assert_awaited_once()
+        assert session.commits == 1
+        assert session.rollbacks == 0
 
     asyncio.run(scenario())
 
@@ -242,6 +265,7 @@ def test_already_tracked_product_returns_conflict_without_mutating_watchlist(mon
     asyncio.run(scenario())
 
 
+# US01-TC-004: reuse an untracked product inside its seven-day grace period.
 def test_product_untracked_less_than_seven_days_is_reused_without_marketplace_call(monkeypatch):
     async def scenario():
         product = _product(tracked_by_count=0, untracked_since=datetime.now(timezone.utc) - timedelta(days=6))
@@ -262,6 +286,7 @@ def test_product_untracked_less_than_seven_days_is_reused_without_marketplace_ca
     asyncio.run(scenario())
 
 
+# US01-TC-005: refresh an untracked product at the seven-day boundary.
 def test_product_untracked_for_seven_days_is_refreshed(monkeypatch):
     async def scenario():
         product = _product(tracked_by_count=0, untracked_since=datetime.now(timezone.utc) - timedelta(days=7))
