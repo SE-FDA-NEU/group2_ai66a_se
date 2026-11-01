@@ -137,7 +137,7 @@ def test_good_price_transition_creates_one_notification_and_marks_tracker(monkey
     asyncio.run(scenario())
 
 
-def test_target_price_hit_creates_one_notification_and_marks_tracker(monkeypatch):
+def test_us02_tc_005_notify_when_price_reaches_target(monkeypatch):
     async def scenario():
         product = _product_snapshot()
         tracker = SimpleNamespace(
@@ -185,7 +185,7 @@ def test_target_price_hit_creates_one_notification_and_marks_tracker(monkeypatch
     asyncio.run(scenario())
 
 
-def test_price_rises_above_target_creates_notification_and_resets_tracker(monkeypatch):
+def test_us02_tc_006_notify_when_price_rises_above_target(monkeypatch):
     async def scenario():
         product = _product_snapshot()
         tracker = SimpleNamespace(
