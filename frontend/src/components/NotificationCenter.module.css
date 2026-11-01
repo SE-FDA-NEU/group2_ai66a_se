@@ -16,10 +16,11 @@
   border: 1px solid #10b981;
   border-left: 4px solid #059669;
   border-radius: var(--radius-md);
-  background: #ecfdf5;
-  color: #065f46;
+  background: #166534;
+  color: #ffffff;
   box-shadow: var(--shadow-md);
   font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
 .toastContent,
@@ -58,7 +59,7 @@
   right: 10px;
   border: 0;
   background: transparent;
-  color: #047857;
+  color: inherit;
   cursor: pointer;
   font-size: 22px;
   width: 36px;
@@ -71,7 +72,7 @@
   margin-top: 4px;
   font-size: 13px;
   font-weight: 600;
-  color: #2563eb;
+  color: inherit;
   background: none;
   border: none;
   padding: 0;
@@ -82,5 +83,10 @@
 }
 
 .viewLink:hover {
-  color: #1d4ed8;
+  color: inherit;
 }
+
+.toast strong { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; }
+.toast span { text-transform: lowercase; }
+.error { background: #b91c1c; border-color: #b91c1c; border-left-color: #7f1d1d; }
+@media (max-width: 576px) { .center { top: 12px; right: 12px; width: calc(100vw - 24px); } }

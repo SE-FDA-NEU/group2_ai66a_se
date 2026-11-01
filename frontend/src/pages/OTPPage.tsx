@@ -57,7 +57,6 @@ const OTPPage: React.FC = () => {
   const [apiError, setApiError] = useState<string | undefined>();
   const [cooldown, setCooldown] = useState<number>(getInitialCooldown);
   const [isResending, setIsResending] = useState(false);
-  const [resendSuccessMsg, setResendSuccessMsg] = useState<string | undefined>();
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -165,18 +164,13 @@ const OTPPage: React.FC = () => {
     if (cooldown > 0 || isResending) return;
     setIsResending(true);
     setApiError(undefined);
-    setResendSuccessMsg(undefined);
     try {
       await sendOTP(email, reason);
       const storageKey = `otp_cooldown_${reason}_${email.trim().toLowerCase()}`;
       sessionStorage.setItem(storageKey, (Date.now() + RESEND_COOLDOWN * 1000).toString());
       setCooldown(RESEND_COOLDOWN);
       setOtp(Array(OTP_LENGTH).fill(''));
-      setResendSuccessMsg('Mã OTP mới đã được gửi thành công!');
       inputRefs.current[0]?.focus();
-      setTimeout(() => {
-        setResendSuccessMsg(undefined);
-      }, 4000);
     } catch (err: any) {
       const detail = err?.error?.message ?? err?.detail ?? err?.message ?? '';
       if (err?.error?.code === 'OTP_COOLDOWN_ACTIVE' || detail.toLowerCase().includes('đợi') || detail.toLowerCase().includes('giây')) {
@@ -277,11 +271,7 @@ const OTPPage: React.FC = () => {
               </button>
             </p>
 
-            {resendSuccessMsg && (
-              <div className={styles.toastSuccess}>
-                ✓ {resendSuccessMsg}
-              </div>
-            )}
+
           </div>
 
           <button

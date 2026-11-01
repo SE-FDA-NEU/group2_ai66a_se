@@ -11,6 +11,7 @@ from pydantic import ValidationError
 from app.core.exceptions import CustomAppException
 from app.schemas.watchlist_schema import TargetPriceUpdate
 from app.services import watchlist_service as service_module
+from app.services import notification_service as notification_module
 
 
 def _product(*, product_id=31, price="195.00", currency="USD", name="Sample product"):
@@ -72,13 +73,15 @@ def test_us02_tc_004_reject_non_positive_target_price():
         TargetPriceUpdate(target_price=Decimal("-10.00"))
 
 
-def test_us02_tc_001_set_valid_target_price(monkeypatch):
+# N185-MAIL-01: preserves US02-TC-001 coverage and issue 185 traceability.
+@pytest.mark.parametrize("previous_target", [None, Decimal("170.00")])
+def test_us02_tc_001_set_valid_target_price(monkeypatch, previous_target):
     async def scenario():
         product = _product(price="195.00", currency="USD")
         tracker = SimpleNamespace(
             user_id=7,
             product_id=31,
-            target_price=None,
+            target_price=previous_target,
             buy_when_good=True,
             target_price_notified=True,
         )
@@ -100,8 +103,10 @@ def test_us02_tc_001_set_valid_target_price(monkeypatch):
         )
         notification_mock = AsyncMock()
         monkeypatch.setattr(service_module.notification_crud, "create", notification_mock)
+        monkeypatch.setattr(notification_module.notification_settings_crud, "get_or_create",
+                            AsyncMock(return_value=SimpleNamespace(email_enabled=True)))
         email_mock = AsyncMock()
-        monkeypatch.setattr(service_module, "enqueue_price_email", email_mock)
+        monkeypatch.setattr(notification_module.pending_notification_email_crud, "create", email_mock)
 
         stats_row = (product, Decimal("180.00"), False, 10, Decimal("192.00"))
         monkeypatch.setattr(
@@ -126,16 +131,14 @@ def test_us02_tc_001_set_valid_target_price(monkeypatch):
         assert n_kwargs["product_id"] == 31
         assert "180.00 USD" in n_kwargs["message"]
 
-        email_mock.assert_awaited_once()
-        e_kwargs = email_mock.await_args.kwargs
-        assert e_kwargs["kind"] == "target_price_set"
-        assert e_kwargs["target_price"] == Decimal("180.00")
+        email_mock.assert_not_awaited()
 
         assert result.target_price == Decimal("180.00")
 
     asyncio.run(scenario())
 
 
+# N185-MAIL-02: preserves US02-TC-002 coverage and issue 185 traceability.
 def test_us02_tc_002_reject_target_equal_to_current_price(monkeypatch):
     async def scenario():
         product = _product(price="195.00", currency="USD")
@@ -159,6 +162,7 @@ def test_us02_tc_002_reject_target_equal_to_current_price(monkeypatch):
     asyncio.run(scenario())
 
 
+# N185-MAIL-03: preserves US02-TC-003 coverage and issue 185 traceability.
 def test_us02_tc_003_reject_target_above_current_price(monkeypatch):
     async def scenario():
         product = _product(price="195.00", currency="USD")

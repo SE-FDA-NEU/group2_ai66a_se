@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Bell, CheckCircle2, Moon, Settings, Tag, X, Zap } from 'lucide-react';
+import { AlertCircle, Bell, Moon, Settings, Tag, X, Zap } from 'lucide-react';
 import { updateTargetPrice, WatchlistProduct } from '../api/watchlistApi';
 import { formatVnd, parseVndInput } from '../utils/currency';
 import styles from './ProductSettingsModal.module.css';
+import apiClient from '../api/config';
+import { showToast } from '../utils/toast';
 
 interface ProductSettingsModalProps {
   isOpen: boolean;
@@ -27,13 +29,13 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
   const [targetPriceInput, setTargetPriceInput] = useState<string>(initialTargetVnd);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Notification settings state (Placeholder for US10)
+  // Account-wide notification preferences.
   const [emailEnabled, setEmailEnabled] = useState<boolean>(true);
   const [quietHoursEnabled, setQuietHoursEnabled] = useState<boolean>(false);
-  const [saleAlertsEnabled, setSaleAlertsEnabled] = useState<boolean>(true);
-  const [notifSavedMsg, setNotifSavedMsg] = useState<string | null>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [quietWindow, setQuietWindow] = useState({ quiet_start: '23:00', quiet_end: '07:00', timezone: 'Asia/Ho_Chi_Minh' });
 
   useEffect(() => {
     if (isOpen) {
@@ -42,10 +44,24 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
         : '';
       setTargetPriceInput(initVnd);
       setValidationError(null);
-      setSuccessMessage(null);
-      setNotifSavedMsg(null);
     }
   }, [isOpen, product.target_price, product.currency]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    setSettingsLoaded(false);
+    void apiClient.get('/notifications/settings').then((response) => {
+      const body = response as unknown as { data: { email_enabled: boolean; quiet_hours_enabled: boolean; quiet_start?: string | null; quiet_end?: string | null; timezone?: string } };
+      if (active && body.data) {
+        setEmailEnabled(body.data.email_enabled);
+        setQuietHoursEnabled(body.data.quiet_hours_enabled);
+        setQuietWindow({ quiet_start: body.data.quiet_start || '23:00', quiet_end: body.data.quiet_end || '07:00', timezone: body.data.timezone || 'Asia/Ho_Chi_Minh' });
+        setSettingsLoaded(true);
+      }
+    }).catch(() => { if (active) showToast('error', 'Không thể tải cài đặt thông báo. Vui lòng thử lại.'); });
+    return () => { active = false; };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -53,7 +69,6 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value;
     setTargetPriceInput(rawVal);
-    setSuccessMessage(null);
 
     const trimmed = rawVal.trim();
     if (!trimmed) {
@@ -96,15 +111,11 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
 
     setIsSubmitting(true);
     setValidationError(null);
-    setSuccessMessage(null);
 
     try {
       const updatedProduct = await updateTargetPrice(product.id, num);
       onTargetPriceUpdated(updatedProduct);
-      setSuccessMessage(`Đã cập nhật cảnh báo tại ${formatVnd(num, 'VND')}`);
-      setTimeout(() => {
-        onClose();
-      }, 1200);
+      onClose();
     } catch (err: any) {
       console.error('Update target price error:', err);
       const detail = err?.detail || err?.message || '';
@@ -118,10 +129,18 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
     }
   };
 
-  const handleSaveNotifications = (e: React.FormEvent) => {
-    e.preventDefault();
-    setNotifSavedMsg('Đã lưu cấu hình thông báo thành công.');
-    setTimeout(() => setNotifSavedMsg(null), 2500);
+  const handleSaveNotifications = async () => {
+    if (!settingsLoaded || savingSettings) return;
+    setSavingSettings(true);
+    try {
+      await apiClient.patch('/notifications/settings', {
+        email_enabled: emailEnabled,
+        quiet_hours_enabled: quietHoursEnabled,
+        ...quietWindow,
+      });
+    } catch (error) {
+      console.error('Không thể lưu cài đặt thông báo:', error);
+    } finally { setSavingSettings(false); }
   };
 
   const isFormValid =
@@ -203,12 +222,6 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
                 </div>
               )}
 
-              {successMessage && (
-                <div className={styles.successMessage} role="status">
-                  <CheckCircle2 size={16} aria-hidden="true" />
-                  <span>{successMessage}</span>
-                </div>
-              )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
                 <button
@@ -259,9 +272,9 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
               <div className={styles.settingInfo}>
                 <span className={styles.settingTitle}>
                   <Moon size={13} style={{ display: 'inline', verticalAlign: '-1px', marginRight: 4 }} />
-                  Giờ yên tĩnh (Quiet Hours)
+                  Giờ yên tĩnh
                 </span>
-                <span className={styles.settingSubtitle}>Tạm hoãn gửi thông báo ban đêm (23:00 – 07:00)</span>
+                <span className={styles.settingSubtitle}>Tạm hoãn gửi email từ {quietWindow.quiet_start.slice(0, 5)} đến {quietWindow.quiet_end.slice(0, 5)}</span>
               </div>
               <label className={styles.toggleSwitch}>
                 <input
@@ -277,26 +290,19 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
               <div className={styles.settingInfo}>
                 <span className={styles.settingTitle}>
                   <Zap size={13} style={{ display: 'inline', verticalAlign: '-1px', marginRight: 4 }} />
-                  Cảnh báo đợt Sale lớn
+                  Cảnh báo đợt giảm giá lớn (sắp có)
                 </span>
                 <span className={styles.settingSubtitle}>Nhận thông báo trước 48 giờ khi sắp có ngày hội sale</span>
               </div>
               <label className={styles.toggleSwitch}>
                 <input
                   type="checkbox"
-                  checked={saleAlertsEnabled}
-                  onChange={(e) => setSaleAlertsEnabled(e.target.checked)}
+                  checked={false} disabled
                 />
                 <span className={styles.toggleSlider}></span>
               </label>
             </div>
 
-            {notifSavedMsg && (
-              <div className={styles.successMessage} style={{ marginTop: 8 }} role="status">
-                <CheckCircle2 size={16} aria-hidden="true" />
-                <span>{notifSavedMsg}</span>
-              </div>
-            )}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
               <button
@@ -304,6 +310,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
                 className={styles.btnCancel}
                 style={{ fontSize: '0.825rem' }}
                 onClick={handleSaveNotifications}
+                disabled={savingSettings || !settingsLoaded}
               >
                 Lưu cấu hình thông báo
               </button>

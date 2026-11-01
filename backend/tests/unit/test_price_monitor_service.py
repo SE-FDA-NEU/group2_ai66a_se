@@ -289,7 +289,7 @@ def test_us02_tc_006_notify_when_price_rises_above_target(monkeypatch):
     asyncio.run(scenario())
 
 
-def test_target_price_notification_state_machine_full_sequence(monkeypatch):
+def test_N185_MAIL_04_target_price_notification_state_machine_full_sequence(monkeypatch):
     """
     Test complete price sequence (BR2, BR4):
     239,000đ -> 189,000đ (notified) -> 190,000đ (suppressed) -> 196,000đ (above target notified) -> 192,000đ (re-notified).

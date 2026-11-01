@@ -1,8 +1,9 @@
 import React from 'react';
-import { Bookmark, LayoutDashboard, LogOut, User as UserIcon, X } from 'lucide-react';
+import { Bell, Bookmark, LayoutDashboard, LogOut, User as UserIcon, X } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import styles from './Sidebar.module.css';
+import { showToast } from '../utils/toast';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -55,6 +56,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <UserIcon className={styles.icon} aria-hidden="true" />
           <span>Hồ sơ cá nhân</span>
         </NavLink>
+        <NavLink to="/notifications" onClick={onClose}
+          className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
+          <Bell className={styles.icon} aria-hidden="true" /><span>Thông báo</span>
+        </NavLink>
       </nav>
 
       <div className={styles.footer}>
@@ -69,6 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               title="Đăng xuất"
               onClick={() => {
                 logout();
+                showToast('success', 'Đã đăng xuất tài khoản.');
                 navigate('/login');
               }}
               className={styles.logoutBtn}

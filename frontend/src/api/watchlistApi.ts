@@ -54,6 +54,7 @@ export interface AddProductPayload {
 }
 
 export interface UserNotification {
+  seen_at?: string | null;
   id: number;
   product_id?: number | null;
   kind: 'target_price_set' | 'good_price' | string;

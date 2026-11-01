@@ -223,7 +223,9 @@ def test_tracking_limit_is_enforced_by_backend(monkeypatch):
 # US01-TC-003: allow the tenth product when the user currently tracks nine.
 def test_tracking_limit_allows_tenth_product(monkeypatch):
     async def scenario():
-        product = _product(tracked_by_count=0)
+        # Keep this boundary test on the cached-product path: another account
+        # already tracks it, so adding the tenth item needs no marketplace fetch.
+        product = _product(tracked_by_count=1)
         _common_mocks(monkeypatch, product=product, count=9)
         marketplace = AsyncMock()
         monkeypatch.setattr(service_module, "rapidapi_client", marketplace)
