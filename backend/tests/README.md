@@ -1,5 +1,8 @@
 # Backend Tests
 
+Milestone 4 US01 watchlist coverage, test case IDs, and regression-check notes:
+see [`docs/testing.md`](../../docs/testing.md).
+
 ```text
 tests/
 |-- unit/               # Unit tests
