@@ -34,7 +34,7 @@ npm run build --prefix frontend
 python scripts/verify_issue185_clean.py
 ```
 
-Lệnh cuối sao chép file đang làm (kể cả chưa commit) sang thư mục tạm, không sao chép `.env`/`.git`/`node_modules`, chạy `npm ci`, `pytest`, build và kiểm tra mutation 6 giây. Môi trường Python dùng thư viện đã cài từ requirements, không phải một máy tính hay Python venv mới hoàn toàn. Log và ảnh minh chứng xem [docs/testing.md](testing.md).
+Lệnh cuối sao chép file đang làm (kể cả chưa commit) sang thư mục tạm, không sao chép `.env`/`.git`/`node_modules`, chạy `npm ci`, `pytest`, build và kiểm tra mutation 6 giây. Môi trường Python dùng thư viện đã cài từ requirements, không phải một máy tính hay Python venv mới hoàn toàn. Kết quả được tạo tại `docs/testing/evidence` khi chạy lệnh kiểm tra bản sao sạch.
 
 ---
 
