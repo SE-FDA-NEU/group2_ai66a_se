@@ -13,7 +13,7 @@ Repository:     https://github.com/SE-FDA-NEU/group2_ai66a_se.git;
 Project board:  https://github.com/orgs/SE-FDA-NEU/projects/19/views/1;
 Setup guide:    https://github.com/SE-FDA-NEU/group2_ai66a_se/blob/main/docs/SETUP.md
 Pull Request:   https://github.com/SE-FDA-NEU/group2_ai66a_se/pull/210
-Merge commit:   ...
+Merge commit:   d9ca7e6ff0772587802996b80e02d17ee982d697
 
 Submitted by:   Nguyen Trong Dai
 ```
@@ -29,7 +29,7 @@ Submitted by:   Nguyen Trong Dai
 ## 1. What we test, and why
 
 | Layer | Test | Why |
-|---|---|---|
+| --- | --- | --- |
 | `backend/app/services/` (services) | Unit tests with in-memory fake database sessions, mock CRUD repositories, and mock external clients | All core business rules reside here (10-product limit **BR8**, 7-day grace period **BR15**, target-price validation **BR1/BR2**, price labels **BR5/BR6/BR7**, OTP limits **BR13**). This is where logic errors have the highest cost, risking bad alerts, data corruption, or unauthorized operations. |
 | `backend/app/crud/` (repository) | Unit tests using SQLite in-memory and mock SQL expressions | Validates query construction, SQL join logic across watchlist tables, and database constraints without requiring a live PostgreSQL instance. |
 | `backend/app/api/v1/endpoints/` (routes) | Integration tests using FastAPI `AsyncClient` with `ASGITransport` | Verifies HTTP status codes (200, 201, 400, 401, 404, 409, 422), response JSON schemas, header handling, and dependency injection overrides without spinning up an HTTP server. |
@@ -38,6 +38,7 @@ Submitted by:   Nguyen Trong Dai
 ### Risk Assessment & Testing Focus
 
 The testing effort is concentrated heavily on the **Service Layer** and **Authentication Endpoints**:
+
 1. **Watchlist & Price Tracking Integrity:** Overfilling user watchlists beyond capacity (BR8) or miscalculating price comparison thresholds (BR6, BR7) directly breaks user trust and violates system limits.
 2. **Security & Authentication Boundary Rules:** OTP rate limiting (maximum 5 attempts) and expiration boundaries (300 seconds) are critical security frontiers. Any regression could allow brute-force attacks or lock legitimate users out of their accounts.
 3. **Grace Period & Data Retention:** Ensuring the 7-day untracked product reuse/refresh boundary (BR15) functions accurately prevents unnecessary third-party API costs while avoiding stale price caches.
@@ -51,7 +52,7 @@ Every P0 story is guarded by at least three test cases: normal success cases, er
 ### US01 — Add a product to the watchlist (BR8, BR15)
 
 | ID | Story | Input | Expected result | Kind |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **US01-TC-001** | US01 Add a product | Valid Amazon URL for unstored product; watchlist has capacity (count = 2) | 201, product fetched from marketplace, initial price saved, tracking created | Normal |
 | **US01-TC-002** | US01 Add a product | Valid Amazon URL that the user already tracks in their watchlist | 409, `PRODUCT_ALREADY_TRACKED`, watchlist unmutated, rollback executed | Error |
 | **US01-TC-003** | US01 Add a product | Valid Amazon URL when user tracks exactly 9 products (boundary below limit) | 201, tenth product is accepted and saved, commit executed | Boundary, on limit |
@@ -62,7 +63,7 @@ Every P0 story is guarded by at least three test cases: normal success cases, er
 ### US02 — Set a target price and get notified (BR1, BR2, BR4)
 
 | ID | Story | Input | Expected result | Kind |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **US02-TC-001** | US02 Set target price | Product current price $100.00; target price $90.00 (< current price) | 200, target price saved, `target_price_set` confirmation notification created | Normal |
 | **US02-TC-002** | US02 Set target price | Product current price $100.00; target price $100.00 (== current price) | 400, `INVALID_TARGET_PRICE`, rejected under BR1 (must be lower than current price) | Boundary, on limit |
 | **US02-TC-003** | US02 Set target price | Product current price $100.00; target price $101.00 (> current price) | 400, `INVALID_TARGET_PRICE`, rejected under BR1 (target cannot exceed current price) | Boundary, just above |
@@ -72,7 +73,7 @@ Every P0 story is guarded by at least three test cases: normal success cases, er
 ### US03 — See full price history & gap detection (BR15)
 
 | ID | Story | Input | Expected result | Kind |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **US03-TC-001** | US03 Full price history | Product ID with recorded price history points; user tracks product | 200, ordered price data points returned along with tracked days | Normal |
 | **US03-TC-002** | US03 Full price history | Product ID not tracked by current user | 404, `TRACKING_NOT_FOUND`, history request rejected | Error |
 | **US03-TC-003** | US03 Full price history | Two recordings separated by exactly 30 minutes (threshold = 30 min) | 200, `is_gap = False`, period treated as continuous | Boundary, on limit |
@@ -82,7 +83,7 @@ Every P0 story is guarded by at least three test cases: normal success cases, er
 ### US04 — Register and sign in with Google or Email (BR13, BR14)
 
 | ID | Story | Input | Expected result | Kind |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **US04-TC-001** | US04 Auth & OTP | Valid email, verified OTP token, nickname, and password registration | 201 user registered; subsequent login returns valid JWT access token | Normal |
 | **US04-TC-002** | US04 Auth & OTP | Valid Google OAuth id_token for new user | 200, user created with `auth_provider='google'` and access token returned | Normal |
 | **US04-TC-003** | US04 Auth & OTP | Valid email, verified OTP token, and new password | 200, password updated and user can log in with new credentials | Normal |
@@ -93,7 +94,7 @@ Every P0 story is guarded by at least three test cases: normal success cases, er
 ### US05 — See tracked products as summary rows (BR5, BR6, BR7)
 
 | ID | Story | Input | Expected result | Kind |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **US05-TC-001** | US05 Summary rows | Authenticated user requests `/api/v1/watchlist` | 200, list of tracked products with stats, low/high prices, and price labels | Normal |
 | **US05-TC-002** | US05 Summary rows | Request `/api/v1/watchlist` without Authorization header | 401, `UNAUTHORIZED`, access refused | Error |
 | **US05-TC-003** | US05 Summary rows | Tracked product with 6 distinct recording days (< 7 days) | 200, `price_label = "Not enough data to assess"` | Boundary, just below |
@@ -108,6 +109,7 @@ Every P0 story is guarded by at least three test cases: normal success cases, er
 Every test case listed in Section 2 is implemented as a deterministic pytest test in `tests/test_p0_stories.py` (and supplemented by integration suites in `backend/tests/`). Test case IDs appear directly in the test function names and docstrings.
 
 All tests execute completely offline without running an HTTP server and without connecting to a live database or Redis instance:
+
 - **Database:** Mock async database sessions (`FakeSession`) and async CRUD replacements.
 - **Cache / OTP:** In-memory deterministic fake Redis implementation.
 - **Third-Party APIs:** Mocked RapidAPI client and Google token verifier.
