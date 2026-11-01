@@ -68,6 +68,21 @@ async def list_watchlist(
     return ApiResponse(message="Đã tải danh sách theo dõi thành công.", data=product_list)
 
 
+@router.get(
+    "/{product_id}",
+    response_model=ApiResponse[Product],
+    status_code=status.HTTP_200_OK,
+    summary="Lấy thông tin chi tiết của một sản phẩm đang theo dõi (/detail)",
+)
+async def get_product_detail(
+    product_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    product = await watchlist_service.get_product(db, current_user, product_id)
+    return ApiResponse(message="Product detail loaded successfully.", data=product)
+
+
 @router.delete(
     "/{product_id}",
     status_code=status.HTTP_204_NO_CONTENT,

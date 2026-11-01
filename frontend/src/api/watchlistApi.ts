@@ -72,6 +72,14 @@ export const getWatchlist = async (): Promise<WatchlistResponse> => {
 };
 
 /**
+ * Lấy thông tin chi tiết của 1 sản phẩm theo dõi (/detail)
+ */
+export const getProductDetail = async (productId: number): Promise<WatchlistProduct> => {
+  const res = await apiClient.get<any, { message: string; data: WatchlistProduct }>(`/watchlist/${productId}`);
+  return res.data;
+};
+
+/**
  * Thêm sản phẩm mới vào danh sách theo dõi
  */
 export const addProductToWatchlist = async (payload: AddProductPayload): Promise<WatchlistProduct> => {
