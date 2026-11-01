@@ -20,3 +20,24 @@ export const getNotifications = async (afterId: number): Promise<UserNotificatio
   }
   return notifications;
 };
+
+export const getUnseenNotifications = async (): Promise<UserNotification[]> => {
+  const response = await apiClient.get('/notifications');
+
+  const body = response as {
+    notifications?: UserNotification[];
+    data?: { notifications?: UserNotification[]; data?: { notifications?: UserNotification[] } };
+  };
+  const notifications =
+    body?.notifications ?? body?.data?.notifications ?? body?.data?.data?.notifications;
+
+  if (!Array.isArray(notifications)) {
+    throw new Error('Unexpected notifications API response shape.');
+  }
+  return notifications;
+};
+
+export const markNotificationsSeen = async (ids: number[]): Promise<void> => {
+  if (ids.length === 0) return;
+  await apiClient.post('/notifications/seen', { ids });
+};

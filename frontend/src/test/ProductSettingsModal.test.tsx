@@ -56,7 +56,7 @@ describe('ProductSettingsModal (US02 - Target Price & Settings)', () => {
     fireEvent.change(input, { target: { value: '200000' } });
 
     expect(
-      screen.getByText('Target must be lower than the current price 200.000 ₫')
+      screen.getByText('Giá mục tiêu phải thấp hơn giá hiện tại (200.000 ₫)')
     ).toBeInTheDocument();
     expect(submitBtn).toBeDisabled();
 
@@ -64,7 +64,7 @@ describe('ProductSettingsModal (US02 - Target Price & Settings)', () => {
     fireEvent.change(input, { target: { value: '250000' } });
 
     expect(
-      screen.getByText('Target must be lower than the current price 200.000 ₫')
+      screen.getByText('Giá mục tiêu phải thấp hơn giá hiện tại (200.000 ₫)')
     ).toBeInTheDocument();
     expect(submitBtn).toBeDisabled();
   });
@@ -85,7 +85,7 @@ describe('ProductSettingsModal (US02 - Target Price & Settings)', () => {
     fireEvent.change(input, { target: { value: '150000' } });
 
     expect(
-      screen.queryByText(/Target must be lower than the current price/i)
+      screen.queryByText(/Giá mục tiêu phải thấp hơn giá hiện tại/i)
     ).not.toBeInTheDocument();
     expect(submitBtn).not.toBeDisabled();
 
@@ -93,6 +93,34 @@ describe('ProductSettingsModal (US02 - Target Price & Settings)', () => {
 
     await waitFor(() => {
       expect(watchlistApi.updateTargetPrice).toHaveBeenCalledWith(101, 150000);
+      expect(defaultProps.onTargetPriceUpdated).toHaveBeenCalledWith(updated);
+    });
+  });
+
+  it('correctly handles Vietnamese dot-formatted input (e.g. 160.000) and saves as 160000', async () => {
+    const updated = {
+      ...mockProduct,
+      target_price: 160000,
+    };
+    vi.mocked(watchlistApi.updateTargetPrice).mockResolvedValue(updated);
+
+    render(<ProductSettingsModal {...defaultProps} />);
+
+    const input = screen.getByLabelText(/Mức giá mục tiêu mới/i);
+    const submitBtn = screen.getByRole('button', { name: /Lưu giá mục tiêu/i });
+
+    // User types 160.000
+    fireEvent.change(input, { target: { value: '160.000' } });
+
+    expect(
+      screen.queryByText(/Giá mục tiêu phải thấp hơn giá hiện tại/i)
+    ).not.toBeInTheDocument();
+    expect(submitBtn).not.toBeDisabled();
+
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(watchlistApi.updateTargetPrice).toHaveBeenCalledWith(101, 160000);
       expect(defaultProps.onTargetPriceUpdated).toHaveBeenCalledWith(updated);
     });
   });

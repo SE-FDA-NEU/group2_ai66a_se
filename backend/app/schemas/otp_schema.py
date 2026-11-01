@@ -25,4 +25,6 @@ class OTPErrors:
     OTP_INVALID = ErrorDetail("OTP_INVALID", 400, "Mã OTP không chính xác.")
     OTP_LIMIT_EXCEEDED = ErrorDetail("OTP_LIMIT_EXCEEDED", 400, "Mã OTP nhập vượt quá số lần cho phép. Vui lòng lấy mã mới.")
     EMAIL_SEND_FAILED = ErrorDetail("EMAIL_SEND_FAILED", 500, "Không thể gửi email OTP. Vui lòng thử lại sau.")
+    OTP_COOLDOWN_ACTIVE = ErrorDetail("OTP_COOLDOWN_ACTIVE", 429, "Vui lòng chờ trước khi yêu cầu mã OTP mới.")
+    OTP_MAX_REQUESTS_EXCEEDED = ErrorDetail("OTP_MAX_REQUESTS_EXCEEDED", 429, "Bạn đã vượt quá số lần yêu cầu mã OTP trong 1 giờ. Vui lòng thử lại sau.")
 

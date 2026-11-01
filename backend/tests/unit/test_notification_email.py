@@ -35,7 +35,7 @@ def test_notification_template_contains_product_price_and_link(kind):
     subject, html_content = _get_notification_html_content(kind=kind, **_common_kwargs())
 
     assert "Tai nghe Sony WH-1000XM5" in html_content
-    assert "189000" in html_content
+    assert "189.000 ₫" in html_content
     assert "https://www.amazon.com/dp/B09XS7JWHH" in html_content
     assert "Trakora App" in subject
 
@@ -46,7 +46,7 @@ def test_target_price_reached_template_shows_target_and_success_message():
     )
 
     assert "Giá mục tiêu đã đạt" in subject
-    assert "195000" in html_content
+    assert "195.000 ₫" in html_content
     assert "chạm giá mục tiêu" in html_content
 
 
@@ -71,7 +71,7 @@ def test_target_price_set_template_works_without_current_price_highlight():
 
     assert "Đã lưu giá mục tiêu" in subject
     assert "Bàn phím Keychron K2" in html_content
-    assert "1200000" in html_content
+    assert "1.200.000 ₫" in html_content
 
 
 def test_notification_template_escapes_html_in_product_name():
@@ -108,7 +108,7 @@ def test_send_notification_email_builds_template_and_sends_email(monkeypatch):
 
         assert captured["to_email"] == "ha@example.com"
         assert "Tai nghe Sony WH-1000XM5" in captured["subject"]
-        assert "189000" in captured["html_content"]
+        assert "189.000 ₫" in captured["html_content"]
         assert "https://www.amazon.com/dp/B09XS7JWHH" in captured["html_content"]
 
     asyncio.run(scenario())

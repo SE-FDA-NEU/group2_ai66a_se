@@ -38,6 +38,18 @@ class Settings(BaseSettings):
     RAPIDAPI_HOST: str = "real-time-amazon-data.p.rapidapi.com"
     RAPIDAPI_PRODUCT_ENDPOINT: str = "https://real-time-amazon-data.p.rapidapi.com/product-details"
 
+    # Real-time Exchange Rate service configuration
+    EXCHANGE_RATE_API_URL: str = "https://open.er-api.com/v6/latest/USD"
+    EXCHANGE_RATE_FALLBACK_URL: str = "https://api.exchangerate-api.com/v4/latest/USD"
+    DEFAULT_USD_TO_VND_RATE: str = "25800"
+    EXCHANGE_RATE_CACHE_TTL_SECONDS: int = 3600
+
+    # 6. Cấu hình OTP & Chống Spam
+    OTP_EXPIRE_SECONDS: int = 300
+    OTP_RESEND_COOLDOWN_SECONDS: int = 60
+    OTP_MAX_ATTEMPTS: int = 5
+    OTP_MAX_REQUESTS_PER_HOUR: int = 5
+
     @property
     def get_redis_url(self) -> str:
         if self.REDIS_URL:

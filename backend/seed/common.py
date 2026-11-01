@@ -9,7 +9,7 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-# Danh sách 10 sản phẩm công nghệ cao cấp demo với thông tin chuẩn Amazon
+# Danh sách 10 sản phẩm công nghệ cao cấp demo với thông tin chuẩn quy đổi VND
 DEMO_PRODUCTS = (
     {
         "marketplace": "amazon",
@@ -21,12 +21,12 @@ DEMO_PRODUCTS = (
         "shop_name": "Sony Store US",
         "product_rating": Decimal("4.60"),
         "review_count": 14250,
-        "current_price": Decimal("348.00"),
-        "original_price": Decimal("399.99"),
-        "currency": "USD",
+        "current_price": Decimal("8990000"),
+        "original_price": Decimal("10350000"),
+        "currency": "VND",
         "in_stock": True,
-        "price_low": Decimal("298.00"),
-        "price_high": Decimal("399.99"),
+        "price_low": Decimal("7700000"),
+        "price_high": Decimal("10350000"),
         "top_reviews": [
             {
                 "rating": 5,
@@ -50,12 +50,12 @@ DEMO_PRODUCTS = (
         "shop_name": "Apple Authorized Store",
         "product_rating": Decimal("4.70"),
         "review_count": 28940,
-        "current_price": Decimal("189.99"),
-        "original_price": Decimal("249.00"),
-        "currency": "USD",
+        "current_price": Decimal("4900000"),
+        "original_price": Decimal("6450000"),
+        "currency": "VND",
         "in_stock": True,
-        "price_low": Decimal("179.00"),
-        "price_high": Decimal("249.00"),
+        "price_low": Decimal("4600000"),
+        "price_high": Decimal("6450000"),
         "top_reviews": [
             {
                 "rating": 5,
@@ -74,12 +74,12 @@ DEMO_PRODUCTS = (
         "shop_name": "Logitech Store",
         "product_rating": Decimal("4.70"),
         "review_count": 8670,
-        "current_price": Decimal("99.99"),
-        "original_price": Decimal("119.99"),
-        "currency": "USD",
+        "current_price": Decimal("2580000"),
+        "original_price": Decimal("3100000"),
+        "currency": "VND",
         "in_stock": True,
-        "price_low": Decimal("89.99"),
-        "price_high": Decimal("119.99"),
+        "price_low": Decimal("2300000"),
+        "price_high": Decimal("3100000"),
         "top_reviews": [
             {
                 "rating": 5,
@@ -98,12 +98,12 @@ DEMO_PRODUCTS = (
         "shop_name": "Keychron Official",
         "product_rating": Decimal("4.50"),
         "review_count": 4210,
-        "current_price": Decimal("79.99"),
-        "original_price": Decimal("99.99"),
-        "currency": "USD",
+        "current_price": Decimal("2060000"),
+        "original_price": Decimal("2580000"),
+        "currency": "VND",
         "in_stock": True,
-        "price_low": Decimal("69.99"),
-        "price_high": Decimal("99.99"),
+        "price_low": Decimal("1800000"),
+        "price_high": Decimal("2580000"),
         "top_reviews": [
             {
                 "rating": 5,
@@ -122,12 +122,12 @@ DEMO_PRODUCTS = (
         "shop_name": "Anker Direct",
         "product_rating": Decimal("4.60"),
         "review_count": 6320,
-        "current_price": Decimal("109.99"),
-        "original_price": Decimal("149.99"),
-        "currency": "USD",
+        "current_price": Decimal("2840000"),
+        "original_price": Decimal("3870000"),
+        "currency": "VND",
         "in_stock": True,
-        "price_low": Decimal("94.99"),
-        "price_high": Decimal("149.99"),
+        "price_low": Decimal("2450000"),
+        "price_high": Decimal("3870000"),
         "top_reviews": [
             {
                 "rating": 5,
@@ -146,12 +146,12 @@ DEMO_PRODUCTS = (
         "shop_name": "Amazon",
         "product_rating": Decimal("4.70"),
         "review_count": 31500,
-        "current_price": Decimal("139.99"),
-        "original_price": Decimal("149.99"),
-        "currency": "USD",
+        "current_price": Decimal("3610000"),
+        "original_price": Decimal("3870000"),
+        "currency": "VND",
         "in_stock": True,
-        "price_low": Decimal("119.99"),
-        "price_high": Decimal("149.99"),
+        "price_low": Decimal("3100000"),
+        "price_high": Decimal("3870000"),
         "top_reviews": [
             {
                 "rating": 5,
@@ -170,12 +170,12 @@ DEMO_PRODUCTS = (
         "shop_name": "Samsung Store",
         "product_rating": Decimal("4.80"),
         "review_count": 28400,
-        "current_price": Decimal("229.78"),
-        "original_price": Decimal("249.99"),
-        "currency": "USD",
+        "current_price": Decimal("5930000"),
+        "original_price": Decimal("6450000"),
+        "currency": "VND",
         "in_stock": True,
-        "price_low": Decimal("199.99"),
-        "price_high": Decimal("249.99"),
+        "price_low": Decimal("5160000"),
+        "price_high": Decimal("6450000"),
         "top_reviews": [
             {
                 "rating": 5,
@@ -194,12 +194,12 @@ DEMO_PRODUCTS = (
         "shop_name": "Logitech Store",
         "product_rating": Decimal("4.60"),
         "review_count": 14900,
-        "current_price": Decimal("67.90"),
-        "original_price": Decimal("79.99"),
-        "currency": "USD",
+        "current_price": Decimal("1750000"),
+        "original_price": Decimal("2060000"),
+        "currency": "VND",
         "in_stock": True,
-        "price_low": Decimal("59.99"),
-        "price_high": Decimal("79.99"),
+        "price_low": Decimal("1550000"),
+        "price_high": Decimal("2060000"),
         "top_reviews": [
             {
                 "rating": 5,
@@ -218,12 +218,12 @@ DEMO_PRODUCTS = (
         "shop_name": "KDD Direct",
         "product_rating": Decimal("4.60"),
         "review_count": 1820,
-        "current_price": Decimal("29.95"),
-        "original_price": Decimal("39.99"),
-        "currency": "USD",
+        "current_price": Decimal("770000"),
+        "original_price": Decimal("1030000"),
+        "currency": "VND",
         "in_stock": True,
-        "price_low": Decimal("24.99"),
-        "price_high": Decimal("39.99"),
+        "price_low": Decimal("645000"),
+        "price_high": Decimal("1030000"),
         "top_reviews": [
             {
                 "rating": 5,
@@ -242,12 +242,12 @@ DEMO_PRODUCTS = (
         "shop_name": "Apple Authorized Store",
         "product_rating": Decimal("4.60"),
         "review_count": 19450,
-        "current_price": Decimal("189.00"),
-        "original_price": Decimal("249.00"),
-        "currency": "USD",
+        "current_price": Decimal("4880000"),
+        "original_price": Decimal("6450000"),
+        "currency": "VND",
         "in_stock": True,
-        "price_low": Decimal("179.00"),
-        "price_high": Decimal("249.00"),
+        "price_low": Decimal("4620000"),
+        "price_high": Decimal("6450000"),
         "top_reviews": [
             {
                 "rating": 5,
@@ -275,12 +275,12 @@ STANDALONE_DEMO_PRODUCT = {
     "shop_name": "PlayStation Store",
     "product_rating": Decimal("4.80"),
     "review_count": 85200,
-    "current_price": Decimal("69.99"),
-    "original_price": Decimal("74.99"),
-    "currency": "USD",
+    "current_price": Decimal("1800000"),
+    "original_price": Decimal("1930000"),
+    "currency": "VND",
     "in_stock": True,
-    "price_low": Decimal("49.99"),
-    "price_high": Decimal("74.99"),
+    "price_low": Decimal("1290000"),
+    "price_high": Decimal("1930000"),
     "top_reviews": [
         {
             "rating": 5,
@@ -296,11 +296,7 @@ STANDALONE_DEMO_PRODUCT = {
 }
 
 
-def format_display_price(price: Decimal | float | str, currency: str = "USD") -> str:
+def format_display_price(price: Decimal | float | str, currency: str = "VND") -> str:
     """Format giá kèm quy đổi VNĐ chuẩn UI."""
-    dec_price = Decimal(str(price))
-    if str(currency).upper() == "USD":
-        vnd_price = round(dec_price * Decimal("26000"))
-        return f"{vnd_price:,.0f} ₫ ({dec_price:.2f} USD)".replace(",", ".")
-    return f"{dec_price:,.0f} {currency}".replace(",", ".")
-
+    dec_price = round(Decimal(str(price)))
+    return f"{int(dec_price):,} ₫".replace(",", ".")

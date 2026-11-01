@@ -13,11 +13,11 @@
   display: grid;
   gap: 5px;
   padding: 14px 42px 14px 16px;
-  border: 1px solid var(--border-color);
-  border-left: 4px solid var(--primary-color);
+  border: 1px solid #10b981;
+  border-left: 4px solid #059669;
   border-radius: var(--radius-md);
-  background: var(--bg-surface);
-  color: var(--text-primary);
+  background: #ecfdf5;
+  color: #065f46;
   box-shadow: var(--shadow-md);
   font-size: 14px;
 }
@@ -58,9 +58,13 @@
   right: 10px;
   border: 0;
   background: transparent;
-  color: var(--text-secondary);
+  color: #047857;
   cursor: pointer;
   font-size: 22px;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 4px;
 }
 
 .viewLink {

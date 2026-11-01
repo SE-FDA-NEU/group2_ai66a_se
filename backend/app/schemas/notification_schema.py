@@ -24,6 +24,10 @@ class NotificationErrors:
     )
 
 
+class NotificationSeenRequest(BaseModel):
+    ids: list[int] = Field(min_length=1, max_length=200)
+
+
 class NotificationPreferenceUpdate(BaseModel):
     email_enabled: bool | None = None
     quiet_hours_enabled: bool | None = None
@@ -35,12 +39,12 @@ class NotificationPreferenceUpdate(BaseModel):
     def validate_timezone(self):
         for field in ("email_enabled", "quiet_hours_enabled", "timezone"):
             if field in self.model_fields_set and getattr(self, field) is None:
-                raise ValueError(f"{field} cannot be null.")
+                raise ValueError(f"Trường {field} không được để trống.")
         if self.timezone is not None:
             try:
                 ZoneInfo(self.timezone)
             except (ZoneInfoNotFoundError, ValueError):
-                raise ValueError("timezone must be a valid IANA timezone.")
+                raise ValueError("Múi giờ phải là múi giờ IANA hợp lệ.")
         return self
 
 

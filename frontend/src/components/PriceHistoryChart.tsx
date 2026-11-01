@@ -288,7 +288,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
         <div className={styles.customTooltip} data-testid="tooltip-gap">
           <div className={styles.tooltipGapAlert}>
             <AlertTriangle size={15} className={styles.gapIcon} aria-hidden="true" />
-            <span>No data recorded during this period</span>
+            <span>Không có dữ liệu được ghi nhận trong khoảng thời gian này</span>
           </div>
           {item.gapTimeRange && (
             <div className={styles.tooltipGapTime}>{item.gapTimeRange}</div>

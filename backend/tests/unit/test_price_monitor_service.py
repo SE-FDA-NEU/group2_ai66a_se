@@ -80,13 +80,13 @@ def _product_snapshot():
         shop_name="Shop",
         product_rating=Decimal("4.5"),
         review_count=12,
-        current_price=Decimal("210.00"),
+        current_price=Decimal("210000"),
         original_price=None,
-        currency="USD",
+        currency="VND",
         in_stock=True,
         top_reviews=[],
-        price_low=Decimal("189.00"),
-        price_high=Decimal("230.00"),
+        price_low=Decimal("189000"),
+        price_high=Decimal("230000"),
     )
 
 
@@ -116,9 +116,9 @@ def test_good_price_transition_creates_one_notification_and_marks_tracker(monkey
                     shop_name=product.shop_name,
                     product_rating=product.product_rating,
                     review_count=product.review_count,
-                    current_price=Decimal("195.00"),
+                    current_price=Decimal("195000"),
                     original_price=None,
-                    currency="USD",
+                    currency="VND",
                     in_stock=True,
                     top_reviews=[],
                 )
@@ -142,7 +142,7 @@ def test_target_price_hit_creates_one_notification_and_marks_tracker(monkeypatch
         product = _product_snapshot()
         tracker = SimpleNamespace(
             user_id=7,
-            target_price=Decimal("200.00"),
+            target_price=Decimal("200000"),
             target_price_notified=False,
         )
         initial_session = FakeSession(product)
@@ -164,9 +164,9 @@ def test_target_price_hit_creates_one_notification_and_marks_tracker(monkeypatch
                     shop_name=product.shop_name,
                     product_rating=product.product_rating,
                     review_count=product.review_count,
-                    current_price=Decimal("195.00"),
+                    current_price=Decimal("195000"),
                     original_price=None,
-                    currency="USD",
+                    currency="VND",
                     in_stock=True,
                     top_reviews=[],
                 )
@@ -190,7 +190,7 @@ def test_price_rises_above_target_creates_notification_and_resets_tracker(monkey
         product = _product_snapshot()
         tracker = SimpleNamespace(
             user_id=7,
-            target_price=Decimal("195.00"),
+            target_price=Decimal("195000"),
             target_price_notified=True,
         )
         initial_session = FakeSession(product)
@@ -212,9 +212,9 @@ def test_price_rises_above_target_creates_notification_and_resets_tracker(monkey
                     shop_name=product.shop_name,
                     product_rating=product.product_rating,
                     review_count=product.review_count,
-                    current_price=Decimal("196.00"),
+                    current_price=Decimal("196000"),
                     original_price=None,
-                    currency="USD",
+                    currency="VND",
                     in_stock=True,
                     top_reviews=[],
                 )
@@ -231,14 +231,14 @@ def test_price_rises_above_target_creates_notification_and_resets_tracker(monkey
         n_kwargs = notification.await_args.kwargs
         assert n_kwargs["kind"] == "price_above_target"
         assert n_kwargs["title"] == "Giá đã tăng trên mục tiêu"
-        assert "195.00" in n_kwargs["message"]
+        assert "195.000 ₫" in n_kwargs["message"]
         assert tracker.target_price_notified is False
         assert update_session.committed is True
 
         email_mock.assert_awaited_once()
         e_kwargs = email_mock.await_args.kwargs
         assert e_kwargs["kind"] == "price_above_target"
-        assert e_kwargs["target_price"] == Decimal("195.00")
+        assert e_kwargs["target_price"] == Decimal("195000")
 
     asyncio.run(scenario())
 
@@ -374,8 +374,8 @@ def test_target_price_notification_state_machine_full_sequence(monkeypatch):
         assert len(notifications_log) == 1
         assert notifications_log[-1]["kind"] == "target_price_reached"
         assert notifications_log[-1]["title"] == "Giá mục tiêu đã đạt"
-        assert "189000" in notifications_log[-1]["message"]
-        assert "195000" in notifications_log[-1]["message"]
+        assert "189.000 ₫" in notifications_log[-1]["message"]
+        assert "195.000 ₫" in notifications_log[-1]["message"]
         assert len(emails_log) == 1
         assert emails_log[-1]["kind"] == "target_price_reached"
         assert tracker.target_price_notified is True
@@ -391,8 +391,8 @@ def test_target_price_notification_state_machine_full_sequence(monkeypatch):
         assert len(notifications_log) == 2
         assert notifications_log[-1]["kind"] == "price_above_target"
         assert notifications_log[-1]["title"] == "Giá đã tăng trên mục tiêu"
-        assert "196000" in notifications_log[-1]["message"]
-        assert "195000" in notifications_log[-1]["message"]
+        assert "196.000 ₫" in notifications_log[-1]["message"]
+        assert "195.000 ₫" in notifications_log[-1]["message"]
         assert len(emails_log) == 2
         assert emails_log[-1]["kind"] == "price_above_target"
         assert tracker.target_price_notified is False
@@ -402,8 +402,8 @@ def test_target_price_notification_state_machine_full_sequence(monkeypatch):
         assert len(notifications_log) == 3
         assert notifications_log[-1]["kind"] == "target_price_reached"
         assert notifications_log[-1]["title"] == "Giá mục tiêu đã đạt"
-        assert "192000" in notifications_log[-1]["message"]
-        assert "195000" in notifications_log[-1]["message"]
+        assert "192.000 ₫" in notifications_log[-1]["message"]
+        assert "195.000 ₫" in notifications_log[-1]["message"]
         assert len(emails_log) == 3
         assert emails_log[-1]["kind"] == "target_price_reached"
         assert tracker.target_price_notified is True

@@ -6,12 +6,43 @@ from app.core.database import get_db
 from app.models.user_model import User
 from app.schemas.common import ApiResponse
 from app.schemas.notification_schema import (
-    NotificationPreferenceResponse, NotificationPreferenceUpdate,
+    NotificationPreferenceResponse, NotificationPreferenceUpdate, NotificationSeenRequest,
 )
-from app.crud.notification_crud import notification_settings_crud
+from app.schemas.watchlist_schema import NotificationList
+from app.crud.notification_crud import notification_crud, notification_settings_crud
 
 
 router = APIRouter()
+
+
+@router.get(
+    "",
+    response_model=ApiResponse[NotificationList],
+    status_code=status.HTTP_200_OK,
+    summary="List unseen notifications for the current user",
+)
+async def list_unseen_notifications(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    items = await notification_crud.list_unseen(db, current_user.id)
+    return ApiResponse(message="Đã tải các thông báo chưa xem.", data=NotificationList(notifications=items))
+
+
+@router.post(
+    "/seen",
+    response_model=ApiResponse[dict],
+    status_code=status.HTTP_200_OK,
+    summary="Mark notifications as seen for the current user",
+)
+async def mark_notifications_seen(
+    request: NotificationSeenRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    count = await notification_crud.mark_seen(db, current_user.id, request.ids)
+    await db.commit()
+    return ApiResponse(message="Đã đánh dấu thông báo là đã xem.", data={"count": count})
 
 
 @router.get(
@@ -25,7 +56,7 @@ async def get_notification_settings(
 ):
     settings = await notification_settings_crud.get_or_create(db, current_user.id)
     await db.commit()
-    return ApiResponse(message="Notification settings loaded.", data=settings)
+    return ApiResponse(message="Đã tải cài đặt thông báo.", data=settings)
 
 
 @router.patch(
@@ -47,4 +78,4 @@ async def update_notification_settings(
         from fastapi import HTTPException
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     await db.commit()
-    return ApiResponse(message="Notification settings saved.", data=settings)
+    return ApiResponse(message="Đã lưu cài đặt thông báo.", data=settings)

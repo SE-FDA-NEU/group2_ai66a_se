@@ -8,10 +8,22 @@ from app.crud import notification_crud, product_crud, tracked_product_crud
 from app.services.notification_service import enqueue_price_email
 from app.services.price_stream_service import price_stream_service
 from app.helper.rapidapi_client import rapidapi_client
+from app.services.exchange_rate_service import exchange_rate_service
 
 
 REFRESH_INTERVAL_SECONDS = 5 * 60
 RETENTION_DAYS = 7
+
+
+def _format_disp_price(price: Decimal | None, currency: str) -> str:
+    if price is None:
+        return "Chưa có dữ liệu"
+    if str(currency).upper() == "VND":
+        return f"{int(price):,} ₫".replace(",", ".")
+    if str(currency).upper() == "USD":
+        vnd_curr = round(Decimal(str(price)) * Decimal("26000"))
+        return f"{vnd_curr:,.0f} ₫ ({price} {currency})".replace(",", ".")
+    return f"{price} {currency}"
 
 
 class PriceMonitorService:
@@ -52,6 +64,8 @@ class PriceMonitorService:
             logger.info("RapidAPI trả về None hoặc mã sản phẩm không khớp cho %s, bỏ qua.", external_id)
             return
 
+        item = await exchange_rate_service.convert_marketplace_product_to_vnd(item)
+
         async with AsyncSessionLocal() as db:
             product = await product_crud.get_by_id(db, product_id, for_update=True)
             if product is None or product.tracked_by_count < 1:
@@ -69,10 +83,7 @@ class PriceMonitorService:
                     db, product.id, for_update=True
                 )
                 for tracker in trackers:
-                    current_disp = f"{product.current_price} {product.currency}"
-                    if str(product.currency).upper() == "USD":
-                        vnd_curr = round(Decimal(str(product.current_price)) * Decimal("26000"))
-                        current_disp = f"{vnd_curr:,.0f} ₫ ({product.current_price} {product.currency})".replace(",", ".")
+                    current_disp = _format_disp_price(product.current_price, product.currency)
 
                     await notification_crud.create(
                         db,
@@ -91,13 +102,8 @@ class PriceMonitorService:
                 db, product.id, product.current_price, for_update=True
             )
             for tracker in target_trackers:
-                current_disp = f"{product.current_price} {product.currency}"
-                target_disp = f"{tracker.target_price} {product.currency}"
-                if str(product.currency).upper() == "USD":
-                    vnd_curr = round(Decimal(str(product.current_price)) * Decimal("26000"))
-                    current_disp = f"{vnd_curr:,.0f} ₫ ({product.current_price} {product.currency})".replace(",", ".")
-                    vnd_target = round(Decimal(str(tracker.target_price)) * Decimal("26000"))
-                    target_disp = f"{vnd_target:,.0f} ₫ ({tracker.target_price} {product.currency})".replace(",", ".")
+                current_disp = _format_disp_price(product.current_price, product.currency)
+                target_disp = _format_disp_price(tracker.target_price, product.currency)
 
                 await notification_crud.create(
                     db,
@@ -126,13 +132,8 @@ class PriceMonitorService:
                 db, product.id, product.current_price, for_update=True
             )
             for tracker in above_target_trackers:
-                current_disp = f"{product.current_price} {product.currency}"
-                target_disp = f"{tracker.target_price} {product.currency}"
-                if str(product.currency).upper() == "USD":
-                    vnd_curr = round(Decimal(str(product.current_price)) * Decimal("26000"))
-                    current_disp = f"{vnd_curr:,.0f} ₫ ({product.current_price} {product.currency})".replace(",", ".")
-                    vnd_target = round(Decimal(str(tracker.target_price)) * Decimal("26000"))
-                    target_disp = f"{vnd_target:,.0f} ₫ ({tracker.target_price} {product.currency})".replace(",", ".")
+                current_disp = _format_disp_price(product.current_price, product.currency)
+                target_disp = _format_disp_price(tracker.target_price, product.currency)
 
                 await notification_crud.create(
                     db,

@@ -153,7 +153,7 @@ def test_update_target_price_rejects_equal_price_br1(monkeypatch):
 
         assert exc_info.value.status_code == 400
         assert exc_info.value.code == "INVALID_TARGET_PRICE"
-        assert exc_info.value.detail == "Target must be lower than the current price 195.00 USD"
+        assert exc_info.value.detail == "Giá mục tiêu phải thấp hơn giá hiện tại (195.00 USD)."
         assert session.rollbacks == 1
 
     asyncio.run(scenario())
@@ -176,7 +176,7 @@ def test_update_target_price_rejects_higher_price_br1(monkeypatch):
 
         assert exc_info.value.status_code == 400
         assert exc_info.value.code == "INVALID_TARGET_PRICE"
-        assert exc_info.value.detail == "Target must be lower than the current price 195.00 USD"
+        assert exc_info.value.detail == "Giá mục tiêu phải thấp hơn giá hiện tại (195.00 USD)."
         assert session.rollbacks == 1
 
     asyncio.run(scenario())

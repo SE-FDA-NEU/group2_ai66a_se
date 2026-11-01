@@ -256,9 +256,24 @@
 
 @media (max-width: 768px) {
   .pageContainer {
-    padding: 24px 16px;
+    padding: 20px 12px 32px;
   }
   .section {
     padding: 18px 16px;
+  }
+
+  .title {
+    font-size: 22px;
+    line-height: 1.3;
+  }
+
+  .buttonRow {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .buttonRow > button {
+    width: 100%;
+    min-height: 44px;
   }
 }

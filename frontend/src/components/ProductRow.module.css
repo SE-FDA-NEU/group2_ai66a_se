@@ -51,6 +51,13 @@
   background-color: #e5e7eb;
 }
 
+.productMetaWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
 .productName {
   font-size: 14px;
   font-weight: 500;
@@ -59,6 +66,22 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.shopMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.shopNameText {
+  color: var(--text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
 
 .colCenter {
@@ -209,16 +232,19 @@
 
 @media (max-width: 768px) {
   .rowContainer {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
     position: relative;
     padding: 16px;
   }
 
   .productCol {
     width: 100%;
-    margin-bottom: 12px;
-    padding-right: 40px;
+    grid-column: 1 / -1;
+    margin-bottom: 2px;
+    padding-right: 0;
+    align-items: flex-start;
   }
 
   .productName {
@@ -226,24 +252,50 @@
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
   }
 
   .colCenter {
     width: 50%;
-    margin-bottom: 8px;
+    width: auto;
+    margin-bottom: 0;
+    min-width: 0;
   }
 
   .badgesCol {
-    width: 100%;
+    grid-column: 1 / -1;
+    width: auto;
     flex-direction: row;
-    margin-top: 8px;
+    flex-wrap: wrap;
+    margin-top: 0;
   }
 
   .actionCol {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    align-items: flex-end;
+    grid-column: 1 / -1;
+    width: 100%;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: stretch;
+    gap: 8px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border-light);
+  }
+
+  .marketplaceLink,
+  .removeButton {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+  }
+
+  .marketplaceLink {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
   }
 }
 
@@ -274,5 +326,9 @@
 
   .colCenter {
     margin-bottom: 4px;
+  }
+
+  .actionCol {
+    flex-direction: column;
   }
 }

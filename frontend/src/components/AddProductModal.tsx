@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { addProductToWatchlist, WatchlistProduct } from '../api/watchlistApi';
-import { convertFromVnd, USD_TO_VND_RATE } from '../utils/currency';
+import { formatVnd, parseVndInput } from '../utils/currency';
 import styles from '../pages/WatchlistPage.module.css';
 
 interface AddProductModalProps {
@@ -41,8 +41,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       return;
     }
 
-    const parsedTargetPrice = targetPrice.trim() ? Number(targetPrice) : null;
-    if (parsedTargetPrice !== null && (!Number.isFinite(parsedTargetPrice) || parsedTargetPrice <= 0)) {
+    const parsedTargetPrice = targetPrice.trim() ? parseVndInput(targetPrice) : null;
+    if (targetPrice.trim() && (parsedTargetPrice === null || parsedTargetPrice <= 0)) {
       setAddError('Giá mục tiêu phải lớn hơn 0.');
       return;
     }
@@ -52,9 +52,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       setAddError(null);
       const newProd = await addProductToWatchlist({
         url: url.trim(),
-        target_price: parsedTargetPrice !== null
-          ? convertFromVnd(parsedTargetPrice, 'USD')
-          : null,
+        target_price: parsedTargetPrice,
         buy_when_good: buyWhenGood,
       });
 
@@ -64,18 +62,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     } catch (err: any) {
       console.error('Add product error:', err);
       const rawMsg = err.detail || err.message || '';
-      if (rawMsg.toLowerCase().includes('lower than the current price')) {
-        const match = rawMsg.match(/lower than the current price\s+([\d.,]+)\s*([A-Za-z]+)?/i);
-        if (match) {
-          const rawPrice = parseFloat(match[1].replace(/,/g, ''));
-          const cur = match[2] || 'USD';
-          const vnd = cur.toUpperCase() === 'USD' ? Math.round(rawPrice * USD_TO_VND_RATE) : Math.round(rawPrice);
-          setAddError(
-            `Target must be lower than the current price ${vnd.toLocaleString('vi-VN')} ₫ (${rawPrice} ${cur}). Vui lòng nhập mức giá nhỏ hơn.`
-          );
-        } else {
-          setAddError(rawMsg);
-        }
+      if (rawMsg.toLowerCase().includes('lower than the current price') || rawMsg.toLowerCase().includes('thấp hơn giá hiện tại')) {
+        setAddError(rawMsg + ' Vui lòng nhập mức giá nhỏ hơn.');
       } else {
         setAddError(rawMsg || 'Không thể thêm sản phẩm. Vui lòng kiểm tra đường dẫn hoặc thử lại sau.');
       }
@@ -144,25 +132,24 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
 
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>
-              Giá mục tiêu cảnh báo (VND, tùy chọn; 1 USD ≈ {USD_TO_VND_RATE.toLocaleString('vi-VN')} VND)
+              Giá mục tiêu cảnh báo (VND, tùy chọn)
             </label>
             <input
-              type="number"
-              min="1"
-              step="1"
-              placeholder="Ví dụ: 500000"
+              type="text"
+              inputMode="numeric"
+              placeholder="Ví dụ: 500.000"
               className={styles.formInput}
               value={targetPrice}
               disabled={buyWhenGood || isSubmitting}
               onChange={(e) => setTargetPrice(e.target.value)}
             />
-            {targetPrice.trim() !== '' && Number(targetPrice) > 0 && (
+            {targetPrice.trim() !== '' && parseVndInput(targetPrice) !== null && (
               <div style={{ fontSize: '12px', color: 'var(--primary-color)', marginTop: '4px', fontWeight: 600 }}>
-                ≈ {Number(targetPrice).toLocaleString('vi-VN')} ₫ (khoảng ${(Number(targetPrice) / USD_TO_VND_RATE).toFixed(2)} USD)
+                Mức giá mục tiêu: {formatVnd(parseVndInput(targetPrice)!)}
               </div>
             )}
             <div style={{ fontSize: '12px', color: 'var(--text-secondary, #6b7280)', marginTop: '4px', lineHeight: 1.4 }}>
-              💡 <em>Lưu ý (BR1): Giá mục tiêu phải thấp hơn giá bán hiện tại. Bạn có thể để trống để đặt sau khi theo dõi, hoặc tick chọn "Mua khi giá tốt".</em>
+              💡 <em>Lưu ý: Giá mục tiêu phải thấp hơn giá bán hiện tại. Bạn có thể để trống để đặt sau khi theo dõi, hoặc tick chọn "Mua khi giá tốt".</em>
             </div>
           </div>
 
