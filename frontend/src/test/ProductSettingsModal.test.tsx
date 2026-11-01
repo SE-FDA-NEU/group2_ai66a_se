@@ -3,6 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ProductSettingsModal } from '../components/ProductSettingsModal';
 import * as watchlistApi from '../api/watchlistApi';
 
+vi.mock('../api/config', () => ({ default: { get: vi.fn().mockResolvedValue({ data: { email_enabled: false, quiet_hours_enabled: false } }), patch: vi.fn().mockResolvedValue({}) } }));
+
 vi.mock('../api/watchlistApi', () => ({
   updateTargetPrice: vi.fn(),
 }));

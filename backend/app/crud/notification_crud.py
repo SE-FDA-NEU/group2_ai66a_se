@@ -8,6 +8,15 @@ from app.models.product_model import (
 
 
 class CRUDNotification:
+    async def list_recent(self, db: AsyncSession, user_id: int) -> list[UserNotification]:
+        result = await db.scalars(
+            select(UserNotification)
+            .where(UserNotification.user_id == user_id)
+            .order_by(UserNotification.created_at.desc(), UserNotification.id.desc())
+            .limit(10)
+        )
+        return list(result.all())
+
     async def create(
         self,
         db: AsyncSession,
@@ -66,6 +75,9 @@ class CRUDNotification:
             .where(
                 UserNotification.user_id == user_id,
                 UserNotification.seen_at.is_(None),
+                # Configuration confirmations stay in history; they must not
+                # fill the delivery batch and block actual price alerts.
+                UserNotification.kind != "target_price_set",
             )
             .order_by(UserNotification.id)
             .limit(limit)

@@ -123,7 +123,7 @@ export const ProductDetailPage: React.FC = () => {
         await removeProductFromWatchlist(product.id);
         navigate('/watchlist', { replace: true });
       } catch (err: any) {
-        alert('Lỗi khi ngừng theo dõi: ' + (err?.detail || err?.message || 'Vui lòng thử lại'));
+        // The API client displays the failure toast.
         setIsRemoving(false);
       }
     }

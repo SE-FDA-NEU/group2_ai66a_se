@@ -8,6 +8,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import { Layout } from './components/Layout';
 import { WatchlistPage } from './pages/WatchlistPage';
 import ProfilePage from './pages/ProfilePage';
+import NotificationsPage from './pages/NotificationsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
@@ -57,6 +58,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/notifications" element={<ProtectedRoute><Layout><NotificationsPage /></Layout></ProtectedRoute>} />
           {/* Tương thích ngược: tự động chuyển hướng /settings sang /profile */}
           <Route path="/settings" element={<Navigate to="/profile" replace />} />
           <Route

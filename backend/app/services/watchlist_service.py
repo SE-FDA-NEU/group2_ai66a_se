@@ -10,7 +10,6 @@ from app.helper.rapidapi_client import rapidapi_client
 from app.services.exchange_rate_service import exchange_rate_service
 from app.models.product_model import Product as ProductModel
 from app.models.user_model import User
-from app.schemas.notification_schema import NotificationKind
 from app.schemas.watchlist_schema import (
     PriceDataPoint,
     PriceHistoryResponse,
@@ -18,7 +17,6 @@ from app.schemas.watchlist_schema import (
     ProductCreate,
     ProductList,
 )
-from app.services.notification_service import enqueue_price_email
 
 
 WATCHLIST_LIMIT_REACHED = ErrorDetail(
@@ -248,17 +246,6 @@ class WatchlistService:
                     f"Đã đặt giá mục tiêu cho {product.name}: "
                     f"{formatted_target}."
                 ),
-            )
-
-            await enqueue_price_email(
-                db,
-                user_id=user.id,
-                kind=NotificationKind.TARGET_PRICE_SET.value,
-                product_name=product.name,
-                current_price=product.current_price,
-                currency=product.currency,
-                product_url=product.url,
-                target_price=normalized_target_price,
             )
 
             await db.commit()

@@ -89,7 +89,7 @@ export const WatchlistPage: React.FC = () => {
       setProducts((prev) => prev.filter((p) => String(p.id) !== id));
     } catch (err: any) {
       console.error('Remove product error:', err);
-      alert(err.message || 'Không thể xóa sản phẩm. Vui lòng thử lại.');
+      // The API client displays the failure toast.
     } finally {
       setRemovingProductId(null);
     }

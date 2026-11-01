@@ -1,65 +1,24 @@
 # Backend Tests
 
-Milestone 4 US01 watchlist coverage, test case IDs, and regression-check notes:
-see [`docs/testing.md`](../../docs/testing.md).
+Cài thư viện và chạy từ thư mục gốc theo [docs/SETUP.md](../../docs/SETUP.md). Cấu hình kiểm thử được gom tại `pytest.ini` và `conftest.py` ở root; không cần `.env` hay dịch vụ đang chạy.
 
-```text
-tests/
-|-- unit/               # Unit tests
-|-- integration/        # Integration tests
-|-- template_test.py    # Templates to copy (one integration, one unit)
-|-- google-auth.py      # Manual utility, not collected by Pytest
-|-- python-version.py   # Manual utility, not collected by Pytest
-`-- README.md
+```bash
+pytest
+pytest -m issue185 -q
+pytest backend/tests -q
+pytest backend/tests/integration/test_notification_seen_endpoint.py -v
 ```
 
-## Test types
+`pytest` chạy backend và các hợp đồng giao diện #185 bằng Vitest thật qua `tests/test_issue185_interface.py`. `unit/` kiểm tra services với dependency giả và repository bằng SQLite trong bộ nhớ. `integration/` gọi FastAPI bằng ASGITransport/TestClient trong tiến trình, thay database, Redis và người dùng bằng fake; không cần PostgreSQL/Redis thật.
 
-- **Unit test** (`unit/`): tests one function or service in isolation. The database, Redis and HTTP clients are replaced with mocks, so it is fast and needs no setup.
-- **Endpoint test** (`integration/`): calls the FastAPI route through `TestClient`, with database and service dependencies mocked. These tests verify routing, status codes and response formatting; they do not require a test database or live Redis.
 
-## Run tests
+`template_test.py` là hai ví dụ được skip có chủ đích. `unit/test_google-auth.py` là sandbox Google OAuth thủ công và không được thu thập. Chỉ các test trong scope #185 có guard chặn mọi dịch vụ ngoài tại root conftest; các test còn lại tiếp tục dùng fake riêng của chúng.
 
-Run from the repository root. These commands build the service image and override its startup entrypoint, so tests do not run database migrations or start the API server:
+Đặt tên `test_<feature>.py`, dùng Arrange → Act → Assert; với code bất đồng bộ dùng `AsyncMock`. Đặt ID ca trong tên hàm hoặc comment và bổ sung hàng tương ứng trong tài liệu. Không in token, mật khẩu hay cấu hình thật vào log.
 
-```powershell
-docker compose run --rm --no-deps --build --entrypoint python backend -m pytest tests -v -s
-docker compose run --rm --no-deps --entrypoint python backend -m pytest tests/unit -v -s
-docker compose run --rm --no-deps --entrypoint python backend -m pytest tests/integration -v -s
-docker compose run --rm --no-deps --entrypoint python backend -m pytest tests/unit/test_rapidapi_client.py -v -s
+## Ma trận kiểm thử từ main
 
-Run frontend tests and the production type/build check:
+- US01: [docs/testing.md](../../docs/testing.md).
+- US02: [US02_TEST_CASES.md](US02_TEST_CASES.md).
 
-```powershell
-docker compose run --rm --no-deps --build frontend npm test
-docker compose run --rm --no-deps frontend npm run build
-```
-```
-
-### Pytest output flags
-
-- `-q` (quiet) shows a compact progress line and final summary, such as `18 passed, 2 skipped`.
-- `-v` (verbose) lists each test name and its result.
-- `-s` disables output capture so `print()` and other stdout/stderr from passing tests appear in the terminal. Without `-s`, Pytest captures output from passing tests and normally displays it when a test fails.
-- Combine `-v -s` to see each test result and its printed data. These flags change output only; they do not change which tests run or what they assert.
-
-The current unit tests print the data they assert when run with `-s`. `template_test.py` reports **2 skipped**, as expected; its examples print the endpoint response or mocked unit result after assertions pass when copied into a real test. Avoid printing tokens, passwords, or other secrets.
-
-## Add a test
-
-1. Create `test_<feature>.py` in `unit/` or `integration/`.
-2. Copy the matching function from `template_test.py` (Template 1 = integration, Template 2 = unit), but **not** the `pytestmark` line.
-3. Rename it (`test_<action>_<condition>_<expected_result>`), replace the placeholders, and run the file.
-
-Each test follows **Arrange** (prepare data), **Act** (call the code or endpoint), **Assert** (check the result). Cover at least one happy path and one error case per feature. In unit tests, patch a dependency where the module under test imports it. For async code, use `async def`, `await` and `AsyncMock`; `pytest-asyncio` is installed from `backend/requirements.txt` when the backend image is built.
-
-## Existing tests
-
-All current tests use mocked dependencies; none checks live RapidAPI, database, or Redis connectivity.
-
-- `test_amazon_link_parser.py`: accepts one Amazon product or short link, rejects invalid or multiple links.
-- `test_rapidapi_client.py`: request parameters, response mapping and timeout handling with a mocked HTTP client.
-- `test_watchlist_service.py`: cached and new products, seven-day reuse grace, refresh after the grace period, duplicate conflict, and tracking limits.
-- `test_watchlist_listing.py`: price labels, insufficient history, and fake-discount calculations from `WatchlistService.list_products`.
-
-The service tests call service methods directly. The endpoint tests call `/api/v1/watchlist` through `TestClient`; `POST` calls `add_to_watchlist`, and `GET` calls `list_watchlist`.
+Giữ tên test `test_us02_tc_*` từ main; các ID N185 được ghi trong comment để truy vết đồng thời hai bộ tiêu chí.

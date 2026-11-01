@@ -62,6 +62,7 @@ class NotificationItem(BaseModel):
     title: str
     message: str
     created_at: datetime
+    seen_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

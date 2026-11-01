@@ -15,11 +15,21 @@ from app.crud.notification_crud import notification_crud, notification_settings_
 router = APIRouter()
 
 
+@router.get("/history", response_model=ApiResponse[NotificationList],
+            summary="List the ten most recent notifications, including seen items")
+async def list_notification_history(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    items = await notification_crud.list_recent(db, current_user.id)
+    return ApiResponse(message="Đã tải lịch sử thông báo.", data=NotificationList(notifications=items))
+
+
 @router.get(
     "",
     response_model=ApiResponse[NotificationList],
     status_code=status.HTTP_200_OK,
-    summary="List unseen notifications for the current user",
+    summary="List unseen price alerts for the current user",
 )
 async def list_unseen_notifications(
     db: AsyncSession = Depends(get_db),

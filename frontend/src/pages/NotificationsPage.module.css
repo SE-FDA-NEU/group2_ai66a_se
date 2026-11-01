@@ -1,0 +1,25 @@
+.page { padding: 32px 40px; max-width: 1200px; margin: 0 auto; width: 100%; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
+.header h1 { margin: 0 0 8px; font-size: 24px; font-weight: 600; }
+.header p { margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+.refresh { display: flex; align-items: center; gap: 8px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 14px; color: var(--text-primary); white-space: nowrap; }
+.refresh:hover { background: var(--border-light); }
+.refresh:disabled { opacity: .6; cursor: wait; }
+.card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: var(--shadow-sm); overflow: hidden; }
+.cardHeader { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 24px; border-bottom: 1px solid var(--border-color); }
+.cardHeader h2 { font-size: 16px; font-weight: 600; margin: 0; }
+.cardHeader span { color: var(--text-secondary); font-size: 12px; }
+.list { list-style: none; margin: 0; padding: 0; }
+.item { display: flex; gap: 14px; padding: 22px 24px; border-bottom: 1px solid var(--border-light); }
+.item:last-child { border-bottom: 0; }
+.icon { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; background: var(--border-light); color: var(--primary-color); flex-shrink: 0; }
+.content { min-width: 0; flex: 1; }
+.content h3 { font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+.content p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin: 0 0 12px; overflow-wrap: anywhere; }
+.meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; color: var(--text-secondary); font-size: 12px; }
+.meta span { display: inline-flex; align-items: center; gap: 4px; }
+.meta a, .empty a { color: var(--primary-color); font-weight: 600; text-underline-offset: 3px; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 56px 24px; text-align: center; color: var(--text-secondary); font-size: 14px; }
+.empty h3 { margin: 0; color: var(--text-primary); font-size: 16px; }
+.empty p { margin: 0; line-height: 1.5; }
+@media (max-width: 768px) { .page { padding: 24px 16px; } .header { flex-wrap: wrap; } .cardHeader, .item { padding: 18px 16px; } }

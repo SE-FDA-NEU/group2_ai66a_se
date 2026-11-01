@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatVnd } from '../utils/currency';
 import { getSafeMarketplaceUrl } from '../utils/marketplace';
 import styles from './NotificationCenter.module.css';
+import { OperationToasts } from './OperationToasts';
 
 export const formatNotificationMessage = (msg: string): string => {
   if (!msg) return '';
@@ -22,7 +23,7 @@ export const formatNotificationMessage = (msg: string): string => {
 };
 
 const POLL_INTERVAL_MS = 5_000;
-const TOAST_DURATION_MS = 6_000;
+const TOAST_DURATION_MS = 5_000;
 const MAX_VISIBLE = 3;
 type VisibleNotification = UserNotification & { productUrl?: string };
 
@@ -65,10 +66,33 @@ interface NotificationCenterProps {
   mockOnly?: boolean;
 }
 
-export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly = false }) => {
+const NotificationDelivery: React.FC<NotificationCenterProps> = ({ mockOnly = false }) => {
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
-  const [visible, setVisible] = useState<VisibleNotification[]>([]);
+  const [queue, setQueue] = useState<VisibleNotification[]>([]);
+  const visible = queue.slice(0, MAX_VISIBLE);
+  const knownIds = useRef(new Set<number>());
+  const pendingSeen = useRef(new Set<number>());
+  const seenRequestRunning = useRef(false);
+  const mockKind = (mockOnly || import.meta.env.DEV)
+    ? new URLSearchParams(window.location.search).get('mockNotification')
+    : null;
+  const mockNotification = mockKind ? MOCK_NOTIFICATIONS[mockKind] : undefined;
+
+  const flushSeen = useCallback(async () => {
+    if (mockOnly || mockNotification || seenRequestRunning.current || pendingSeen.current.size === 0) return;
+    const ids = [...pendingSeen.current];
+    seenRequestRunning.current = true;
+    try {
+      await markNotificationsSeen(ids);
+      ids.forEach((id) => pendingSeen.current.delete(id));
+    } catch (error) {
+      // Retain failed acknowledgements for the next poll, even after dismissal.
+      console.error('Could not mark notifications as seen:', error);
+    } finally {
+      seenRequestRunning.current = false;
+    }
+  }, [mockOnly, mockNotification]);
 
   const timersRef = useRef<Map<number, number>>(new Map());
 
@@ -78,12 +102,12 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
       window.clearTimeout(timer);
       timersRef.current.delete(id);
     }
-    setVisible((current) => current.filter((item) => item.id !== id));
+    setQueue((current) => current.filter((item) => item.id !== id));
   }, []);
 
   useEffect(() => {
     let active = true;
-    const timers = timersRef.current;
+    let polling = false;
 
     const poll = async () => {
       // Chỉ poll nếu người dùng đã đăng nhập hoặc đang test mock
@@ -91,12 +115,11 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
         return;
       }
 
+      if (polling) return;
+      polling = true;
       try {
-        const mockKind = (mockOnly || import.meta.env.DEV)
-          ? new URLSearchParams(window.location.search).get('mockNotification')
-          : null;
-        const mockNotification = mockKind ? MOCK_NOTIFICATIONS[mockKind] : undefined;
-
+        await flushSeen();
+        if (!active) return;
         let notifications: UserNotification[] = [];
         if (mockNotification) {
           notifications = [mockNotification];
@@ -106,20 +129,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
 
         if (!active || notifications.length === 0) return;
 
-        // Server-side seen: mark everything unseen as seen so reload/reopen
-        // never floods the user with the same toasts again.
-        if (!mockNotification && !mockOnly && notifications.length > 0) {
-          try {
-            await markNotificationsSeen(notifications.map((n) => n.id));
-          } catch (error) {
-            console.error('Could not mark notifications as seen:', error);
-          }
-        }
-        if (!active) return;
-
-        // Chỉ hiển thị popup Toast cho các cảnh báo giá thời gian thực, bỏ qua thông báo cấu hình giá mục tiêu
+        // Keep configuration confirmations out of price-alert toasts.
         const actionableAlerts = notifications.filter(
-          (n) => n.kind !== 'target_price_set'
+          (n) => n.kind !== 'target_price_set' && !knownIds.current.has(n.id)
         );
 
         if (actionableAlerts.length === 0) return;
@@ -146,17 +158,18 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
           productUrl: item.product_id == null ? undefined : productUrls.get(item.product_id),
         }));
 
-        notificationsWithLinks.forEach((n) => {
-          if (timers.has(n.id)) return;
-          const timer = window.setTimeout(() => dismiss(n.id), TOAST_DURATION_MS);
-          timers.set(n.id, timer);
+        const newItems = notificationsWithLinks.filter((item) => {
+          if (knownIds.current.has(item.id)) return false;
+          knownIds.current.add(item.id);
+          return true;
         });
-
-        setVisible((current) => [...current, ...notificationsWithLinks].slice(-MAX_VISIBLE));
+        setQueue((current) => [...current, ...newItems]);
       } catch (error) {
         if (isLoggedIn) {
           console.error('Could not load notifications:', error);
         }
+      } finally {
+        polling = false;
       }
     };
 
@@ -165,15 +178,32 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
     return () => {
       active = false;
       window.clearInterval(interval);
+    };
+  }, [isLoggedIn, mockOnly, mockNotification, flushSeen]);
+
+  useEffect(() => {
+    // Effects run after the toast DOM has been committed. Queued items are
+    // acknowledged and timed only when they enter the visible slots.
+    visible.forEach((item) => {
+      if (timersRef.current.has(item.id)) return;
+      pendingSeen.current.add(item.id);
+      timersRef.current.set(item.id, window.setTimeout(() => dismiss(item.id), TOAST_DURATION_MS));
+    });
+    void flushSeen();
+  }, [queue, dismiss, flushSeen]);
+
+  useEffect(() => {
+    const timers = timersRef.current;
+    return () => {
       timers.forEach((timer) => window.clearTimeout(timer));
       timers.clear();
     };
-  }, [dismiss, isLoggedIn, mockOnly]);
+  }, []);
 
   if (visible.length === 0) return null;
 
-  return createPortal(
-    <div className={styles.center} aria-live="polite" aria-label="Thông báo">
+  return (
+    <>
       {visible.map((notification) => (
         <div className={styles.toast} key={notification.id} role="status">
           {notification.productUrl ? (
@@ -215,7 +245,17 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ mockOnly
           </button>
         </div>
       ))}
-    </div>,
-    document.body,
+    </>
+  );
+};
+
+// Reset queued items and local deduplication when the authenticated session changes.
+export const NotificationCenter: React.FC<NotificationCenterProps> = (props) => {
+  const { token, isLoggedIn } = useAuth();
+  return createPortal(
+    <div className={styles.center} aria-label="Thông báo">
+      <OperationToasts />
+      <NotificationDelivery key={`${isLoggedIn}:${token ?? ''}`} {...props} />
+    </div>, document.body,
   );
 };

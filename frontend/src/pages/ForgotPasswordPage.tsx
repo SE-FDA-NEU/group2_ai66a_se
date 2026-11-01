@@ -46,7 +46,6 @@ const ForgotPasswordPage: React.FC = () => {
   const [otpError, setOtpError] = useState<string | undefined>();
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN);
   const [isResending, setIsResending] = useState(false);
-  const [resendSuccessMsg, setResendSuccessMsg] = useState<string | undefined>();
   const [verifiedToken, setVerifiedToken] = useState<string>('');
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -201,7 +200,6 @@ const ForgotPasswordPage: React.FC = () => {
     if (cooldown > 0 || isResending) return;
     setIsResending(true);
     setApiError(undefined);
-    setResendSuccessMsg(undefined);
 
     try {
       await sendOTP(email, 'reset-password');
@@ -211,12 +209,8 @@ const ForgotPasswordPage: React.FC = () => {
       setCooldown(RESEND_COOLDOWN);
       setOtp(Array(OTP_LENGTH).fill(''));
       setOtpError(undefined);
-      setResendSuccessMsg('Mã OTP mới đã được gửi thành công!');
       otpInputsRef.current[0]?.focus();
 
-      setTimeout(() => {
-        setResendSuccessMsg(undefined);
-      }, 4000);
     } catch (err: any) {
       const detail = getErrorMessage(err);
       if (
@@ -548,11 +542,7 @@ const ForgotPasswordPage: React.FC = () => {
                   </button>
                 </div>
 
-                {resendSuccessMsg && (
-                  <div className={styles.toastSuccess}>
-                    ✓ {resendSuccessMsg}
-                  </div>
-                )}
+
 
                 {apiError && (
                   <div className={styles.alertBanner} role="alert">

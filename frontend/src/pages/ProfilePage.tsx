@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, CircleCheck } from 'lucide-react';
+import { showToast } from '../utils/toast';
 import { useNavigate } from 'react-router-dom';
 import { getUserProfile, updateNickname, changePassword } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
@@ -24,8 +24,6 @@ const ProfilePage: React.FC = () => {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   
-  const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -55,21 +53,20 @@ const ProfilePage: React.FC = () => {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editNickname.trim()) {
-      setProfileMsg({ type: 'error', text: 'Tên hiển thị không được để trống.' });
+      showToast('error', 'Tên hiển thị không được để trống.');
       return;
     }
 
     setIsSavingProfile(true);
-    setProfileMsg(null);
     try {
       const res = await updateNickname(editNickname);
       if (res.data) {
         setNickname(res.data.nickname);
         setUser(res.data);
-        setProfileMsg({ type: 'success', text: 'Cập nhật tên hiển thị thành công.' });
+
       }
     } catch (err: any) {
-      setProfileMsg({ type: 'error', text: err?.message || err?.detail || 'Lỗi cập nhật hồ sơ.' });
+      console.error('Không thể cập nhật tài khoản:', err);
     } finally {
       setIsSavingProfile(false);
     }
@@ -78,28 +75,27 @@ const ProfilePage: React.FC = () => {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!oldPassword || !newPassword || !confirmPassword) {
-      setPasswordMsg({ type: 'error', text: 'Vui lòng điền đầy đủ các trường.' });
+      showToast('error', 'Vui lòng điền đầy đủ các trường.');
       return;
     }
     if (newPassword.length < 8) {
-      setPasswordMsg({ type: 'error', text: 'Mật khẩu mới phải có ít nhất 8 ký tự.' });
+      showToast('error', 'Mật khẩu mới phải có ít nhất 8 ký tự.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordMsg({ type: 'error', text: 'Xác nhận mật khẩu không khớp.' });
+      showToast('error', 'Xác nhận mật khẩu không khớp.');
       return;
     }
 
     setIsSavingPassword(true);
-    setPasswordMsg(null);
     try {
       await changePassword(oldPassword, newPassword);
-      setPasswordMsg({ type: 'success', text: 'Đổi mật khẩu thành công.' });
+
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      setPasswordMsg({ type: 'error', text: err?.message || err?.detail || 'Mật khẩu cũ không đúng hoặc có lỗi xảy ra.' });
+      console.error('Không thể cập nhật tài khoản:', err);
     } finally {
       setIsSavingPassword(false);
     }
@@ -107,13 +103,14 @@ const ProfilePage: React.FC = () => {
 
   const handleLogout = () => {
     logout();
+    showToast('success', 'Đã đăng xuất tài khoản.');
     navigate('/login');
   };
 
   const handleDeleteAccount = () => {
     const confirm = window.confirm('Bạn có chắc chắn muốn xóa tài khoản này không? Mọi dữ liệu sẽ bị xóa vĩnh viễn.');
     if (confirm) {
-      alert('Chức năng xóa tài khoản đang được phát triển.');
+      showToast('error', 'Chức năng xóa tài khoản chưa được hỗ trợ.');
     }
   };
 
@@ -138,11 +135,6 @@ const ProfilePage: React.FC = () => {
           <h2 className={styles.sectionTitle}>Hồ sơ cá nhân</h2>
         </div>
         
-        {profileMsg && (
-          <div className={`${styles.alertBanner} ${profileMsg.type === 'success' ? styles.alertSuccess : styles.alertError}`}>
-            {profileMsg.type === 'success' ? <CircleCheck size={16} aria-hidden="true" /> : <AlertCircle size={16} aria-hidden="true" />}{profileMsg.text}
-          </div>
-        )}
 
         <form onSubmit={handleUpdateProfile}>
           <div className={styles.formGroup}>
@@ -194,11 +186,6 @@ const ProfilePage: React.FC = () => {
           <h2 className={styles.sectionTitle}>Đổi mật khẩu</h2>
         </div>
 
-        {passwordMsg && (
-          <div className={`${styles.alertBanner} ${passwordMsg.type === 'success' ? styles.alertSuccess : styles.alertError}`}>
-            {passwordMsg.type === 'success' ? <CircleCheck size={16} aria-hidden="true" /> : <AlertCircle size={16} aria-hidden="true" />}{passwordMsg.text}
-          </div>
-        )}
 
         <form onSubmit={handleChangePassword}>
           <div className={styles.formGroup}>

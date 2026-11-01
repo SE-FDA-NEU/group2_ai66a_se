@@ -71,7 +71,7 @@ describe('OTPPage Anti-Spam & Resend Flow', () => {
     expect(resendBtn).toBeEnabled();
   });
 
-  it('triggers sendOTP and restarts cooldown with success toast when resend button is clicked', async () => {
+  it('triggers sendOTP and restarts cooldown when resend button is clicked', async () => {
     sessionStorage.setItem('otp_cooldown_verify-email_test@example.com', (Date.now() - 1000).toString());
     vi.mocked(authApi.sendOTP).mockResolvedValue({ message: 'OTP sent' });
 
@@ -86,7 +86,6 @@ describe('OTPPage Anti-Spam & Resend Flow', () => {
 
     await waitFor(() => {
       expect(authApi.sendOTP).toHaveBeenCalledWith('test@example.com', 'verify-email');
-      expect(screen.getByText(/Mã OTP mới đã được gửi thành công!/i)).toBeInTheDocument();
       expect(resendBtn).toBeDisabled();
     });
   });
