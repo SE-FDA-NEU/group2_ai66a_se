@@ -329,8 +329,12 @@ class WatchlistService:
             price_label = "Not enough data to assess"
 
         # Shop trust label logic (BR10)
-        shop_rating = getattr(product, "shop_rating", None) or product.product_rating
-        shop_review_count = getattr(product, "shop_review_count", None) or product.review_count
+        shop_rating = getattr(product, "shop_rating", None)
+        if shop_rating is None:
+            shop_rating = product.product_rating
+        shop_review_count = getattr(product, "shop_review_count", None)
+        if shop_review_count is None:
+            shop_review_count = product.review_count
         shop_trust_label = None
         if shop_rating is not None and shop_review_count is not None:
             r = Decimal(str(shop_rating))

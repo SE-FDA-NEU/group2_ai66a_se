@@ -36,8 +36,8 @@ def _make_product(
         original_price=None,
         currency="USD",
         in_stock=True,
-        price_low=None,
-        price_high=None,
+        price_low=Decimal("99.00"),
+        price_high=Decimal("99.00"),
         top_reviews=[],
     )
 
