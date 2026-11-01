@@ -58,7 +58,7 @@ class FakeSession:
         return None
 
 
-def test_target_price_update_schema_validation():
+def test_us02_tc_004_reject_non_positive_target_price():
     # Valid positive target price
     update = TargetPriceUpdate(target_price=Decimal("150.00"))
     assert update.target_price == Decimal("150.00")
@@ -72,7 +72,7 @@ def test_target_price_update_schema_validation():
         TargetPriceUpdate(target_price=Decimal("-10.00"))
 
 
-def test_update_target_price_success(monkeypatch):
+def test_us02_tc_001_set_valid_target_price(monkeypatch):
     async def scenario():
         product = _product(price="195.00", currency="USD")
         tracker = SimpleNamespace(
@@ -136,7 +136,7 @@ def test_update_target_price_success(monkeypatch):
     asyncio.run(scenario())
 
 
-def test_update_target_price_rejects_equal_price_br1(monkeypatch):
+def test_us02_tc_002_reject_target_equal_to_current_price(monkeypatch):
     async def scenario():
         product = _product(price="195.00", currency="USD")
         tracker = SimpleNamespace(user_id=7, product_id=31, target_price=None)
@@ -159,7 +159,7 @@ def test_update_target_price_rejects_equal_price_br1(monkeypatch):
     asyncio.run(scenario())
 
 
-def test_update_target_price_rejects_higher_price_br1(monkeypatch):
+def test_us02_tc_003_reject_target_above_current_price(monkeypatch):
     async def scenario():
         product = _product(price="195.00", currency="USD")
         tracker = SimpleNamespace(user_id=7, product_id=31, target_price=None)
