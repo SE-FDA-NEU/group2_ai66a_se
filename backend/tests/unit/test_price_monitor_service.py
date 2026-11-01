@@ -137,12 +137,12 @@ def test_good_price_transition_creates_one_notification_and_marks_tracker(monkey
     asyncio.run(scenario())
 
 
-def test_target_price_hit_creates_one_notification_and_marks_tracker(monkeypatch):
+def test_us02_tc_005_notify_when_price_equals_target(monkeypatch):
     async def scenario():
         product = _product_snapshot()
         tracker = SimpleNamespace(
             user_id=7,
-            target_price=Decimal("200000"),
+            target_price=Decimal("195000"),
             target_price_notified=False,
         )
         initial_session = FakeSession(product)
@@ -185,7 +185,53 @@ def test_target_price_hit_creates_one_notification_and_marks_tracker(monkeypatch
     asyncio.run(scenario())
 
 
-def test_price_rises_above_target_creates_notification_and_resets_tracker(monkeypatch):
+def test_us02_tc_007_no_reached_notification_above_target(monkeypatch):
+    async def scenario():
+        product = _product_snapshot()
+        tracker = SimpleNamespace(
+            user_id=7,
+            target_price=Decimal("195000"),
+            target_price_notified=False,
+        )
+        initial_session = FakeSession(product)
+        # No pending-reached trackers; tracker is not yet in the above-target state.
+        update_session = FakeSession(product, tracker_batches=[[], []], distinct_days=5)
+        sessions = [initial_session, update_session]
+        monkeypatch.setattr(monitor_module, "AsyncSessionLocal", lambda: sessions.pop(0))
+        monkeypatch.setattr(
+            monitor_module.rapidapi_client,
+            "fetch_product",
+            AsyncMock(
+                return_value=SimpleNamespace(
+                    external_id="B012345678",
+                    url=product.url,
+                    name=product.name,
+                    image_url=product.image_url,
+                    brand=product.brand,
+                    shop_name=product.shop_name,
+                    product_rating=product.product_rating,
+                    review_count=product.review_count,
+                    current_price=Decimal("195001"),
+                    original_price=None,
+                    currency="VND",
+                    in_stock=True,
+                    top_reviews=[],
+                )
+            ),
+        )
+        notification = AsyncMock()
+        monkeypatch.setattr(monitor_module.notification_crud, "create", notification)
+
+        await PriceMonitorService()._refresh_one(31)
+
+        notification.assert_not_awaited()
+        assert tracker.target_price_notified is False
+        assert update_session.committed is True
+
+    asyncio.run(scenario())
+
+
+def test_us02_tc_006_notify_when_price_rises_above_target(monkeypatch):
     async def scenario():
         product = _product_snapshot()
         tracker = SimpleNamespace(
