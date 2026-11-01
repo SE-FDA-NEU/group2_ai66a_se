@@ -2,6 +2,42 @@
 
 Tài liệu này hướng dẫn chi tiết từng bước thiết lập và khởi chạy hệ thống Trakora trên một máy tính mới hoàn toàn (clean machine). Thời gian thực hiện ước tính: **5–10 phút**.
 
+## Chạy kiểm thử tự động trên bản clone mới (không cần server)
+
+Phần này độc lập với hướng dẫn chạy ứng dụng bằng Docker bên dưới. Cần **Python 3.12+**, **Node.js 20+** và npm. Không cần `.env`, Docker, PostgreSQL, Redis, SMTP hay khóa Google/RapidAPI thật để chạy kiểm thử.
+
+Từ thư mục gốc repository, tạo môi trường Python riêng và cài thư viện:
+
+```powershell
+python -m venv .venv
+# Windows PowerShell (không cần đổi ExecutionPolicy):
+.\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+npm ci --prefix frontend
+.\.venv\Scripts\python.exe -m pytest
+```
+
+Trên Linux/macOS, dùng `.venv/bin/python` thay cho `.\.venv\Scripts\python.exe`. Nếu môi trường Python đã được kích hoạt và cài đủ thư viện, lệnh chung là:
+
+```bash
+pytest
+```
+
+Lệnh này chạy backend và các ca giao diện của issue #185. Pytest gọi Vitest thật bằng subprocess; không mô phỏng lại React bằng Python. Bộ test cố định cấu hình giả trong `conftest.py`, dùng mock hoặc SQLite trong bộ nhớ, và chặn HTTP/Redis/PostgreSQL/SMTP thật cho issue #185. Không cần tạo hay chỉnh tay file `.env`.
+
+```bash
+# Chỉ issue #185, gồm các ca React có mã truy vết:
+pytest -m issue185 -q
+# Toàn bộ test frontend và kiểm tra bản build:
+npm test --prefix frontend
+npm run build --prefix frontend
+# Tự kiểm tra bản sao sạch + lỗi cố tình đưa vào bản sao:
+python scripts/verify_issue185_clean.py
+```
+
+Lệnh cuối sao chép file đang làm (kể cả chưa commit) sang thư mục tạm, không sao chép `.env`/`.git`/`node_modules`, chạy `npm ci`, `pytest`, build và kiểm tra mutation 6 giây. Môi trường Python dùng thư viện đã cài từ requirements, không phải một máy tính hay Python venv mới hoàn toàn. Log và ảnh minh chứng xem [docs/testing.md](testing.md).
+
+---
+
 ## Yêu cầu Môi trường Tiên quyết (Prerequisites)
 
 | Công cụ | Phiên bản Tối thiểu | Lệnh kiểm tra |

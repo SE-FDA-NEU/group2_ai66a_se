@@ -1,0 +1,24 @@
+$ pytest tests/test_issue185_interface.py -k N185-UI-03 -q  # mutant: 6000 ms
+F                                                                        [100%]
+================================== FAILURES ===================================
+_____________________ test_issue185_interface[N185-UI-03] _____________________
+
+case_id = 'N185-UI-03'
+react_results = [{'ancestorTitles': ['', 'NotificationCenter target price notifications'], 'fullName': ' NotificationCenter target pri...with 2 notifications', 'status': 'passed', 'title': 'N185-UI-10 visible slot boundary with 2 notifications', ...}, ...]
+
+    @pytest.mark.parametrize("case_id", CASES, ids=CASES)
+    def test_issue185_interface(case_id, react_results):
+        matches = [test for test in react_results if case_id in test["fullName"]]
+        assert matches, f"Missing React case {case_id}"
+        failures = [message for test in matches for message in test.get("failureMessages", [])]
+>       assert all(test["status"] == "passed" for test in matches), "\n".join(failures)
+E       AssertionError: expected [ <div �(2)>�(2)</div>, �(2) ] to have a length of 2 but got 3
+E       assert False
+E        +  where False = all(<generator object test_issue185_interface.<locals>.<genexpr> at 0x00000209E4AA86C0>)
+
+tests\test_issue185_interface.py:38: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_issue185_interface.py::test_issue185_interface[N185-UI-03]
+1 failed, 11 deselected in 6.31s
+
+Exit code: 1

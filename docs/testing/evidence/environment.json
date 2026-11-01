@@ -1,0 +1,11 @@
+{
+  "python": "3.12.6",
+  "node": "v22.19.0",
+  "npm": "10.9.3",
+  "snapshot": "git tracked and untracked non-ignored working files; no .git or .env",
+  "python_dependencies": "preinstalled from backend/requirements.txt; not a fresh OS or fresh Python venv",
+  "frontend_dependencies": "fresh npm ci in disposable copy",
+  "green_exit": 0,
+  "red_exit": 1,
+  "restored_exit": 0
+}

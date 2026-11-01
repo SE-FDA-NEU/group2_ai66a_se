@@ -42,3 +42,9 @@ the local Python environment is missing `asyncpg`, so pytest cannot collect the
 service tests. No mutation was left in the source. Rerun the command above in an
 environment with Docker access to record the failing mutation run and the
 passing restored run here.
+
+## Issue #185 — Thông báo
+
+Phần kiểm thử bổ sung US02 cho email theo ngưỡng giá, toast 5 giây, đã xem/reload và lịch sử 10 mục: [báo cáo #185](testing/issue185.md). Ma trận US02 từ main: [US02_TEST_CASES.md](../backend/tests/US02_TEST_CASES.md).
+
+Chạy toàn bộ từ root bằng `pytest` sau khi cài Python dependencies và `npm ci --prefix frontend` theo [SETUP.md](SETUP.md). Với Docker, chạy backend bằng `docker compose exec -w /workspace backend python -m pytest backend/tests -q`; test React chạy riêng trong container frontend vì image backend chưa có Node.js.
