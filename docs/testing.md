@@ -1,5 +1,57 @@
 # Milestone 4 Testing
 
+## US04 — Register and sign in with Google or Email
+
+### What we test, and why
+
+| Layer | Test | Why |
+|---|---|---|
+| `backend/app/services/auth_service.py` (authentication and OTP services) | Integration tests through the FastAPI routes, with fake Redis and users | Covers the user-visible authentication flows and OTP business rules without external services. |
+| `backend/app/api/v1/endpoints/` (routes) | FastAPI `AsyncClient` with `ASGITransport` | Checks response status and payloads without starting a server. |
+| Persistence and external providers | Fakes/mocks; no real database, Redis, SMTP, or Google verification | Keeps the suite deterministic and runnable on a clean machine. |
+
+The authentication and OTP rules carry the highest risk because errors can block
+registration or password recovery, or permit an invalid OTP. The suite checks
+successful flows, rejected input, the five-attempt limit, and the five-minute
+OTP expiration boundary. UI presentation is not covered by these backend tests.
+
+### Test cases for US04
+
+| ID | Story | Input | Expected result | Kind / pytest test |
+|---|---|---|---|---|
+| US04-TC-001 | As a user, I want to register and sign in with email so I can access my account. | New email; request OTP, verify the returned test OTP, register, then log in. | OTP verification and registration succeed; login returns an access token. | Integration — `test_us04_tc_001_full_email_registration_and_login_flow` |
+| US04-TC-002 | As a user, I want to sign in with Google so I can access my account. | A valid mocked Google token for a new user. | A Google account is created and an access token is returned. | Integration — `test_us04_tc_002_google_login_new_user` |
+| US04-TC-003 | As a user, I want to recover my password with email OTP so I can regain access. | Existing email; request and verify OTP, set a new password, then log in. | Password reset succeeds and the new password can sign in. | Integration — `test_us04_tc_003_forgot_password_flow` |
+| US04-TC-004 | As a user, I want OTP verification attempts limited to five so repeated guesses are refused. | Submit an incorrect OTP five times, then submit again. | Attempts 1–5 return `OTP_INVALID`; attempt 6 returns `OTP_LIMIT_EXCEEDED`. | Integration — `test_us04_tc_004_otp_fifth_wrong_attempt_is_allowed_then_limit_exceeded` |
+| US04-TC-010 | As a user, I want an OTP to remain usable during its five-minute validity period. | Submit the correct OTP 299 seconds after it is issued. | Verification succeeds and returns a verification token. | Integration — `test_us04_tc_010_otp_is_valid_just_before_five_minute_expiry` |
+| US04-TC-011 | As a user, I want expired OTPs refused after five minutes. | Submit the correct OTP at the 300-second expiry boundary. | Verification is rejected with `OTP_EXPIRED`. | Integration — `test_us04_tc_011_otp_expires_at_five_minute_limit` |
+
+### Automated tests
+
+Each case above maps to a pytest test in
+`backend/tests/integration/test_auth_endpoint.py`; the ID appears in the test
+name. They use a deterministic fake Redis implementation that honors key
+expirations. Run the US04 suite from the repository root with:
+
+```bash
+python -m pytest backend/tests/integration/test_auth_endpoint.py -q
+```
+
+These tests use an in-process ASGI client, fake Redis/user storage, and mocked
+email and Google verification. They do not start a server or use a real
+database or external provider.
+
+### What the tests found
+
+The five-minute cases check both sides of the expiry boundary (299 seconds and
+300 seconds). The five-attempt case checks the fifth rejected code and the
+subsequent blocked attempt. A deliberate mutation run and its red pytest output
+have not yet been recorded; perform that check before treating the US04
+regression-evidence requirement as complete. For example, temporarily change
+`OTP_EXPIRE_SECONDS` from 300 to 301 and run the US04 suite; TC-011 should fail.
+Restore the setting to 300 and rerun the suite, which should pass. Do not commit
+the temporary mutation.
+
 ## US01 — Add a product to the watchlist
 
 ### Review of issue #81 tests

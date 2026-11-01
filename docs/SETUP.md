@@ -24,6 +24,16 @@ pytest
 
 Lệnh này chạy backend và các ca giao diện của issue #185. Pytest gọi Vitest thật bằng subprocess; không mô phỏng lại React bằng Python. Bộ test cố định cấu hình giả trong `conftest.py`, dùng mock hoặc SQLite trong bộ nhớ, và chặn HTTP/Redis/PostgreSQL/SMTP thật cho issue #185. Không cần tạo hay chỉnh tay file `.env`.
 
+Để chạy riêng các ca xác thực US04 (OTP, đăng ký, đăng nhập và khôi phục mật
+khẩu), từ thư mục gốc repository chạy:
+
+```bash
+python -m pytest backend/tests/integration/test_auth_endpoint.py -q
+```
+
+Các ca này dùng test client trong tiến trình, fake Redis/user storage và mock
+dịch vụ email/Google; không cần bật backend server hay database thật.
+
 ```bash
 # Chỉ issue #185, gồm các ca React có mã truy vết:
 pytest -m issue185 -q

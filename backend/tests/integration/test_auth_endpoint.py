@@ -4,6 +4,7 @@ from httpx import AsyncClient, ASGITransport
 from typing import Optional
 from unittest.mock import patch, AsyncMock
 import json
+import time
 
 from main import app
 from app.core.database import get_db
@@ -43,29 +44,62 @@ class FakeUserCRUD:
         return db_obj
 
 class FakeRedis:
+    def __init__(self):
+        self.expirations = {}
+        self.time_offset = 0
+
+    def now(self):
+        return time.monotonic() + self.time_offset
+
+    def advance(self, seconds):
+        self.time_offset += seconds
+
+    def clear(self):
+        FAKE_REDIS_DB.clear()
+        self.expirations.clear()
+        self.time_offset = 0
+
     async def get(self, key):
+        expires_at = self.expirations.get(key)
+        if expires_at is not None and self.now() >= expires_at:
+            await self.delete(key)
+            return None
         return FAKE_REDIS_DB.get(key)
+
     async def set(self, key, value, ex=None):
         FAKE_REDIS_DB[key] = value
+        if ex is not None:
+            self.expirations[key] = self.now() + ex
+        else:
+            self.expirations.pop(key, None)
+
+    async def ttl(self, key):
+        expires_at = self.expirations.get(key)
+        if key not in FAKE_REDIS_DB or expires_at is None:
+            return -1
+        return max(0, int(expires_at - self.now()))
+
     async def delete(self, key):
         if key in FAKE_REDIS_DB:
             del FAKE_REDIS_DB[key]
+        self.expirations.pop(key, None)
+
+
+FAKE_REDIS = FakeRedis()
 
 # --- FIXTURES ---
 @pytest_asyncio.fixture(autouse=True)
 async def setup_fakes():
     # Clear fakes before each test
     FAKE_USERS_DB.clear()
-    FAKE_REDIS_DB.clear()
+    FAKE_REDIS.clear()
     yield
 
 @pytest_asyncio.fixture
 async def client():
     async_mock_db = AsyncMock()
-    fake_redis = FakeRedis()
-
     app.dependency_overrides[get_db] = lambda: async_mock_db
-    app.dependency_overrides[get_redis] = lambda: fake_redis
+    app.dependency_overrides[get_redis] = lambda: FAKE_REDIS
 
     # Patch user_crud and external services
     fake_crud = FakeUserCRUD()
@@ -94,7 +128,7 @@ async def client():
 # --- TESTS ---
 
 @pytest.mark.asyncio
-async def test_full_email_registration_and_login_flow(client: AsyncClient):
+async def test_us04_tc_001_full_email_registration_and_login_flow(client: AsyncClient):
     """Đăng ký qua email -> Xác nhận OTP -> Login"""
     email = "test1@test.com"
     password_test = "password123"
@@ -129,7 +163,7 @@ async def test_full_email_registration_and_login_flow(client: AsyncClient):
     assert "access_token" in response.json()
 
 @pytest.mark.asyncio
-async def test_google_login_new_user(client: AsyncClient):
+async def test_us04_tc_002_google_login_new_user(client: AsyncClient):
     """Đăng nhập Google lần đầu -> Tự động đăng ký"""
     token = "newuser" # mapped to newuser@gmail.com in fake_verify
     response = await client.post("/api/v1/auth/google", json={"id_token": token})
@@ -142,7 +176,7 @@ async def test_google_login_new_user(client: AsyncClient):
     assert FAKE_USERS_DB[0].auth_provider == "google"
 
 @pytest.mark.asyncio
-async def test_email_then_google_login(client: AsyncClient):
+async def test_us04_tc_005_email_then_google_login(client: AsyncClient):
     """Người dùng đã đăng ký bằng email, sau đó đăng nhập bằng Google"""
     # Register email manually for test
     fake_crud = FakeUserCRUD()
@@ -160,7 +194,7 @@ async def test_email_then_google_login(client: AsyncClient):
     assert FAKE_USERS_DB[0].google_sub == "g_sub_email_first"
 
 @pytest.mark.asyncio
-async def test_google_then_email_register(client: AsyncClient):
+async def test_us04_tc_006_google_then_email_register(client: AsyncClient):
     """Người dùng đã đăng nhập Google, sau đó đăng ký/cập nhật mật khẩu bằng email"""
     fake_crud = FakeUserCRUD()
     user = await fake_crud.create(None, "google_first@gmail.com", "Google User", None, "google", "g_sub_google_first")
@@ -181,7 +215,7 @@ async def test_google_then_email_register(client: AsyncClient):
     assert FAKE_USERS_DB[0].password_hashed is not None
 
 @pytest.mark.asyncio
-async def test_forgot_password_flow(client: AsyncClient):
+async def test_us04_tc_003_forgot_password_flow(client: AsyncClient):
     """Quên mật khẩu -> Gửi OTP -> Xác thực -> Đặt lại mật khẩu"""
     # Arrange: Create user
     fake_crud = FakeUserCRUD()
@@ -216,7 +250,7 @@ async def test_forgot_password_flow(client: AsyncClient):
     assert "access_token" in response.json()
 
 @pytest.mark.asyncio
-async def test_otp_invalid_and_limit_exceeded(client: AsyncClient):
+async def test_us04_tc_004_otp_fifth_wrong_attempt_is_allowed_then_limit_exceeded(client: AsyncClient):
     """Test nhập sai mã OTP nhiều lần"""
     email = "otp@test.com"
     # Send OTP
@@ -226,16 +260,48 @@ async def test_otp_invalid_and_limit_exceeded(client: AsyncClient):
     for i in range(5):
         response = await client.post("/api/v1/otp/verify", json={"email": email, "otp": "000000", "reason": OTPReason.VERIFY_EMAIL.value})
         assert response.status_code == 400
+        assert response.json()["error"]["code"] == "OTP_INVALID"
         
-    # The 6th time should return limit exceeded regardless of code (wait, it deletes the key on 5th attempt)
-    # So 6th attempt will return OTP expired/not exist
+    # The 6th attempt is blocked because the five failed attempts exhausted the limit.
     response = await client.post("/api/v1/otp/verify", json={"email": email, "otp": "000000", "reason": OTPReason.VERIFY_EMAIL.value})
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "OTP_LIMIT_EXCEEDED"
 
 
 @pytest.mark.asyncio
-async def test_reset_password_blocked_for_google_only_account(client: AsyncClient):
+async def test_us04_tc_010_otp_is_valid_just_before_five_minute_expiry(client: AsyncClient):
+    """An OTP can still be verified one second before its five-minute TTL."""
+    email = "otp-before-expiry@test.com"
+    response = await client.post("/api/v1/otp/send", json={"email": email, "reason": OTPReason.VERIFY_EMAIL.value})
+    assert response.status_code == 200
+
+    otp_key = f"otp:{OTPReason.VERIFY_EMAIL}:{email}"
+    code = json.loads(FAKE_REDIS_DB[otp_key])["code"]
+    FAKE_REDIS.advance(299)
+
+    response = await client.post("/api/v1/otp/verify", json={"email": email, "otp": code, "reason": OTPReason.VERIFY_EMAIL.value})
+    assert response.status_code == 200
+    assert response.json()["data"]["verified_token"]
+
+
+@pytest.mark.asyncio
+async def test_us04_tc_011_otp_expires_at_five_minute_limit(client: AsyncClient):
+    """An OTP is rejected once its five-minute TTL has elapsed."""
+    email = "otp-at-expiry@test.com"
+    response = await client.post("/api/v1/otp/send", json={"email": email, "reason": OTPReason.VERIFY_EMAIL.value})
+    assert response.status_code == 200
+
+    otp_key = f"otp:{OTPReason.VERIFY_EMAIL}:{email}"
+    code = json.loads(FAKE_REDIS_DB[otp_key])["code"]
+    FAKE_REDIS.advance(300)
+
+    response = await client.post("/api/v1/otp/verify", json={"email": email, "otp": code, "reason": OTPReason.VERIFY_EMAIL.value})
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "OTP_EXPIRED"
+
+
+@pytest.mark.asyncio
+async def test_us04_tc_007_google_only_password_reset_is_blocked(client: AsyncClient):
     """Test chặn yêu cầu gửi OTP reset password cho tài khoản đăng ký Google thuần túy"""
     google_email = "google_user@test.com"
     # Tạo user Google thuần túy (không có password_hashed)
@@ -262,7 +328,7 @@ async def test_reset_password_blocked_for_google_only_account(client: AsyncClien
 
 
 @pytest.mark.asyncio
-async def test_otp_send_cooldown_60s(client: AsyncClient):
+async def test_us04_tc_008_otp_resend_inside_cooldown_is_blocked(client: AsyncClient):
     """Test cơ chế chặn gửi lại mã OTP trong vòng 60 giây (Cooldown)"""
     email = "cooldown@test.com"
     # Gửi OTP lần 1 -> Thành công (200)
@@ -278,7 +344,7 @@ async def test_otp_send_cooldown_60s(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_otp_hourly_rate_limit(client: AsyncClient):
+async def test_us04_tc_009_otp_hourly_limit_fifth_allowed_sixth_blocked(client: AsyncClient):
     """Test cơ chế giới hạn tối đa 5 lần gửi OTP trong vòng 1 giờ"""
     email = "hourly@test.com"
     # Gửi thành công 5 lần (giả lập xóa cooldown giữa các lần để kiểm tra hạn ngạch 1 giờ)
