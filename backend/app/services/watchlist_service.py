@@ -56,6 +56,23 @@ class WatchlistService:
         ]
         return ProductList(total=len(products), products=products)
 
+    async def get_product(
+        self, db: AsyncSession, user: User, product_id: int
+    ) -> Product:
+        row = await tracked_product_crud.get_with_product_statistics(
+            db, user.id, product_id
+        )
+        if row is None:
+            raise TRACKING_NOT_FOUND.throw()
+
+        return self._to_summary_response(
+            product=row[0],
+            target_price=row[1],
+            buy_when_good=row[2],
+            distinct_days=row[3],
+            median_price=row[4],
+        )
+
     async def add_product(
         self, db: AsyncSession, user: User, request: ProductCreate
     ) -> Product:
@@ -325,11 +342,12 @@ class WatchlistService:
             else:
                 shop_trust_label = "Needs caution"
 
-        top_reviews = getattr(product, "top_reviews", None) or []
+        top_reviews = (getattr(product, "top_reviews", None) or [])[:5]
 
         return Product(
             id=product.id,
             name=product.name,
+            product_name=product.name,
             url=product.url,
             image_url=product.image_url,
             marketplace=product.marketplace,

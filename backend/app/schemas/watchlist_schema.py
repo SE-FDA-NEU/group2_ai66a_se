@@ -24,6 +24,7 @@ class TargetPriceUpdate(BaseModel):
 class Product(BaseModel):
     id: int
     name: str
+    product_name: str | None = None
     url: str
     image_url: str
     marketplace: str
