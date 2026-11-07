@@ -13,44 +13,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  detect:
-    name: Detect stack
-    runs-on: ubuntu-latest
-    outputs:
-      python: ${{ steps.check.outputs.python }}
-      node: ${{ steps.check.outputs.node }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: check
-        run: |
-          if ls requirements.txt pyproject.toml setup.py 2>/dev/null | grep -q .; then
-            echo "python=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "python=false" >> "$GITHUB_OUTPUT"
-          fi
-          if [ -f package.json ]; then
-            echo "node=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "node=false" >> "$GITHUB_OUTPUT"
-          fi
-
   python:
     name: Python tests
-    needs: detect
-    if: needs.detect.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
           cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      # The root pytest suite includes interface tests that execute Vitest.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies for interface tests
+        working-directory: frontend
+        run: npm ci
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r backend/requirements.txt
           pip install pytest pytest-cov ruff
 
       - name: Lint
@@ -58,7 +47,7 @@ jobs:
         continue-on-error: true   # Week 1-6: warn only. Remove this line from Sprint 2 onward.
 
       - name: Test
-        run: pytest -v --cov --cov-report=term-missing --junitxml=junit.xml
+        run: pytest -v --cov=backend --cov-report=term-missing --junitxml=junit.xml
 
       - name: Publish test summary
         if: always()
@@ -84,8 +73,6 @@ jobs:
 
   node:
     name: Node build and tests
-    needs: detect
-    if: needs.detect.outputs.node == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -94,17 +81,23 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      - run: npm ci || npm install
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
 
       - name: Lint
+        working-directory: frontend
         run: npm run lint --if-present
         continue-on-error: true   # Week 1-6: warn only. Remove this line from Sprint 2 onward.
 
       - name: Test
+        working-directory: frontend
         run: npm test --if-present
 
       - name: Build
+        working-directory: frontend
         run: npm run build --if-present
 
   secrets:
