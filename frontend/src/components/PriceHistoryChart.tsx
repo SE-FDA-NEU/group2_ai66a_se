@@ -249,7 +249,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
         isMax: maxPrice !== null && numPrice === maxPrice,
       });
 
-      labelMap[currentKey] = displayTime;
+      if (displayTime) labelMap[currentKey] = displayTime;
     });
 
     return { chartData: items, gapAreas: gaps, keyToLabelMap: labelMap };
@@ -390,6 +390,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
             <button
               key={opt.key}
               type="button"
+              aria-pressed={selectedRange === opt.key}
               className={`${styles.rangeButton} ${selectedRange === opt.key ? styles.rangeButtonActive : ''}`}
               onClick={() => {
                 setSelectedRange(opt.key);
@@ -488,7 +489,9 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" vertical={false} />
             <XAxis
               dataKey="chartKey"
+              ticks={Object.keys(keyToLabelMap)}
               tickFormatter={(key) => keyToLabelMap[key] || ''}
+              minTickGap={16}
               tickLine={false}
               axisLine={{ stroke: 'var(--border-color)' }}
               tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
@@ -558,9 +561,8 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
                 x1={gap.startKey}
                 x2={gap.endKey}
                 fill="var(--status-warning-bg)"
-                fillOpacity={0.45}
-                stroke="var(--status-warning)"
-                strokeDasharray="3 3"
+                fillOpacity={0.65}
+                stroke="none"
               />
             ))}
 
@@ -568,23 +570,34 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
             <Line
               type="monotone"
               dataKey="solidPrice"
-              stroke="var(--primary-color)"
+              stroke="var(--chart-price-color)"
               strokeWidth={2}
               connectNulls={false}
-              dot={{ r: 2.5, fill: 'var(--primary-color)' }}
-              activeDot={{ r: 5, fill: 'var(--primary-color)', stroke: '#fff', strokeWidth: 2 }}
+              isAnimationActive={false}
+              dot={{
+                r: chartData.length === 1 ? 3 : 1.5,
+                fill: 'var(--chart-price-color)',
+                stroke: 'none',
+              }}
+              activeDot={{
+                r: 4,
+                fill: 'var(--chart-price-color)',
+                stroke: 'var(--bg-surface)',
+                strokeWidth: 1.5,
+              }}
             />
 
             {/* Đường nét đứt nối qua khoảng trống mất dữ liệu (Dashed gap stroke) */}
             <Line
-              type="monotone"
+              type="linear"
               dataKey="gapPrice"
-              stroke="var(--status-warning)"
-              strokeWidth={2}
-              strokeDasharray="4 4"
+              stroke="var(--chart-gap-color)"
+              strokeWidth={1.5}
+              strokeDasharray="5 4"
               connectNulls={false}
-              dot={{ r: 3, fill: 'var(--status-warning)', stroke: '#fff', strokeWidth: 1 }}
-              activeDot={{ r: 5, fill: 'var(--status-warning)', stroke: '#fff', strokeWidth: 2 }}
+              isAnimationActive={false}
+              dot={false}
+              activeDot={false}
             />
           </LineChart>
         </ResponsiveContainer>

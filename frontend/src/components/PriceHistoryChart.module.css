@@ -4,6 +4,9 @@
 */
 
 .chartCard {
+  --chart-price-color: color-mix(in srgb, var(--status-success) 55%, var(--primary-color));
+  --chart-gap-color: color-mix(in srgb, var(--status-warning) 58%, var(--primary-color));
+
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -196,13 +199,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #b45309; /* High-contrast amber */
+  color: var(--chart-gap-color);
   font-weight: 600;
   font-size: 13px;
 }
 
 .gapIcon {
-  color: var(--status-warning);
   flex-shrink: 0;
 }
 
@@ -253,22 +255,22 @@
 
 .legendLineSolid {
   width: 16px;
-  height: 3px;
-  background-color: var(--primary-color);
+  height: 2px;
+  background-color: var(--chart-price-color);
   border-radius: 1px;
 }
 
 .legendLineDashed {
   width: 16px;
   height: 0px;
-  border-top: 2px dashed var(--status-warning);
+  border-top: 2px dashed var(--chart-gap-color);
 }
 
 .legendBoxShaded {
   width: 14px;
   height: 10px;
   background-color: var(--status-warning-bg);
-  border: 1px dashed var(--status-warning);
+  border: 1px dashed var(--chart-gap-color);
   border-radius: 2px;
 }
 
@@ -367,8 +369,9 @@
 
   .rangeButton {
     flex: 1;
+    min-width: 3.5rem;
     text-align: center;
-    padding: 6px 0;
+    padding: 0.375rem 0.25rem;
     font-size: 12px;
   }
 
