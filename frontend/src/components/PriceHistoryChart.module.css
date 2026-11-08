@@ -4,7 +4,7 @@
 */
 
 .chartCard {
-  --chart-price-color: color-mix(in srgb, var(--status-success) 55%, var(--primary-color));
+  --chart-price-color: #6d28d9;
   --chart-gap-color: color-mix(in srgb, var(--status-warning) 58%, var(--primary-color));
 
   background-color: var(--bg-surface);
@@ -237,6 +237,7 @@
 /* Legend */
 .chartLegend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
@@ -251,6 +252,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .legendLineSolid {
@@ -399,7 +401,6 @@
 
   .chartLegend {
     justify-content: flex-start;
-    flex-wrap: wrap;
     gap: 12px;
     font-size: 11px;
   }

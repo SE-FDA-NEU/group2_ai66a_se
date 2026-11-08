@@ -512,13 +512,6 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
                 y={minPrice}
                 stroke="var(--status-success)"
                 strokeDasharray="4 4"
-                label={{
-                  value: 'Thấp nhất',
-                  position: 'insideBottomRight',
-                  fill: 'var(--status-success)',
-                  fontSize: 10,
-                  fontWeight: 600,
-                }}
               />
             )}
 
@@ -528,13 +521,6 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
                 y={maxPrice}
                 stroke="var(--status-error)"
                 strokeDasharray="4 4"
-                label={{
-                  value: 'Cao nhất',
-                  position: 'insideTopRight',
-                  fill: 'var(--status-error)',
-                  fontSize: 10,
-                  fontWeight: 600,
-                }}
               />
             )}
 
@@ -544,13 +530,6 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
                 y={Number(targetPrice)}
                 stroke="#2563eb"
                 strokeDasharray="4 4"
-                label={{
-                  value: 'Mục tiêu',
-                  position: 'insideBottomLeft',
-                  fill: '#2563eb',
-                  fontSize: 10,
-                  fontWeight: 600,
-                }}
               />
             )}
 
