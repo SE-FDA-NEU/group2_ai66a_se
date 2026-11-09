@@ -15,3 +15,7 @@ export const changePassword = async (oldPassword: string, newPassword: string): 
     new_password: newPassword 
   });
 };
+
+export const deleteAccount = async (payload: { password?: string; verified_token?: string }): Promise<ApiResponse<null>> => {
+  return await apiClient.delete<any, ApiResponse<null>>('/user/me', { data: payload });
+};

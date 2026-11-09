@@ -10,7 +10,7 @@ const operationMessage = (method?: string, url = ''): string | null => {
   if (url.includes('/auth/register')) return 'Đăng ký tài khoản thành công.';
   if (url.includes('/otp/send')) return 'Đã gửi mã xác thực đến email của bạn.';
   if (url.includes('/otp/verify')) return 'Xác thực mã thành công.';
-  if (url.includes('/user/me')) return 'Đã cập nhật hồ sơ cá nhân.';
+  if (url.includes('/user/me')) return method.toLowerCase() === 'delete' ? 'Đã xóa tài khoản thành công.' : 'Đã cập nhật hồ sơ cá nhân.';
   if (url.includes('/notifications/settings')) return 'Đã lưu cài đặt thông báo.';
   if (url.includes('/target-price')) return 'Đã lưu giá mục tiêu.';
   if (url.includes('/watchlist')) return method.toLowerCase() === 'delete' ? 'Đã ngừng theo dõi sản phẩm.' : 'Đã thêm sản phẩm vào danh sách theo dõi.';

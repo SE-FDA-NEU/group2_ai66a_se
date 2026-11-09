@@ -17,6 +17,7 @@ export interface UserResponse {
   id: number;
   email: string;
   nickname: string;
+  auth_provider: string;
   is_activate: boolean;
   is_developer: boolean;
 }
@@ -26,7 +27,7 @@ export interface OTPVerifyData {
 }
 
 // Các lý do gửi OTP (Đăng ký / Quên mật khẩu)
-export type OTPReason = 'verify-email' | 'reset-password';
+export type OTPReason = 'verify-email' | 'reset-password' | 'delete-account';
 
 // -------------------------------------------------------------
 // 1. NHÓM ĐĂNG NHẬP / ĐĂNG KÝ MẶC ĐỊNH & GOOGLE

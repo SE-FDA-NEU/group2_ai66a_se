@@ -3,6 +3,8 @@ import { showToast } from '../utils/toast';
 import { useNavigate } from 'react-router-dom';
 import { getUserProfile, updateNickname, changePassword } from '../api/userApi';
 import { useAuth } from '../context/AuthContext';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DeleteAccountModal } from '../components/DeleteAccountModal';
 import styles from './ProfilePage.module.css';
 
 const ProfilePage: React.FC = () => {
@@ -12,6 +14,7 @@ const ProfilePage: React.FC = () => {
   // User state
   const [email, setEmail] = useState('');
   const [nickname, setNickname] = useState('');
+  const [authProvider, setAuthProvider] = useState('email');
 
   // Form states
   const [editNickname, setEditNickname] = useState('');
@@ -23,7 +26,9 @@ const ProfilePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
-  
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
 
   useEffect(() => {
     fetchProfile();
@@ -37,7 +42,7 @@ const ProfilePage: React.FC = () => {
         setEmail(res.data.email);
         setNickname(res.data.nickname);
         setEditNickname(res.data.nickname);
-        // If auth_provider exists in the future response, it can be set here.
+        setAuthProvider(res.data.auth_provider || 'email');
       }
     } catch (err: any) {
       console.error('Failed to fetch profile', err);
@@ -107,11 +112,9 @@ const ProfilePage: React.FC = () => {
     navigate('/login');
   };
 
-  const handleDeleteAccount = () => {
-    const confirm = window.confirm('Bạn có chắc chắn muốn xóa tài khoản này không? Mọi dữ liệu sẽ bị xóa vĩnh viễn.');
-    if (confirm) {
-      showToast('error', 'Chức năng xóa tài khoản chưa được hỗ trợ.');
-    }
+  const handleDeleted = () => {
+    logout();
+    navigate('/login');
   };
 
   if (isLoading) {
@@ -244,7 +247,7 @@ const ProfilePage: React.FC = () => {
         <p className={styles.sessionDesc}>
           Đăng xuất khỏi thiết bị hiện tại. Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng Trakora.
         </p>
-        <button type="button" className={styles.btnOutline} onClick={handleLogout}>
+        <button type="button" className={styles.btnOutline} onClick={() => setShowLogoutConfirm(true)}>
           Đăng xuất
         </button>
       </section>
@@ -257,10 +260,30 @@ const ProfilePage: React.FC = () => {
         <p className={styles.dangerDescription}>
           Khi bạn xóa tài khoản, mọi dữ liệu danh sách theo dõi và lịch sử của bạn sẽ bị xóa vĩnh viễn và không thể khôi phục.
         </p>
-        <button type="button" className={styles.btnDanger} onClick={handleDeleteAccount}>
+        <button type="button" className={styles.btnDanger} onClick={() => setShowDeleteModal(true)}>
           Xóa tài khoản vĩnh viễn
         </button>
       </section>
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        title="Đăng xuất?"
+        description="Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng Trakora."
+        confirmLabel="Đăng xuất"
+        onConfirm={() => {
+          setShowLogoutConfirm(false);
+          handleLogout();
+        }}
+        onClose={() => setShowLogoutConfirm(false)}
+      />
+
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        email={email}
+        hasPassword={authProvider !== 'google'}
+        onClose={() => setShowDeleteModal(false)}
+        onDeleted={handleDeleted}
+      />
     </div>
   );
 };

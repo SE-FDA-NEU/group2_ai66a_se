@@ -24,9 +24,14 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(min_length=8)
     verify_token: str
 
+class DeleteAccountRequest(BaseModel):
+    password: Optional[str] = None
+    verified_token: Optional[str] = None
+
 class UserResponse(UserBase):
     id: int
     nickname: str
+    auth_provider: Optional[str] = "email"
     is_activate: Optional[bool] = True
     is_developer: Optional[bool] = False
 
@@ -36,6 +41,7 @@ class UserErrors:
     EMAIL_ALREADY_EXISTS = ErrorDetail("EMAIL_ALREADY_EXISTS", 400, "Email này đã tồn tại.")
     USER_NOT_FOUND = ErrorDetail("USER_NOT_FOUND", 404, "Không tìm thấy người dùng này.")
     INVALID_OLD_PASSWORD = ErrorDetail("INVALID_OLD_PASSWORD", 400, "Mật khẩu cũ không chính xác.")
+    VERIFY_REQUIRED = ErrorDetail("VERIFY_REQUIRED", 400, "Cần xác thực mật khẩu hoặc mã OTP để xóa tài khoản.")
     GOOGLE_ACCOUNT_NO_PASSWORD = ErrorDetail(
         "GOOGLE_ACCOUNT_NO_PASSWORD",
         400,

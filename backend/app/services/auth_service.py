@@ -100,6 +100,9 @@ class AuthService:
                 raise UserErrors.USER_NOT_FOUND.throw()
             if existed_user.auth_provider == "google" and not existed_user.password_hashed:
                 raise UserErrors.GOOGLE_ACCOUNT_NO_PASSWORD.throw()
+        elif reason == OTPReason.DELETE_ACCOUNT:
+            if not existed_user:
+                raise UserErrors.USER_NOT_FOUND.throw()
 
         now = time.time()
         cooldown_key = f"otp-cooldown:{email}"

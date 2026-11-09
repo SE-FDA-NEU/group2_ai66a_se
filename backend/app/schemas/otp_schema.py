@@ -7,6 +7,7 @@ from app.core.exceptions import ErrorDetail
 class OTPReason(str, Enum):
     VERIFY_EMAIL = "verify-email"
     RESET_PASSWORD = "reset-password"
+    DELETE_ACCOUNT = "delete-account"
 
 class OTPSendRequest(BaseModel):
     email: EmailStr
