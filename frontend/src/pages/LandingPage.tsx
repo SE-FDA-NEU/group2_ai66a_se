@@ -64,7 +64,7 @@ const CORE_FEATURES: FeatureItem[] = [
     highlights: [
       'Đường tham chiếu nét đứt cho Giá cao nhất, Giá thấp nhất và Giá mục tiêu',
       'Tự động phát hiện và hiển thị khoảng gián đoạn thu thập dữ liệu (Gap)',
-      'Cập nhật biến động giá theo thời gian thực qua Server-Sent Events (SSE)',
+      'Cập nhật biến động giá theo thời gian thực ngay trên giao diện',
     ],
     icon: <ChartNoAxesCombined size={26} aria-hidden="true" />,
   },
@@ -72,9 +72,9 @@ const CORE_FEATURES: FeatureItem[] = [
     id: 'feature-fake-discount',
     title: 'Cảnh báo giảm giá ảo & Nhãn đánh giá giá',
     description:
-      'Phân tích lịch sử giá thực tế để gắn nhãn khách quan (Giá tốt, Bình thường, Giá cao) và phát hiện ngay chiêu trò nâng giá gốc trước đợt sale.',
+      'Phân tích lịch sử giá thực tế để gắn nhãn khách quan (Giá tốt, Bình thường, Giá cao) và cảnh báo giảm giá ảo khi sản phẩm đang hiển thị giảm giá trên sàn nhưng giá sau giảm vẫn cao hơn trên 10% so với trung vị lịch sử.',
     highlights: [
-      'Cảnh báo "Giảm giá ảo" khi giá sau giảm vẫn cao hơn trung bình lịch sử',
+      'Cảnh báo "Giảm giá ảo" khi có khuyến mãi trên sàn nhưng giá sau giảm cao hơn > 10% trung vị lịch sử',
       'Nhãn "Giá tốt" khi giá hiện tại nằm trong vùng ≤ 5% sát mức đáy lịch sử',
       'Hiển thị rõ "Chưa đủ dữ liệu" với sản phẩm mới theo dõi dưới 7 ngày',
     ],
@@ -106,11 +106,11 @@ const CORE_FEATURES: FeatureItem[] = [
   },
   {
     id: 'feature-notifications',
-    title: 'Đa kênh thông báo, Giờ yên tĩnh & Bảo mật',
+    title: 'Thông báo tự động, Giờ yên tĩnh & Bảo mật',
     description:
-      'Nhận thông báo qua Web Push, Trung tâm thông báo và Email; hỗ trợ cấu hình khung giờ yên tĩnh ban đêm cùng xác thực Google OAuth / OTP.',
+      'Nhận cảnh báo qua Trung tâm thông báo trên ứng dụng và qua Email; hỗ trợ cấu hình khung giờ yên tĩnh ban đêm cùng xác thực Google OAuth / OTP.',
     highlights: [
-      'Tùy chỉnh bật/tắt thông báo Email, Web Push và Khung giờ yên tĩnh (Quiet Hours)',
+      'Tùy chỉnh bật/tắt thông báo qua Email và Khung giờ yên tĩnh (Quiet Hours)',
       'Đăng ký & đăng nhập nhanh qua Google OAuth hoặc Email OTP 6 chữ số',
       'Quản lý hồ sơ cá nhân, biệt danh (nickname) và khôi phục mật khẩu an toàn',
     ],
@@ -438,14 +438,14 @@ const LandingPage: React.FC = () => {
               </span>
               <h3>Nhận diện ngay giá tốt, giảm giá ảo và độ uy tín cửa hàng</h3>
               <p>
-                Mỗi sản phẩm trong Watchlist hiển thị đầy đủ giá hiện tại, khoảng giá thấp/cao lịch sử, điểm sao đánh giá, nhãn độ tin cậy của shop và cảnh báo ngay nếu người bán nâng giá gốc lên cao rồi gắn mác giảm giá ảo.
+                Mỗi sản phẩm trong Watchlist hiển thị đầy đủ giá hiện tại, khoảng giá thấp/cao lịch sử, điểm sao đánh giá, nhãn độ tin cậy của shop và cảnh báo giảm giá ảo khi có mức giảm giá trên sàn nhưng giá sau giảm vẫn cao hơn trên 10% so với trung vị lịch sử.
               </p>
               <div className={styles.visualLegendTags}>
                 <span className={`${styles.badgePill} ${styles.badgeSuccess}`}>
                   Nhãn Giá tốt & Shop uy tín
                 </span>
                 <span className={`${styles.badgePill} ${styles.badgeWarning}`}>
-                  Cảnh báo giảm giá ảo (Fake Discount)
+                  Cảnh báo giảm giá ảo (&gt; 10% trung vị lịch sử)
                 </span>
               </div>
             </div>
@@ -516,19 +516,19 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Visual 3: Multi-channel Notification & Quiet Hours Illustration */}
+          {/* Visual 3: Notification Center, Email & Quiet Hours Illustration */}
           <div className={styles.visualBlock}>
             <div className={styles.visualTextCol}>
               <span className={styles.visualEyebrow}>
                 Cảnh báo thông minh & Khung giờ yên tĩnh
               </span>
-              <h3>Thông báo tức thì đa kênh nhưng không làm phiền giấc ngủ</h3>
+              <h3>Thông báo tức thì qua ứng dụng & Email mà không làm phiền giấc ngủ</h3>
               <p>
-                Ngay khi giá giảm xuống dưới mức <strong>Giá mục tiêu</strong> hoặc chạm vùng <strong>Giá tốt</strong>, Trakora lập tức gửi cảnh báo qua Trung tâm thông báo, Web Push và Email. Bạn có thể bật <strong>Khung giờ yên tĩnh (Quiet Hours)</strong> để không bị đánh thức vào ban đêm.
+                Ngay khi giá giảm xuống dưới mức <strong>Giá mục tiêu</strong> hoặc chạm vùng <strong>Giá tốt</strong>, Trakora lập tức gửi cảnh báo qua Trung tâm thông báo trên ứng dụng và qua Email. Bạn có thể bật <strong>Khung giờ yên tĩnh (Quiet Hours)</strong> để tạm hoãn gửi thông báo vào ban đêm.
               </p>
               <div className={styles.visualLegendTags}>
                 <span className={`${styles.badgePill} ${styles.badgeSuccess}`}>
-                  Email + Web Push + In-App SSE
+                  Email + Thông báo trong ứng dụng
                 </span>
                 <span className={`${styles.badgePill} ${styles.badgeNeutral}`}>
                   Quiet Hours: 23:00 – 07:00
@@ -562,7 +562,7 @@ const LandingPage: React.FC = () => {
                     <Moon size={18} aria-hidden="true" />
                     <div>
                       <div className={styles.settingBoxTitle}>Khung giờ yên tĩnh (Quiet Hours)</div>
-                      <div className={styles.settingBoxSub}>Tạm hoãn chuông báo từ 23:00 đến 07:00 sáng</div>
+                      <div className={styles.settingBoxSub}>Tạm hoãn thông báo từ 23:00 đến 07:00 sáng</div>
                     </div>
                   </div>
                   <div className={styles.settingVisualBox}>
