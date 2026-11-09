@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import App from '../App';
 import { isTokenValid, clearAuthStorage } from '../utils/auth';
 
@@ -145,6 +145,9 @@ describe('Route Guard & Navigation Protection', () => {
     render(<App />);
 
     expect(window.location.pathname).toBe('/profile');
-    expect(screen.getByRole('link', { name: /hồ sơ cá nhân/i })).toBeInTheDocument();
+    const accountMenuButton = screen.getByRole('button', { name: /tài khoản/i });
+    fireEvent.click(accountMenuButton);
+    expect(await screen.findByRole('menu', { name: 'Menu tài khoản' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /hồ sơ cá nhân/i })).toBeInTheDocument();
   });
 });

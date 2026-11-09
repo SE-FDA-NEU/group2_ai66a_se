@@ -7,7 +7,7 @@ import styles from './ProfilePage.module.css';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { logout, setUser } = useAuth();
+  const { setUser } = useAuth();
 
   // User state
   const [email, setEmail] = useState('');
@@ -99,12 +99,6 @@ const ProfilePage: React.FC = () => {
     } finally {
       setIsSavingPassword(false);
     }
-  };
-
-  const handleLogout = () => {
-    logout();
-    showToast('success', 'Đã đăng xuất tài khoản.');
-    navigate('/login');
   };
 
   const handleDeleteAccount = () => {
@@ -234,19 +228,6 @@ const ProfilePage: React.FC = () => {
             </button>
           </div>
         </form>
-      </section>
-
-      {/* Phiên đăng nhập */}
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Phiên đăng nhập</h2>
-        </div>
-        <p className={styles.sessionDesc}>
-          Đăng xuất khỏi thiết bị hiện tại. Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng Trakora.
-        </p>
-        <button type="button" className={styles.btnOutline} onClick={handleLogout}>
-          Đăng xuất
-        </button>
       </section>
 
       {/* Xóa tài khoản */}

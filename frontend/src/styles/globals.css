@@ -26,10 +26,6 @@
   /* Typography */
   --font-family-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
-  /* Layout */
-  --sidebar-width: 240px;
-  --sidebar-collapsed-width: 72px;
-  
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -44,6 +40,16 @@
 
   /* Auth Brand Gradient */
   --auth-panel-bg: linear-gradient(145deg, #131921 0%, #232F3E 50%, #37475A 100%);
+}
+
+.appLayout {
+  min-height: 100vh;
+  background-color: var(--bg-main);
+}
+
+.mainContent {
+  min-width: 0;
+  width: 100%;
 }
 
 * {
