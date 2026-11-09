@@ -60,5 +60,10 @@ class CRUDUser(CRUDBase[User]):
         await db.execute(stmt)
         await db.commit()
 
+    async def remove(self, db: AsyncSession, db_obj: User) -> None:
+        """Xóa người dùng (các bản ghi liên quan cascade theo FK)"""
+        await db.delete(db_obj)
+        await db.commit()
+
 
 user_crud = CRUDUser(User)

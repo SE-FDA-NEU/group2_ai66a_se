@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Bell, Bookmark, LayoutDashboard, LogOut, User as UserIcon, X } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { ConfirmDialog } from './ConfirmDialog';
 import styles from './Sidebar.module.css';
 import { showToast } from '../utils/toast';
 
@@ -13,6 +14,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { logout, isLoggedIn, user } = useAuth();
   const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
@@ -72,11 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {isLoggedIn && (
             <button
               title="Đăng xuất"
-              onClick={() => {
-                logout();
-                showToast('success', 'Đã đăng xuất tài khoản.');
-                navigate('/login');
-              }}
+              onClick={() => setShowLogoutConfirm(true)}
               className={styles.logoutBtn}
             >
               <LogOut size={16} aria-hidden="true" />
@@ -84,6 +82,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        title="Đăng xuất?"
+        description="Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng Trakora."
+        confirmLabel="Đăng xuất"
+        onConfirm={() => {
+          setShowLogoutConfirm(false);
+          logout();
+          showToast('success', 'Đã đăng xuất tài khoản.');
+          navigate('/login');
+        }}
+        onClose={() => setShowLogoutConfirm(false)}
+      />
     </aside>
   );
 };
