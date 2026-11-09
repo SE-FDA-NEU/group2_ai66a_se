@@ -9,7 +9,7 @@ import styles from './ProfilePage.module.css';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { logout, setUser } = useAuth();
+  const { setUser, logout } = useAuth();
 
   // User state
   const [email, setEmail] = useState('');
@@ -251,7 +251,6 @@ const ProfilePage: React.FC = () => {
           Đăng xuất
         </button>
       </section>
-
       {/* Xóa tài khoản */}
       <section className={`${styles.section} ${styles.dangerZone}`}>
         <div className={styles.sectionHeader}>
