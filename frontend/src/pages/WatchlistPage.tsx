@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowUpDown, Plus, RotateCw, Search } from 'lucide-react
 import { useNavigate } from 'react-router-dom';
 import { ProductRow } from '../components/ProductRow';
 import { AddProductModal } from '../components/AddProductModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import {
   getWatchlist,
   removeProductFromWatchlist,
@@ -39,6 +40,7 @@ export const WatchlistPage: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [removingProductId, setRemovingProductId] = useState<string | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
 
   const handleSortChange = (newSort: SortOption) => {
     setSortBy(newSort);
@@ -76,12 +78,17 @@ export const WatchlistPage: React.FC = () => {
     fetchProducts();
   }, [fetchProducts]);
 
-  const handleRemove = async (id: string) => {
-    if (removingProductId !== null) return;
+  const handleRemove = (id: string) => {
+    if (removingProductId !== null || pendingRemove !== null) return;
 
     const product = products.find((item) => String(item.id) === id);
-    const productName = product?.name ?? 'sản phẩm này';
-    if (!window.confirm(`Bạn có chắc muốn ngừng theo dõi "${productName}"?`)) return;
+    setPendingRemove({ id, name: product?.name ?? 'sản phẩm này' });
+  };
+
+  const confirmRemove = async () => {
+    if (!pendingRemove) return;
+    const { id } = pendingRemove;
+    setPendingRemove(null);
 
     setRemovingProductId(id);
     try {
@@ -315,6 +322,16 @@ export const WatchlistPage: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={(newProd) => setProducts((prev) => [newProd, ...prev])}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingRemove !== null}
+        title="Ngừng theo dõi sản phẩm?"
+        description={`Bạn có chắc muốn ngừng theo dõi "${pendingRemove?.name ?? ''}"?`}
+        confirmLabel="Ngừng theo dõi"
+        danger
+        onConfirm={confirmRemove}
+        onClose={() => setPendingRemove(null)}
       />
     </div>
   );

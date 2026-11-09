@@ -6,6 +6,7 @@ import styles from './ProductDetailPage.module.css';
 import { formatVnd } from '../utils/currency';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
 import { ProductSettingsModal } from '../components/ProductSettingsModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ShopTrustBadge } from '../components/ShopTrustBadge';
 import { computeShopTrustLabel, formatPriceLabel } from '../utils/trustLabel';
 import { getSafeMarketplaceUrl } from '../utils/marketplace';
@@ -25,6 +26,7 @@ export const ProductDetailPage: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [showUnfollowConfirm, setShowUnfollowConfirm] = useState(false);
 
   useEffect(() => {
     let isCurrentRequest = true;
@@ -117,15 +119,13 @@ export const ProductDetailPage: React.FC = () => {
   }
 
   const handleUnfollow = async () => {
-    if (window.confirm('Bạn có chắc chắn muốn ngừng theo dõi sản phẩm này?')) {
-      setIsRemoving(true);
-      try {
-        await removeProductFromWatchlist(product.id);
-        navigate('/watchlist', { replace: true });
-      } catch (err: any) {
-        // The API client displays the failure toast.
-        setIsRemoving(false);
-      }
+    setIsRemoving(true);
+    try {
+      await removeProductFromWatchlist(product.id);
+      navigate('/watchlist', { replace: true });
+    } catch (err: any) {
+      // The API client displays the failure toast.
+      setIsRemoving(false);
     }
   };
 
@@ -275,7 +275,7 @@ export const ProductDetailPage: React.FC = () => {
             </button>
             <button
               className={styles.btnUnfollow}
-              onClick={handleUnfollow}
+              onClick={() => setShowUnfollowConfirm(true)}
               disabled={isRemoving}
               aria-busy={isRemoving}
             >
@@ -369,6 +369,19 @@ export const ProductDetailPage: React.FC = () => {
         onClose={() => setIsSettingsModalOpen(false)}
         product={product}
         onTargetPriceUpdated={(updatedProduct) => setProduct(updatedProduct)}
+      />
+
+      <ConfirmDialog
+        isOpen={showUnfollowConfirm}
+        title="Ngừng theo dõi sản phẩm?"
+        description="Bạn có chắc chắn muốn ngừng theo dõi sản phẩm này?"
+        confirmLabel="Ngừng theo dõi"
+        danger
+        onConfirm={() => {
+          setShowUnfollowConfirm(false);
+          handleUnfollow();
+        }}
+        onClose={() => setShowUnfollowConfirm(false)}
       />
     </div>
   );
