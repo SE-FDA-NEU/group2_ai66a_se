@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import PriceHistoryChart, { formatTooltipDisplay } from '../components/PriceHistoryChart';
 import * as watchlistApi from '../api/watchlistApi';
 
@@ -10,6 +10,26 @@ vi.mock('../api/watchlistApi', async () => {
     ...actual,
     getPriceHistory: vi.fn(),
   };
+});
+
+it('preserves the chart during refresh and ignores an older range response', async () => {
+  const initial = { min_price: 100000, max_price: 100000, tracked_days: 8, data_points: [{ price: 100000, timestamp: '2026-10-18T10:00:00Z', is_gap: false }] };
+  let finishOld!: (value: typeof initial) => void;
+  let finishNew!: (value: typeof initial) => void;
+  vi.mocked(watchlistApi.getPriceHistory).mockReset().mockResolvedValueOnce(initial)
+    .mockReturnValueOnce(new Promise(resolve => { finishOld = resolve; }))
+    .mockReturnValueOnce(new Promise(resolve => { finishNew = resolve; }));
+  render(<PriceHistoryChart productId={10} currency="VND" />);
+  await screen.findByTestId('price-history-chart');
+  const rangeButtons = screen.getAllByRole('button').filter(button => button.hasAttribute('aria-pressed'));
+  fireEvent.click(rangeButtons[2]);
+  expect(screen.getByTestId('price-history-chart')).toBeInTheDocument();
+  expect(screen.getByRole('status')).toHaveTextContent('Đang cập nhật');
+  fireEvent.click(rangeButtons[3]);
+  await act(async () => finishNew({ ...initial, data_points: [{ ...initial.data_points[0], price: 300000 }] }));
+  expect(screen.getByTestId('stat-latest-price')).toHaveTextContent('300.000');
+  await act(async () => finishOld({ ...initial, data_points: [{ ...initial.data_points[0], price: 200000 }] }));
+  expect(screen.getByTestId('stat-latest-price')).toHaveTextContent('300.000');
 });
 
 describe('formatTooltipDisplay helper', () => {
