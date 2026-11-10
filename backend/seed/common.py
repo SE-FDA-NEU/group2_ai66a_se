@@ -300,3 +300,17 @@ def format_display_price(price: Decimal | float | str, currency: str = "VND") ->
     """Format giá kèm quy đổi VNĐ chuẩn UI."""
     dec_price = round(Decimal(str(price)))
     return f"{int(dec_price):,} ₫".replace(",", ".")
+
+
+# Development content is explicitly illustrative, not live marketplace information.
+for _demo in (*DEMO_PRODUCTS, STANDALONE_DEMO_PRODUCT):
+    _demo["details"] = {
+        "product_description": f"Dữ liệu minh họa cho {_demo['name']}. Nội dung phục vụ kiểm thử giao diện, không phải mô tả trực tiếp từ nhà bán hàng.",
+        "about_product": ["Thông tin minh họa để kiểm thử trang chi tiết.", "Xem trang bán hàng để xác nhận thông số và điều kiện mua."],
+        "product_details": {"Brand": _demo.get("brand"), "ASIN": _demo["external_id"].replace("DEMO-", "").replace("SEED-", "")},
+        "product_information": {"Tên sản phẩm": _demo["name"]},
+        "product_photos": [_demo["image_url"]],
+        "main_buy_box": {"seller": _demo.get("shop_name")},
+        "product_availability": "Còn hàng (minh họa)" if _demo.get("in_stock") else "Hết hàng (minh họa)",
+        "currency": _demo["currency"],
+    }
