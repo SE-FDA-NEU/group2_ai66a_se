@@ -32,6 +32,8 @@ class Product(Base):
     price_high = Column(Numeric(12, 2), nullable=False)
     untracked_since = Column(DateTime(timezone=True), nullable=True)
     top_reviews = Column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
+    details = Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
+    details_updated_at = Column(DateTime(timezone=True), nullable=True)
     last_refreshed_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
 
