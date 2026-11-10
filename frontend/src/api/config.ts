@@ -6,10 +6,10 @@ import { showToast } from '../utils/toast';
 const operationMessage = (method?: string, url = ''): string | null => {
   if (!method || ['get', 'head', 'options'].includes(method.toLowerCase()) || url.endsWith('/seen')) return null;
   if (url.includes('/password') || url.includes('/reset-password')) return 'Đã cập nhật mật khẩu.';
-  if (url.includes('/auth/login') || url.includes('/auth/google')) return 'Đăng nhập thành công.';
+  if (url.includes('/auth/login') || url.includes('/auth/google') || url.includes('/otp/verify')) return null;
   if (url.includes('/auth/register')) return 'Đăng ký tài khoản thành công.';
   if (url.includes('/otp/send')) return 'Đã gửi mã xác thực đến email của bạn.';
-  if (url.includes('/otp/verify')) return 'Xác thực mã thành công.';
+
   if (url.includes('/user/me')) return method.toLowerCase() === 'delete' ? 'Đã xóa tài khoản thành công.' : 'Đã cập nhật hồ sơ cá nhân.';
   if (url.includes('/notifications/settings')) return 'Đã lưu cài đặt thông báo.';
   if (url.includes('/target-price')) return 'Đã lưu giá mục tiêu.';
@@ -83,6 +83,9 @@ apiClient.interceptors.response.use(
       showToast('error', detail);
     }
 
+    if (error.config?.url?.includes('/otp/send') && !error.response) {
+      return Promise.reject({ error: { code: 'OTP_DELIVERY_UNCERTAIN' }, detail: 'Chưa xác định được email đã gửi hay chưa. Vui lòng kiểm tra hộp thư và chờ trước khi gửi lại.' });
+    }
     return Promise.reject({
       status: error.response?.status,
       ...errorData,
