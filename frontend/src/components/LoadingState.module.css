@@ -1,0 +1,24 @@
+.auth { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; overflow: auto; padding: 2rem 1.25rem; background: var(--bg-main); color: var(--text-primary); font-family: var(--font-family-main); }
+.authContent { width: min(100%, 32rem); text-align: center; }
+.wordmark { font-size: 1.25rem; font-weight: 700; margin-bottom: 3.5rem; }
+.mark { width: 10rem; margin: 0 auto 2rem; color: var(--primary-color); }
+.mark > span { display: grid; place-items: center; width: 3.25rem; height: 3.25rem; margin: auto auto 1rem; border-radius: var(--radius-md); background: var(--primary-color); color: var(--bg-surface); font-size: 1.75rem; font-weight: 700; }
+.mark svg { width: 100%; overflow: visible; fill: none; stroke-width: 2.5; }
+.track { stroke: var(--border-color); }
+.trace { stroke: currentColor; stroke-dasharray: 45 180; animation: trace 1.8s linear infinite; }
+.auth h1 { font-size: 1.5rem; line-height: 1.4; margin: 0 0 1rem; outline: none; }
+.auth p { font-size: 1rem; line-height: 1.7; margin: .75rem 0; }
+.auth .help { color: var(--text-secondary); font-size: .875rem; }
+.actions { display: flex; justify-content: center; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+.actions button { min-height: 2.75rem; padding: .75rem 1rem; border-radius: var(--radius-sm); border: .0625rem solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); }
+.actions button:first-child { background: var(--primary-color); color: var(--bg-surface); }
+.section { width: 100%; padding: 1.5rem 0; color: var(--text-secondary); }
+.inline { display: inline-flex; align-items: center; justify-content: center; gap: .625rem; line-height: 1.6; }
+.spinner { width: 1rem; height: 1rem; flex-shrink: 0; display: inline-block; border: .125rem solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .9s linear infinite; }
+.skeleton { display: grid; gap: .75rem; margin-top: 1.25rem; }
+.skeleton i { display: block; height: 3rem; border-radius: var(--radius-sm); background: var(--border-light); animation: pulse 1.5s ease-in-out infinite; }
+.skeleton i:last-child { width: 75%; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes trace { to { stroke-dashoffset: -225; } }
+@keyframes pulse { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .trace, .spinner, .skeleton i { animation: none; } .trace { stroke-dasharray: none; } }
