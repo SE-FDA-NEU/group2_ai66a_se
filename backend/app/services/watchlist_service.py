@@ -3,7 +3,8 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ErrorDetail
+from app.core.exceptions import ErrorDetail, CustomAppException
+from app.core.config import settings
 from app.crud import product_crud, notification_crud, tracked_product_crud, user_crud
 from app.helper.amazon_link_parser import parse_amazon_link
 from app.helper.rapidapi_client import rapidapi_client
@@ -15,6 +16,7 @@ from app.schemas.watchlist_schema import (
     PriceHistoryResponse,
     Product,
     ProductCreate,
+    ProductDetail,
     ProductList,
 )
 
@@ -57,20 +59,41 @@ class WatchlistService:
         return ProductList(total=len(products), products=products)
 
     async def get_product(
-        self, db: AsyncSession, user: User, product_id: int
-    ) -> Product:
-        row = await tracked_product_crud.get_with_product_statistics(
-            db, user.id, product_id
-        )
+        self, db: AsyncSession, user: User, product_id: int, refresh: bool = False
+    ) -> ProductDetail:
+        row = await tracked_product_crud.get_with_product_statistics(db, user.id, product_id)
         if row is None:
             raise TRACKING_NOT_FOUND.throw()
-
-        return self._to_summary_response(
-            product=row[0],
-            target_price=row[1],
-            buy_when_good=row[2],
-            distinct_days=row[3],
-            median_price=row[4],
+        product = row[0]
+        details = getattr(product, "details", None) or {}
+        updated_at = getattr(product, "details_updated_at", None)
+        is_demo = product.marketplace == "demo" or str(product.external_id).startswith(("DEMO-", "SEED-"))
+        refreshed_at = updated_at.replace(tzinfo=timezone.utc) if updated_at and updated_at.tzinfo is None else updated_at
+        stale = refreshed_at is None or refreshed_at < datetime.now(timezone.utc) - timedelta(hours=6)
+        refresh_failed = False
+        if refresh or not details or stale:
+            incoming = {}
+            if is_demo:
+                from app.helper.rapidapi_client import _find_demo_product
+                demo = _find_demo_product(product.external_id)
+                incoming = demo.details if demo else {}
+            elif settings.RAPIDAPI_KEY:
+                try:
+                    incoming = await rapidapi_client.fetch_details(product.external_id, country="US")
+                except CustomAppException:
+                    refresh_failed = True
+            if incoming:
+                product_crud.merge_product_details(product, incoming)
+                await db.flush()
+                await db.commit()
+        summary = self._to_summary_response(
+            product=product, target_price=row[1], buy_when_good=row[2],
+            distinct_days=row[3], median_price=row[4],
+        )
+        return ProductDetail(
+            **summary.model_dump(), details=getattr(product, "details", None) or {},
+            details_updated_at=getattr(product, "details_updated_at", None),
+            details_refresh_failed=refresh_failed, is_demo=is_demo,
         )
 
     async def add_product(
