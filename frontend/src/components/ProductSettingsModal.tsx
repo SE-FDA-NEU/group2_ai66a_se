@@ -1,10 +1,10 @@
+import { SectionLoadingState, InlinePending } from './LoadingState';
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Bell, Moon, Settings, Tag, X, Zap } from 'lucide-react';
 import { updateTargetPrice, WatchlistProduct } from '../api/watchlistApi';
 import { formatVnd, parseVndInput } from '../utils/currency';
 import styles from './ProductSettingsModal.module.css';
 import apiClient from '../api/config';
-import { showToast } from '../utils/toast';
 
 interface ProductSettingsModalProps {
   isOpen: boolean;
@@ -35,6 +35,8 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
   const [quietHoursEnabled, setQuietHoursEnabled] = useState<boolean>(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [settingsError, setSettingsError] = useState(false);
+  const [settingsRetry, setSettingsRetry] = useState(0);
   const [quietWindow, setQuietWindow] = useState({ quiet_start: '23:00', quiet_end: '07:00', timezone: 'Asia/Ho_Chi_Minh' });
 
   useEffect(() => {
@@ -51,17 +53,19 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
     if (!isOpen) return;
     let active = true;
     setSettingsLoaded(false);
+    setSettingsError(false);
     void apiClient.get('/notifications/settings').then((response) => {
       const body = response as unknown as { data: { email_enabled: boolean; quiet_hours_enabled: boolean; quiet_start?: string | null; quiet_end?: string | null; timezone?: string } };
+      if (active && !body.data) throw new Error('Missing settings');
       if (active && body.data) {
         setEmailEnabled(body.data.email_enabled);
         setQuietHoursEnabled(body.data.quiet_hours_enabled);
         setQuietWindow({ quiet_start: body.data.quiet_start || '23:00', quiet_end: body.data.quiet_end || '07:00', timezone: body.data.timezone || 'Asia/Ho_Chi_Minh' });
         setSettingsLoaded(true);
       }
-    }).catch(() => { if (active) showToast('error', 'Không thể tải cài đặt thông báo. Vui lòng thử lại.'); });
+    }).catch(() => { if (active) setSettingsError(true); });
     return () => { active = false; };
-  }, [isOpen]);
+  }, [isOpen, settingsRetry]);
 
   if (!isOpen) return null;
 
@@ -92,6 +96,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
 
   const handleSaveTargetPrice = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const trimmed = targetPriceInput.trim();
     if (!trimmed) {
       setValidationError('Vui lòng nhập giá mục tiêu.');
@@ -150,7 +155,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
     Number(targetPriceInput.trim()) > 0;
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose} role="dialog" aria-modal="true">
+    <div className={styles.modalOverlay} onClick={isSubmitting || savingSettings ? undefined : onClose} role="dialog" aria-modal="true">
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className={styles.modalHeader}>
@@ -158,7 +163,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
             <Settings size={20} className={styles.titleIcon} aria-hidden="true" />
             <h2 className={styles.modalTitle}>Cài đặt sản phẩm & Cảnh báo</h2>
           </div>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Đóng cài đặt">
+          <button className={styles.closeBtn} disabled={isSubmitting || savingSettings} onClick={onClose} aria-label="Đóng cài đặt">
             <X size={18} aria-hidden="true" />
           </button>
         </div>
@@ -232,7 +237,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
                 >
                   {isSubmitting ? (
                     <>
-                      <div className={styles.spinner} aria-hidden="true" />
+                      <InlinePending message="Đang lưu giá mục tiêu..." />
                       <span>Đang lưu...</span>
                     </>
                   ) : (
@@ -252,6 +257,8 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
             <p className={styles.sectionDesc}>
               Cấu hình các kênh và khung giờ nhận thông báo khi có biến động giá.
             </p>
+            {!settingsLoaded && !settingsError && <SectionLoadingState message="Đang tải cài đặt thông báo..." skeleton={false} />}
+            {settingsError && <p role="alert">Không thể tải cài đặt thông báo. <button type="button" onClick={() => setSettingsRetry(value => value + 1)}>Thử lại</button></p>}
 
             <div className={styles.settingItem}>
               <div className={styles.settingInfo}>
@@ -261,7 +268,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
               <label className={styles.toggleSwitch}>
                 <input
                   type="checkbox"
-                  checked={emailEnabled}
+                  disabled={!settingsLoaded || savingSettings} checked={emailEnabled}
                   onChange={(e) => setEmailEnabled(e.target.checked)}
                 />
                 <span className={styles.toggleSlider}></span>
@@ -279,7 +286,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
               <label className={styles.toggleSwitch}>
                 <input
                   type="checkbox"
-                  checked={quietHoursEnabled}
+                  disabled={!settingsLoaded || savingSettings} checked={quietHoursEnabled}
                   onChange={(e) => setQuietHoursEnabled(e.target.checked)}
                 />
                 <span className={styles.toggleSlider}></span>
@@ -312,7 +319,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
                 onClick={handleSaveNotifications}
                 disabled={savingSettings || !settingsLoaded}
               >
-                Lưu cấu hình thông báo
+                {savingSettings ? <InlinePending message="Đang lưu cấu hình..." /> : 'Lưu cấu hình thông báo'}
               </button>
             </div>
           </section>
@@ -320,7 +327,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
 
         {/* Footer */}
         <div className={styles.modalFooter}>
-          <button type="button" className={styles.btnCancel} onClick={onClose}>
+          <button type="button" disabled={isSubmitting || savingSettings} className={styles.btnCancel} onClick={onClose}>
             Đóng
           </button>
         </div>
