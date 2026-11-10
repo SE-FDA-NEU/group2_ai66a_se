@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { AlertCircle, Bell, ShoppingCart, TrendingUp } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { sendOTP, loginWithGoogle } from '../api/authApi';
-import { getUserProfile } from '../api/userApi';
+import { AuthPendingScreen } from '../components/LoadingState';
 import { useAuth } from '../context/AuthContext';
 import { GoogleAuthButton } from '../components/GoogleAuthButton';
 import styles from './RegisterPage.module.css';
@@ -116,28 +116,29 @@ const RegisterPage: React.FC = () => {
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGooglePrompting, setIsGooglePrompting] = useState(false);
   const [apiError, setApiError] = useState<string | undefined>();
 
+  const operation = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const handleGoogleSuccess = async (idToken: string) => {
+    if (operation.current) return;
+    operation.current = true;
     setIsGoogleLoading(true);
     setApiError(undefined);
     try {
       const res = await loginWithGoogle(idToken);
-      saveToken(res.access_token);
-      localStorage.setItem("access_token", res.access_token);
-      try {
-        const user = await getUserProfile();
-        if (user?.data?.email) {
-          localStorage.setItem("user_email", user.data.email);
-        }
-      } catch (e) {
-        console.error("Failed to get user profile", e);
-      }
+      if (!mounted.current) return;
+      await saveToken(res.access_token);
+      if (!mounted.current) return;
       navigate('/watchlist', { replace: true });
     } catch (err: any) {
+      if (!mounted.current) return;
       const detail = err?.detail ?? err?.message ?? '';
       setApiError(detail || 'Đăng ký bằng Google thất bại. Vui lòng thử lại.');
     } finally {
+      operation.current = false;
       setIsGoogleLoading(false);
     }
   };
@@ -193,12 +194,15 @@ const RegisterPage: React.FC = () => {
     const hasErrors = Object.values(allErrors).some(Boolean);
     if (hasErrors) return;
 
+    if (operation.current || isGooglePrompting) return;
+    operation.current = true;
     setIsLoading(true);
     setApiError(undefined);
     try {
       await sendOTP(values.email, 'verify-email');
       const storageKey = `otp_cooldown_verify-email_${values.email.trim().toLowerCase()}`;
       sessionStorage.setItem(storageKey, (Date.now() + 60000).toString());
+      if (!mounted.current) return;
       navigate('/otp', {
         state: {
           email: values.email,
@@ -208,9 +212,10 @@ const RegisterPage: React.FC = () => {
         },
       });
     } catch (err: any) {
+      if (!mounted.current) return;
       const detail = err?.error?.message ?? err?.detail ?? err?.message ?? '';
       if (
-        err?.error?.code === 'OTP_COOLDOWN_ACTIVE' ||
+        err?.error?.code === 'OTP_COOLDOWN_ACTIVE' || err?.error?.code === 'OTP_DELIVERY_UNCERTAIN' ||
         detail.toLowerCase().includes('đợi') ||
         detail.toLowerCase().includes('giây')
       ) {
@@ -226,6 +231,7 @@ const RegisterPage: React.FC = () => {
             nickname: values.fullName,
             password: values.password,
             reason: 'verify-email',
+            deliveryUncertain: err?.error?.code === 'OTP_DELIVERY_UNCERTAIN',
           },
         });
         return;
@@ -236,6 +242,7 @@ const RegisterPage: React.FC = () => {
         setApiError(detail || 'Không thể gửi OTP. Vui lòng thử lại.');
       }
     } finally {
+      operation.current = false;
       setIsLoading(false);
     }
   };
@@ -245,7 +252,9 @@ const RegisterPage: React.FC = () => {
 
   // ─── Main render ────────────────────────────────────────────────────────────
   return (
-    <div className={styles.pageContainer}>
+    <>
+      {(isLoading || isGoogleLoading) && <AuthPendingScreen message={isGoogleLoading ? 'Đang xác thực Google...' : 'Đang gửi mã xác minh đến email của bạn...'} />}
+      <div hidden={isLoading || isGoogleLoading} className={styles.pageContainer}>
       {/* Navbar */}
       <nav className={styles.navbar}>
         <div className={styles.navLeft}>
@@ -368,9 +377,8 @@ const RegisterPage: React.FC = () => {
               <button
                 type="submit"
                 className={styles.submitBtn}
-                disabled={isLoading || isGoogleLoading}
+                disabled={isLoading || isGoogleLoading || isGooglePrompting}
               >
-                {isLoading && <span className={styles.spinner} aria-hidden="true" />}
                 {isLoading ? 'Đang gửi OTP...' : 'Đăng ký'}
               </button>
             </form>
@@ -386,9 +394,10 @@ const RegisterPage: React.FC = () => {
             <div className={styles.socialAuthContainer}>
               <GoogleAuthButton
                 mode="register"
+                onInteractionChange={setIsGooglePrompting}
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
-                isLoading={isGoogleLoading}
+                isLoading={isGoogleLoading || isLoading}
               />
             </div>
 
@@ -437,6 +446,7 @@ const RegisterPage: React.FC = () => {
 
       </main>
     </div>
+    </>
   );
 };
 

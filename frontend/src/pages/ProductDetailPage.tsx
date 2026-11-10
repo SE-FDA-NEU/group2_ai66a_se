@@ -1,3 +1,4 @@
+import { SectionLoadingState, InlinePending } from '../components/LoadingState';
 import { ProductGallery, ProductInformation } from '../components/ProductInformation';
 import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Bell, Settings, Star } from 'lucide-react';
@@ -71,10 +72,7 @@ export const ProductDetailPage: React.FC = () => {
   if (isLoading && !product) {
     return (
       <div className={styles.pageContainer}>
-        <div className={styles.loadingContainer} role="status" aria-live="polite">
-          <div className={styles.spinner} aria-hidden="true" />
-          <span>Đang tải thông tin sản phẩm...</span>
-        </div>
+        <SectionLoadingState message="Đang tải thông tin sản phẩm..." />
       </div>
     );
   }
@@ -267,7 +265,7 @@ export const ProductDetailPage: React.FC = () => {
               disabled={isRemoving}
               aria-busy={isRemoving}
             >
-              {isRemoving ? 'Đang ngừng theo dõi...' : 'Ngừng theo dõi (Unfollow)'}
+              {isRemoving ? <InlinePending message="Đang ngừng theo dõi..." /> : 'Ngừng theo dõi (Unfollow)'}
             </button>
             {marketplaceUrl && (
               <a

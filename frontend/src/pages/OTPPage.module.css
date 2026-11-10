@@ -203,17 +203,6 @@
 }
 
 /* Loading spinner */
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #ffffff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
 /* ─── Resend row ──────────────────────────────────────────────────── */
 
 .resendContainer {
@@ -303,10 +292,6 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 @keyframes shake {

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { SectionLoadingState, PendingButton } from '../components/LoadingState';
+import React, { useEffect, useState, useRef } from 'react';
 import { showToast } from '../utils/toast';
 import { useNavigate } from 'react-router-dom';
 import { getUserProfile, updateNickname, changePassword } from '../api/userApi';
@@ -24,6 +25,8 @@ const ProfilePage: React.FC = () => {
 
   // Status states
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const requestId = useRef(0);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -31,13 +34,18 @@ const ProfilePage: React.FC = () => {
 
 
   useEffect(() => {
-    fetchProfile();
+    void fetchProfile();
+    return () => { requestId.current++; };
   }, []);
 
   const fetchProfile = async () => {
+    const version = ++requestId.current;
+    setLoadError(false);
     setIsLoading(true);
     try {
       const res = await getUserProfile();
+      if (version !== requestId.current) return;
+      if (!res.data) throw new Error('Missing profile');
       if (res.data) {
         setEmail(res.data.email);
         setNickname(res.data.nickname);
@@ -45,18 +53,21 @@ const ProfilePage: React.FC = () => {
         setAuthProvider(res.data.auth_provider || 'email');
       }
     } catch (err: any) {
+      if (version !== requestId.current) return;
+      setLoadError(true);
       console.error('Failed to fetch profile', err);
       if (err.status === 401 || err?.error_code === 'UNAUTHORIZED' || err === 'Unauthorized') {
         navigate('/login', { replace: true });
         return;
       }
     } finally {
-      setIsLoading(false);
+      if (version === requestId.current) setIsLoading(false);
     }
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSavingProfile) return;
     if (!editNickname.trim()) {
       showToast('error', 'Tên hiển thị không được để trống.');
       return;
@@ -79,6 +90,7 @@ const ProfilePage: React.FC = () => {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSavingPassword) return;
     if (!oldPassword || !newPassword || !confirmPassword) {
       showToast('error', 'Vui lòng điền đầy đủ các trường.');
       return;
@@ -120,13 +132,12 @@ const ProfilePage: React.FC = () => {
   if (isLoading) {
     return (
       <div className={styles.pageContainer}>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner} aria-hidden="true" />
-          <span>Đang tải thông tin tài khoản...</span>
-        </div>
+        <SectionLoadingState message="Đang tải thông tin tài khoản..." />
       </div>
     );
   }
+
+  if (loadError) return <div className={styles.pageContainer} role="alert"><h1>Không tải được hồ sơ</h1><p>Vui lòng kiểm tra kết nối và thử lại.</p><button className={styles.btnPrimary} onClick={() => void fetchProfile()}>Thử lại</button></div>;
 
   return (
     <div className={styles.pageContainer}>
@@ -157,7 +168,7 @@ const ProfilePage: React.FC = () => {
               id="nickname"
               type="text" 
               className={styles.input} 
-              value={editNickname} 
+              disabled={isSavingProfile} value={editNickname}
               onChange={(e) => setEditNickname(e.target.value)}
               placeholder="Nhập tên hiển thị"
             />
@@ -168,17 +179,17 @@ const ProfilePage: React.FC = () => {
               type="button" 
               className={styles.btnOutline}
               onClick={() => setEditNickname(nickname)}
-              disabled={editNickname === nickname}
+              disabled={isSavingProfile || editNickname === nickname}
             >
               Hủy
             </button>
-            <button 
+            <PendingButton pending={isSavingProfile} pendingLabel="Đang lưu hồ sơ..."
               type="submit" 
               className={styles.btnPrimary}
               disabled={isSavingProfile || editNickname === nickname || !editNickname.trim()}
             >
-              {isSavingProfile ? 'Đang lưu...' : 'Lưu thay đổi'}
-            </button>
+              Lưu thay đổi
+            </PendingButton>
           </div>
         </form>
       </section>
@@ -197,7 +208,7 @@ const ProfilePage: React.FC = () => {
               id="oldPassword"
               type="password" 
               className={styles.input} 
-              value={oldPassword} 
+              disabled={isSavingPassword} value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
               placeholder="Nhập mật khẩu hiện tại"
             />
@@ -209,7 +220,7 @@ const ProfilePage: React.FC = () => {
               id="newPassword"
               type="password" 
               className={styles.input} 
-              value={newPassword} 
+              disabled={isSavingPassword} value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Tối thiểu 8 ký tự"
             />
@@ -221,20 +232,20 @@ const ProfilePage: React.FC = () => {
               id="confirmPassword"
               type="password" 
               className={styles.input} 
-              value={confirmPassword} 
+              disabled={isSavingPassword} value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Nhập lại mật khẩu mới"
             />
           </div>
 
           <div className={styles.buttonRow}>
-            <button 
+            <PendingButton pending={isSavingPassword} pendingLabel="Đang cập nhật mật khẩu..."
               type="submit" 
               className={styles.btnPrimary}
               disabled={isSavingPassword || !oldPassword || !newPassword || !confirmPassword}
             >
-              {isSavingPassword ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
-            </button>
+              Cập nhật mật khẩu
+            </PendingButton>
           </div>
         </form>
       </section>
