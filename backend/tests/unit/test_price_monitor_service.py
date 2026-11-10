@@ -85,6 +85,7 @@ def _product_snapshot():
         currency="VND",
         in_stock=True,
         top_reviews=[],
+        details={},
         price_low=Decimal("189000"),
         price_high=Decimal("230000"),
     )
@@ -121,6 +122,7 @@ def test_good_price_transition_creates_one_notification_and_marks_tracker(monkey
                     currency="VND",
                     in_stock=True,
                     top_reviews=[],
+                    details={},
                 )
             ),
         )
@@ -169,6 +171,7 @@ def test_us02_tc_005_notify_when_price_equals_target(monkeypatch):
                     currency="VND",
                     in_stock=True,
                     top_reviews=[],
+                    details={},
                 )
             ),
         )
@@ -216,6 +219,7 @@ def test_us02_tc_007_no_reached_notification_above_target(monkeypatch):
                     currency="VND",
                     in_stock=True,
                     top_reviews=[],
+                    details={},
                 )
             ),
         )
@@ -263,6 +267,7 @@ def test_us02_tc_006_notify_when_price_rises_above_target(monkeypatch):
                     currency="VND",
                     in_stock=True,
                     top_reviews=[],
+                    details={},
                 )
             ),
         )
@@ -404,6 +409,7 @@ def test_N185_MAIL_04_target_price_notification_state_machine_full_sequence(monk
                         currency="VND",
                         in_stock=True,
                         top_reviews=[],
+                        details={},
                     )
                 ),
             )
