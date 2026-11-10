@@ -69,7 +69,7 @@ export const sendOTP = async (email: string, reason: OTPReason): Promise<ApiResp
   return await apiClient.post<any, ApiResponse<null>>('/otp/send', {
     email,
     reason,
-  });
+  }, { timeout: 25000 });
 };
 
 /**
