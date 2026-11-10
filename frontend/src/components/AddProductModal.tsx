@@ -1,3 +1,4 @@
+import { InlinePending } from './LoadingState';
 import React, { useState } from 'react';
 import { addProductToWatchlist, WatchlistProduct } from '../api/watchlistApi';
 import { formatVnd, parseVndInput } from '../utils/currency';
@@ -77,37 +78,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <h2 className={styles.modalTitle}>Thêm sản phẩm cần theo dõi</h2>
 
-        {isSubmitting && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '10px 14px',
-              marginBottom: '14px',
-              backgroundColor: '#eff6ff',
-              border: '1px solid #bfdbfe',
-              borderRadius: '8px',
-              color: '#1d4ed8',
-              fontSize: '13px',
-              fontWeight: 500,
-            }}
-            role="status"
-          >
-            <div
-              style={{
-                width: 16,
-                height: 16,
-                border: '2px solid #1d4ed8',
-                borderTopColor: 'transparent',
-                borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite',
-                flexShrink: 0,
-              }}
-            />
-            <span>Đang lấy thông tin sản phẩm từ sàn thương mại điện tử... Vui lòng chờ trong giây lát.</span>
-          </div>
-        )}
+        {isSubmitting && <InlinePending message="Đang lấy thông tin sản phẩm từ sàn thương mại điện tử..." />}
 
         {addError && (
           <div className={styles.errorMessage} role="alert" style={{ marginBottom: 14 }}>
