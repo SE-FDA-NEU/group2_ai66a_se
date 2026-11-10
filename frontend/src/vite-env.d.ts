@@ -22,6 +22,7 @@ declare namespace google.accounts.id {
     logo_alignment?: 'left' | 'center';
     width?: string | number;
     locale?: string;
+    click_listener?: () => void;
   }
 
   interface IdConfiguration {
