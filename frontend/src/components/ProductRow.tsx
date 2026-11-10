@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, ShieldCheck, ShieldAlert, Star } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Star, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProductRow.module.css';
 import { formatVnd } from '../utils/currency';
@@ -54,7 +54,14 @@ export const ProductRow: React.FC<ProductRowProps> = ({
   const navigate = useNavigate();
   const marketplaceUrl = getSafeMarketplaceUrl(originalProduct?.url);
 
-  const resolvedShopName = shopName || originalProduct?.shop_name;
+  const productName = name?.trim() || 'Sản phẩm chưa có tên';
+  const resolvedShopName = shopName?.trim() || originalProduct?.shop_name?.trim();
+  const displayedPriceLabel = isFakeDiscount
+    ? 'Khuyến mãi ảo'
+    : formatPriceLabel(notEnoughData ? null : priceLabel?.trim());
+  const priceBadgeStyle = isFakeDiscount
+    ? styles.badgeWarning
+    : displayedPriceLabel === 'Giá tốt' ? styles.badgePrimary : styles.badgeNeutral;
   const trustLabel = computeShopTrustLabel(
     shopRating ?? originalProduct?.shop_rating ?? starRating,
     shopReviewCount ?? originalProduct?.shop_review_count ?? originalProduct?.review_count,
@@ -97,7 +104,8 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
           handleRowClick();
         }
       }}
@@ -106,24 +114,25 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       <div className={styles.productCol}>
         <div className={styles.imageContainer}>
           {image ? (
-            <img src={image} alt={name} className={styles.productImage} loading="lazy" />
+            <img src={image} alt="" className={styles.productImage} loading="lazy" />
           ) : (
             <div className={styles.imagePlaceholder} />
           )}
         </div>
         <div className={styles.productMetaWrapper}>
-          <h3 className={styles.productName} title={name}>{name}</h3>
+          <h3 className={styles.productName}>{productName}</h3>
           {(resolvedShopName || trustLabel) && (
             <div className={styles.shopMetaRow}>
               {resolvedShopName && <span className={styles.shopNameText}>{resolvedShopName}</span>}
-              {trustLabel && <ShopTrustBadge label={trustLabel} size="small" />}
+              {trustLabel && <ShopTrustBadge className={styles.shopTrustBadge} label={trustLabel} size="small" />}
             </div>
           )}
         </div>
       </div>
 
       {/* Cột 2: Giá hiện tại */}
-      <div className={styles.colCenter}>
+      <div className={styles.summaryCell}>
+        <span className={styles.mobileLabel}>Giá hiện tại</span>
         <div className={styles.priceDetails}>
           <span className={styles.currentPrice}>{formatVnd(currentPrice, currency)}</span>
           {targetPrice != null && (
@@ -135,18 +144,20 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       </div>
 
       {/* Cột 3: Khoảng giá */}
-      <div className={styles.colCenter}>
+      <div className={styles.summaryCell}>
+        <span className={styles.mobileLabel}>Khoảng giá</span>
         {priceLow && priceHigh ? (
           <span className={styles.priceRange}>
             {formatVnd(priceLow, currency)} - {formatVnd(priceHigh, currency)}
           </span>
         ) : (
-          <span className={styles.emptyText}>Chưa đủ dữ liệu</span>
+          <span className={styles.emptyText}>Chưa có khoảng giá</span>
         )}
       </div>
 
       {/* Cột 4: Đánh giá */}
-      <div className={styles.colCenter}>
+      <div className={styles.summaryCell}>
+        <span className={styles.mobileLabel}>Đánh giá</span>
         {starRating ? (
           <div className={styles.rating}>
             <Star className={styles.starIcon} size={14} fill="#f59e0b" color="#f59e0b" aria-hidden="true" />
@@ -157,71 +168,39 @@ export const ProductRow: React.FC<ProductRowProps> = ({
         )}
       </div>
 
-      {/* Cột 5: Nhãn giá + Trust */}
-      <div className={styles.badgesCol}>
-        {/* Shop trust label */}
-        {shopTrustLabel === 'Trusted' && (
-          <span
-            className={`${styles.badge} ${styles.badgePrimary}`}
-            data-testid={`trust-label-${id}`}
-          >
-            <ShieldCheck size={11} aria-hidden="true" /> Trusted
-          </span>
-        )}
-        {shopTrustLabel === 'Risky: few ratings' && (
-          <span
-            className={`${styles.badge} ${styles.badgeWarning}`}
-            data-testid={`trust-label-${id}`}
-          >
-            <ShieldAlert size={11} aria-hidden="true" /> Risky: few ratings
-          </span>
-        )}
-        {shopTrustLabel === 'Needs caution' && (
-          <span
-            className={`${styles.badge} ${styles.badgeNeutral}`}
-            data-testid={`trust-label-${id}`}
-          >
-            <AlertTriangle size={11} aria-hidden="true" /> Needs caution
-          </span>
-        )}
-        {/* Price label badges */}
-        {notEnoughData && (
-          <span className={`${styles.badge} ${styles.badgeWarning}`}>
-            <AlertTriangle size={13} aria-hidden="true" /> {formatPriceLabel(priceLabel)}
-          </span>
-        )}
-        {!notEnoughData && priceLabel && (
-          <span className={`${styles.badge} ${priceLabel === 'Good price' || priceLabel === 'Giá tốt' ? styles.badgePrimary : styles.badgeNeutral}`}>
-            {formatPriceLabel(priceLabel)}
-          </span>
-        )}
-        {isFakeDiscount && (
-          <span className={`${styles.badge} ${styles.badgeWarning}`}><AlertTriangle size={13} aria-hidden="true" /> Khuyến mãi ảo</span>
-        )}
+      {/* Cột 5: Nhãn giá */}
+      <div className={styles.summaryCell}>
+        <span className={styles.mobileLabel}>Nhãn giá</span>
+        <span className={`${styles.badge} ${priceBadgeStyle}`}>
+          {isFakeDiscount && <AlertTriangle size={13} aria-hidden="true" />}
+          <span>{displayedPriceLabel}</span>
+        </span>
       </div>
 
       {/* Cột 6: Thao tác */}
       <div className={styles.actionCol}>
         {marketplaceUrl && (
           <a
-            className={styles.marketplaceLink}
+            className={`${styles.actionButton} ${styles.marketplaceLink}`}
             href={marketplaceUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
           >
-            Xem trên marketplace
+            <ExternalLink size={14} aria-hidden="true" />
+            Xem nơi bán
           </a>
         )}
         <button
-          className={styles.removeButton}
+          type="button"
+          className={`${styles.actionButton} ${styles.removeButton}`}
           onClick={handleRemoveClick}
           disabled={isRemoving}
           aria-busy={isRemoving}
           aria-label="Ngừng theo dõi sản phẩm"
           title="Ngừng theo dõi sản phẩm"
         >
+          <Trash2 size={14} aria-hidden="true" />
           {isRemoving ? 'Đang xử lý...' : 'Ngừng theo dõi'}
         </button>
       </div>

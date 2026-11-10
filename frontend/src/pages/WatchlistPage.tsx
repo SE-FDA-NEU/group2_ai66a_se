@@ -82,7 +82,7 @@ export const WatchlistPage: React.FC = () => {
     if (removingProductId !== null || pendingRemove !== null) return;
 
     const product = products.find((item) => String(item.id) === id);
-    setPendingRemove({ id, name: product?.name ?? 'sản phẩm này' });
+    setPendingRemove({ id, name: product?.name?.trim() || 'sản phẩm này' });
   };
 
   const confirmRemove = async () => {
@@ -104,7 +104,7 @@ export const WatchlistPage: React.FC = () => {
 
   const displayedProducts = useMemo(() => {
     let result = products.filter((p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase())
+      (p.name ?? '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     if (sortBy === 'price_asc') {
@@ -230,7 +230,7 @@ export const WatchlistPage: React.FC = () => {
           <div>Khoảng giá</div>
           <div>Đánh giá</div>
           <div>Nhãn giá</div>
-          <div style={{ textAlign: 'center' }}>Thao tác</div>
+          <div>Thao tác</div>
         </div>
 
         <div className={combinedStyles.tableBody}>
