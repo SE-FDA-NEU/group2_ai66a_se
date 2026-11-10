@@ -1,3 +1,4 @@
+import { InlinePending } from './LoadingState';
 import { useState } from 'react';
 import { DetailedProduct, ProductValue, WatchlistProduct } from '../api/watchlistApi';
 import { getSafeMarketplaceUrl } from '../utils/marketplace';
@@ -74,7 +75,7 @@ export function ProductInformation({ detail, loading, error, onRefresh }: Inform
       <div><h2 id="product-information-title">Chi tiết sản phẩm</h2>{updatedAt && !Number.isNaN(updatedAt.getTime()) && <p className={styles.note}>Cập nhật: {updatedAt.toLocaleString('vi-VN')}</p>}</div>
       <button type="button" disabled={loading} onClick={onRefresh}>{loading ? 'Đang tải...' : 'Cập nhật thông tin'}</button>
     </header>
-    {loading && <p role="status" className={styles.note}>Đang tải thông tin chi tiết...</p>}
+    {loading && <InlinePending message="Đang tải thông tin chi tiết..." />}
     {(error || detail?.details_refresh_failed) && <div role="alert" className={styles.error}>Không thể cập nhật thông tin chi tiết. Thông tin đã lưu vẫn được hiển thị. Vui lòng thử cập nhật lại.</div>}
     {detail?.is_demo && <p className={styles.notice}>Dữ liệu minh họa dùng cho phát triển, không phải thông tin trực tiếp từ nhà bán hàng.</p>}
     {!loading && !error && Object.keys(data).length === 0 && <p className={styles.note}>Chưa có thông tin chi tiết từ nhà bán hàng. Bạn có thể thử cập nhật hoặc xem trang bán hàng.</p>}
