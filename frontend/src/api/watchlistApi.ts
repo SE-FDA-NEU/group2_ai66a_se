@@ -39,6 +39,12 @@ export interface CustomerReview {
   author?: string | null;
   reviewer?: string | null;
   date?: string | null;
+  verified_purchase?: boolean;
+  variant?: string | null;
+  helpful_votes?: number | null;
+  images?: string[];
+  videos?: (string | { url?: string; video_url?: string })[];
+  link?: string | null;
   created_at?: string | null;
 }
 
@@ -144,3 +150,13 @@ export const updateTargetPrice = async (
   return res.data;
 };
 
+
+export interface ReviewPage {
+  reviews: CustomerReview[];
+  has_more: boolean;
+  source: 'live' | 'cached';
+}
+export const getProductReviews = async (productId: number, page: number, stars?: number): Promise<ReviewPage> => {
+  const res = await apiClient.get<never, { data: ReviewPage }>(`/watchlist/${productId}/reviews`, { params: { page, stars } });
+  return res.data;
+};
