@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { SectionLoadingState, InlinePending } from './LoadingState';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -96,7 +97,10 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const requestId = useRef(0);
+  useEffect(() => { setData(null); }, [productId]);
   const fetchData = useCallback(async () => {
+    const version = ++requestId.current;
     setIsLoading(true);
     setError(null);
     try {
@@ -104,17 +108,19 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
         hours !== undefined
           ? await getPriceHistory(productId, days, 30, hours)
           : await getPriceHistory(productId, days);
-      setData(response);
+      if (version === requestId.current) setData(response);
     } catch (err: any) {
+      if (version !== requestId.current) return;
       console.error('Failed to fetch price history', err);
       setError(err?.detail || err?.message || 'Không thể tải lịch sử giá');
     } finally {
-      setIsLoading(false);
+      if (version === requestId.current) setIsLoading(false);
     }
   }, [productId, days, hours]);
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
+    return () => { requestId.current++; };
   }, [fetchData]);
 
   const minPrice = useMemo(() => {
@@ -320,19 +326,18 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
   };
 
   // 1. Trạng thái Đang tải (Loading)
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <div className={styles.chartCard} data-testid="chart-loading">
         <div className={styles.stateContainer}>
-          <div className={styles.spinner} aria-hidden="true" />
-          <span>Đang tải lịch sử giá...</span>
+          <SectionLoadingState message="Đang tải lịch sử giá..." />
         </div>
       </div>
     );
   }
 
   // 2. Trạng thái Lỗi (Error)
-  if (error) {
+  if (error && !data) {
     return (
       <div className={styles.chartCard} data-testid="chart-error">
         <div className={styles.stateContainer}>
@@ -350,6 +355,8 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
   if (!chartData || chartData.length === 0) {
     return (
       <div className={styles.chartCard} data-testid="chart-empty">
+        {isLoading && <InlinePending message="Đang cập nhật lịch sử giá..." />}
+        {error && <p role="alert">{error} <button type="button" onClick={() => void fetchData()}>Thử lại</button></p>}
         <div className={styles.header}>
           <h3 className={styles.chartTitle}>
             <TrendingUp size={18} aria-hidden="true" /> Lịch sử biến động giá
@@ -385,6 +392,8 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
             <TrendingUp size={18} aria-hidden="true" /> Lịch sử biến động giá
           </h3>
         </div>
+        {isLoading && <InlinePending message="Đang cập nhật lịch sử giá..." />}
+        {error && <p role="alert">{error} <button type="button" onClick={() => void fetchData()}>Thử lại</button></p>}
         <div className={styles.rangeButtons} role="group" aria-label="Khoảng thời gian">
           {RANGE_OPTIONS.map((opt) => (
             <button
@@ -466,24 +475,6 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
 
       {/* Biểu đồ Recharts */}
       <div className={styles.chartWrapper}>
-        {isLoading ? (
-          <div className={styles.emptyContainer} data-testid="chart-loading">
-            <div className={styles.spinner} aria-hidden="true" />
-            <span>Đang tải dữ liệu biểu đồ...</span>
-          </div>
-        ) : error ? (
-          <div className={styles.emptyContainer} data-testid="chart-error">
-            <span className={styles.errorText}>{error}</span>
-            <button type="button" className={styles.btnRetry} onClick={fetchData}>
-              Thử lại
-            </button>
-          </div>
-        ) : chartData.length === 0 ? (
-          <div className={styles.emptyContainer} data-testid="chart-empty">
-            <span className={styles.emptyTitle}>Chưa có dữ liệu biến động giá</span>
-            <span>Hệ thống sẽ cập nhật tự động khi có quan sát giá mới.</span>
-          </div>
-        ) : (
           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
           <LineChart data={chartData} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" vertical={false} />
@@ -580,7 +571,6 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
             />
           </LineChart>
         </ResponsiveContainer>
-        )}
       </div>
 
       {/* Chú thích biểu đồ (Legend) */}
