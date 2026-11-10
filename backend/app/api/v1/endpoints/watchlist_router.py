@@ -187,3 +187,27 @@ async def update_target_price(
     )
     return ApiResponse(message="Đã cập nhật giá mục tiêu thành công.", data=product)
 
+
+
+@router.get("/{product_id}/reviews", response_model=ApiResponse[dict])
+async def get_product_reviews(
+    product_id: int,
+    page: int = Query(default=1, ge=1),
+    stars: int | None = Query(default=None, ge=1, le=5),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from app.crud import product_crud
+    from app.core.config import settings
+    from app.helper.rapidapi_client import rapidapi_client
+    from app.helper.review_normalizer import cached_review_page
+    if await tracked_product_crud.get(db, current_user.id, product_id) is None:
+        raise TRACKING_NOT_FOUND.throw()
+    product = await product_crud.get_by_id(db, product_id)
+    if product is None:
+        raise TRACKING_NOT_FOUND.throw()
+    if not settings.RAPIDAPI_KEY or product.external_id.startswith(("DEMO-", "SEED-")):
+        result = cached_review_page(product.top_reviews or [], page, stars)
+    else:
+        result = await rapidapi_client.fetch_reviews(product.external_id, page, stars)
+    return ApiResponse(message="Reviews loaded successfully.", data=result)
