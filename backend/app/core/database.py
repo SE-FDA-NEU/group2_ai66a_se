@@ -12,8 +12,8 @@ engine = create_async_engine(
     echo=False,
     future=True,
 
-    pool_size=20,          # Giữ tối đa 10 kết nối luôn mở sẵn trong bộ nhớ để dùng ngay
-    max_overflow=10,       # Khi tải tăng đột biến, cho phép mở thêm tối đa 10 kết nối tạm thời
+    pool_size=5,           # Keep the persistent connection count modest for managed databases.
+    max_overflow=5,        # Allow a small temporary burst without exhausting provider limits.
     pool_timeout=30,       # Nếu pool bị đầy, request phải chờ tối đa 30 giây trước khi báo lỗi timeout
     pool_recycle=1800,     # Tự động đóng và giải phóng kết nối sau 30 phút để tránh lỗi Postgres ngắt kết nối idle (treo mạng)
     pool_pre_ping=True,    # Cơ chế "bắt tay trước" - tự động kiểm tra kết nối còn sống không trước khi giao cho app

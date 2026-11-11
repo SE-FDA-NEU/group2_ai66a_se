@@ -100,6 +100,15 @@ Create a Render **Web Service**, connect the GitHub repository and production br
 
 The container entrypoint waits for the configured database, applies `alembic upgrade head`, and then starts Uvicorn. Uvicorn binds to `0.0.0.0` and uses Render's runtime `PORT` value; when running locally without `PORT`, it defaults to `8000`. The production command does not enable auto-reload.
 
+### Connect the backend to Supabase Postgres
+
+1. In the Supabase Dashboard, open the project and select **Connect**.
+2. Choose **Session pooler** and copy its connection string. This mode is suitable for a persistent backend that needs IPv4 connectivity.
+3. In Render, add the connection string as the backend's `DATABASE_URL` environment variable. Preserve the host, port, username, and database name supplied by Supabase; encode reserved characters in the password. The backend accepts the standard `postgresql://` URL from Supabase and adapts it for SQLAlchemy/asyncpg. Add `?sslmode=require` if the copied URL does not already require TLS.
+4. When `DATABASE_URL` is set, local `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, and `HOST_PORT_DB` values are not needed by the backend.
+
+At startup, the entrypoint verifies database connectivity without printing connection exceptions, then runs `alembic upgrade head`. The application pool is limited to five persistent plus five overflow connections per backend instance; account for this per-instance maximum when choosing the Supabase database plan and scaling the Render service. Never put the connection URL in source control or client-side variables.
+
 Lệnh này sẽ tiến hành build Docker images cho cả Backend và Frontend, sau đó khởi động 4 dịch vụ độc lập trong các container:
 - **db-postgre** (PostgreSQL 15): Cổng `5432` — Lưu trữ cơ sở dữ liệu quan hệ.
 - **redis** (Redis 7): Cổng `6379` — Quản lý phiên OTP, hàng đợi thông báo giá và rate limiting.

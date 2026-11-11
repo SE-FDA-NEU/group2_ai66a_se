@@ -13,8 +13,9 @@ async def wait_db() -> None:
             print("-> Ket noi Database thanh cong!")
             await engine.dispose()
             return
-        except Exception as e:
-            print(f"-> Cho Database san sang (lan {attempt}/30): {e}")
+        except Exception:
+            # Avoid printing connection exceptions, which can contain database details.
+            print(f"-> Cho Database san sang (lan {attempt}/30)")
             await asyncio.sleep(2)
     print("-> Loi: Het thoi gian cho Database sau 30 lan thu (60s)!")
     sys.exit(1)

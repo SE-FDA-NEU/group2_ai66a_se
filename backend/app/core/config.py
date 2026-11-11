@@ -19,10 +19,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
     # 3. Cấu hình kết nối Cơ sở dữ liệu
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
-    HOST_PORT_DB: str
+    POSTGRES_USER: Optional[str] = None
+    POSTGRES_PASSWORD: Optional[str] = None
+    POSTGRES_DB: Optional[str] = None
+    HOST_PORT_DB: Optional[str] = None
     
     # DATABASE_URL do Docker truyền vào, nếu không có sẽ tự ghép
     DATABASE_URL: Optional[str] = None
@@ -68,7 +68,25 @@ class Settings(BaseSettings):
     @property
     def get_database_url(self) -> str:
         if self.DATABASE_URL:
-            return self.DATABASE_URL
+            database_url = self.DATABASE_URL.strip()
+            if database_url.startswith("postgres://"):
+                database_url = "postgresql+asyncpg://" + database_url[len("postgres://"):]
+            elif database_url.startswith("postgresql://"):
+                database_url = "postgresql+asyncpg://" + database_url[len("postgresql://"):]
+            elif not database_url.startswith("postgresql+asyncpg://"):
+                raise ValueError("DATABASE_URL must use a PostgreSQL URL scheme.")
+
+            # asyncpg expects `ssl`, while some providers expose libpq's `sslmode`.
+            from sqlalchemy.engine import make_url
+            url = make_url(database_url)
+            query = dict(url.query)
+            sslmode = query.pop("sslmode", None)
+            if sslmode and "ssl" not in query:
+                query["ssl"] = "require" if sslmode in {"require", "verify-ca", "verify-full"} else "prefer"
+            return url.set(query=query).render_as_string(hide_password=False)
+
+        if not all((self.POSTGRES_USER, self.POSTGRES_PASSWORD, self.POSTGRES_DB, self.HOST_PORT_DB)):
+            raise ValueError("Set DATABASE_URL or provide all local PostgreSQL settings.")
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@localhost:{self.HOST_PORT_DB}/{self.POSTGRES_DB}"
 
     # Chỉ định cấu hình để Pydantic đọc file .env
