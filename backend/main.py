@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 from admin import create_admin_user
 from contextlib import asynccontextmanager
@@ -57,6 +58,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title=settings.PROJECT_NAME,
               version="1.0.0",
               lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 app.add_exception_handler(CustomAppException, global_app_exception_handler)

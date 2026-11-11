@@ -34,6 +34,8 @@ class Settings(BaseSettings):
 
     # 5. Cấu hình Google Auth
     GOOGLE_CLIENT_ID: str
+    # Comma-separated browser origins allowed to call this API.
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     # RapidAPI product lookup adapter (optional in local/test environments)
     RAPIDAPI_KEY: Optional[str] = None
@@ -51,6 +53,10 @@ class Settings(BaseSettings):
     OTP_RESEND_COOLDOWN_SECONDS: int = 60
     OTP_MAX_ATTEMPTS: int = 5
     OTP_MAX_REQUESTS_PER_HOUR: int = 5
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [origin.strip().rstrip("/") for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
     @property
     def get_redis_url(self) -> str:
