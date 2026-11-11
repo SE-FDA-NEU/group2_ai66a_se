@@ -1,5 +1,6 @@
 import { SectionLoadingState, InlinePending } from '../components/LoadingState';
 import { ProductGallery, ProductInformation } from '../components/ProductInformation';
+import { ProductReviews } from '../components/ProductReviews';
 import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Bell, Settings, Star } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -127,7 +128,6 @@ export const ProductDetailPage: React.FC = () => {
     product.shop_trust_label
   );
 
-  const recentReviews = (product.reviews || product.top_reviews || []).slice(0, 5);
   const marketplaceUrl = getSafeMarketplaceUrl(product.url);
 
   return (
@@ -291,65 +291,7 @@ export const ProductDetailPage: React.FC = () => {
         />
       </div>
 
-      {/* Customer Reviews Section (5 most recent reviews) */}
-      <div className={styles.reviewsSection} data-testid="customer-reviews-section">
-        <div className={styles.reviewsHeader}>
-          <h2 className={styles.reviewsSectionTitle}>Đánh giá từ khách hàng</h2>
-          {product.product_rating && (
-            <div className={styles.reviewsSummary} data-testid="reviews-summary">
-              <div className={styles.avgRatingBox}>
-                <Star size={18} fill="currentColor" className={styles.starIconYellow} aria-hidden="true" />
-                <span className={styles.avgRatingScore} data-testid="reviews-average-rating">
-                  {Number(product.product_rating).toFixed(1)}
-                </span>
-                <span className={styles.avgRatingScale}>/ 5.0</span>
-              </div>
-              <span className={styles.totalRatingsLabel} data-testid="reviews-total-ratings">
-                ({(product.review_count ?? 0).toLocaleString('en-US')} lượt đánh giá)
-              </span>
-            </div>
-          )}
-        </div>
-
-        {recentReviews.length > 0 ? (
-          <div className={styles.reviewsList} data-testid="reviews-list">
-            {recentReviews.map((review, idx) => {
-              const reviewRating = review.rating != null ? parseFloat(String(review.rating)) : null;
-              const reviewerName = review.author || review.reviewer || 'Khách hàng';
-              const reviewText = review.text || review.comment || review.body || review.content;
-              const reviewDate = review.date || review.created_at;
-
-              return (
-                <div key={review.id || idx} className={styles.reviewCard} data-testid="review-card">
-                  <div className={styles.reviewCardHeader}>
-                    <div className={styles.reviewerMeta}>
-                      <div className={styles.reviewerAvatar} aria-hidden="true">
-                        {reviewerName.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className={styles.reviewerName}>{reviewerName}</div>
-                        {reviewDate && <div className={styles.reviewDate}>{reviewDate}</div>}
-                      </div>
-                    </div>
-                    {reviewRating !== null && (
-                      <div className={styles.reviewRatingStars} data-testid="review-rating" aria-label={`${reviewRating} trên 5 sao`}>
-                        <Star size={14} fill="currentColor" className={styles.starIconYellow} aria-hidden="true" />
-                        <span>{reviewRating.toFixed(1)}</span>
-                      </div>
-                    )}
-                  </div>
-                  {review.title && <h3 className={styles.reviewTitle}>{review.title}</h3>}
-                  {reviewText && <p className={styles.reviewBody}>{reviewText}</p>}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className={styles.emptyReviews} data-testid="empty-reviews">
-            <p>Chưa có đánh giá nào từ khách hàng cho sản phẩm này.</p>
-          </div>
-        )}
-      </div>
+      <ProductReviews key={product.id} product={product} />
 
       {/* Pop-up Modal Cài đặt theo dõi sản phẩm (US02) */}
       <ProductSettingsModal

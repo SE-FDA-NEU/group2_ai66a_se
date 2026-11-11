@@ -206,10 +206,6 @@
   letter-spacing: 0.05em;
 }
 
-.headerActionCol {
-  text-align: center;
-}
-
 .tableBody {
   display: flex;
   flex-direction: column;
@@ -260,7 +256,12 @@
 
 @media (max-width: 1024px) {
   .tableHeader {
-    grid-template-columns: var(--watchlist-grid-columns);
+    display: none;
+  }
+
+  .toolbarRight,
+  .searchContainer {
+    min-width: 0;
   }
 }
 @media (max-width: 768px) {
@@ -295,9 +296,6 @@
     width: 100%;
   }
 
-  .tableHeader {
-    display: none;
-  }
 }
 
 /* ─── Modal Overlay and Content ───────────────────────────────────────────── */

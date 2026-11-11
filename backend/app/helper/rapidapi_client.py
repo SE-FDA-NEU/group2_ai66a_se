@@ -150,6 +150,27 @@ class RapidAPIClient:
             raise MARKETPLACE_UNAVAILABLE.throw()
         try:
             return extract_details(await self._request_product(asin, country))
+    async def fetch_reviews(self, asin: str, page: int, stars: int | None):
+        from app.helper.review_normalizer import normalize_review
+        if not settings.RAPIDAPI_KEY:
+            raise MARKETPLACE_UNAVAILABLE.throw()
+        params = {"asin": asin, "country": "US", "page": str(page), "sort_by": "MOST_RECENT"}
+        if stars is not None:
+            params["star_rating"] = f"{stars}_STARS"
+        try:
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                response = await client.get(
+                    settings.RAPIDAPI_PRODUCT_ENDPOINT.rsplit("/", 1)[0] + "/product-reviews",
+                    params=params,
+                    headers={"X-RapidAPI-Key": settings.RAPIDAPI_KEY, "X-RapidAPI-Host": settings.RAPIDAPI_HOST},
+                )
+                response.raise_for_status()
+                payload = response.json()
+                data = payload.get("data")
+                if payload.get("status") == "ERROR" or not isinstance(data, dict) or not isinstance(data.get("reviews"), list):
+                    raise ValueError("Invalid reviews response")
+                reviews = [normalize_review(r) for r in data["reviews"] if isinstance(r, dict)]
+                return {"reviews": reviews, "has_more": len(reviews) >= 10, "source": "live"}
         except (httpx.HTTPError, ValueError) as exc:
             raise MARKETPLACE_UPSTREAM_ERROR.throw() from exc
 

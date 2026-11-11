@@ -10,6 +10,7 @@ import * as watchlistApi from '../api/watchlistApi';
 vi.mock('../api/watchlistApi', () => ({
   getWatchlist: vi.fn(),
   getProductDetail: vi.fn().mockRejectedValue(new Error("Offline fixture")),
+  getProductReviews: vi.fn().mockRejectedValue(new Error("offline fixture")),
   removeProductFromWatchlist: vi.fn(),
 }));
 
@@ -193,7 +194,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       expect(screen.getByTestId('reviews-total-ratings')).toHaveTextContent('1,200 lượt đánh giá');
     });
 
-    it('renders the list of 5 most recent customer reviews and limits to 5', () => {
+    it('renders all six cached reviews within the initial ten', () => {
       const sampleReviews = [
         { id: 1, author: 'Alice', rating: 5, title: 'Amazing audio', comment: 'Best noise cancellation ever!' },
         { id: 2, author: 'Bob', rating: 4, title: 'Good value', comment: 'Comfortable to wear all day.' },
@@ -217,7 +218,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       );
 
       const reviewCards = screen.getAllByTestId('review-card');
-      expect(reviewCards).toHaveLength(5);
+      expect(reviewCards).toHaveLength(6);
 
       expect(screen.getByText('Alice')).toBeInTheDocument();
       expect(screen.getByText('Amazing audio')).toBeInTheDocument();
@@ -226,12 +227,13 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       expect(screen.getByText('Eve')).toBeInTheDocument();
       expect(screen.getByText('Perfect purchase')).toBeInTheDocument();
 
-      // The 6th review should not be rendered
-      expect(screen.queryByText('Frank')).not.toBeInTheDocument();
-      expect(screen.queryByText('6th review')).not.toBeInTheDocument();
+      // The initial batch now includes the sixth review.
+      expect(screen.getByText('Frank')).toBeInTheDocument();
+      expect(screen.getByText('6th review')).toBeInTheDocument();
     });
 
-    it('renders empty message when no customer reviews are available', () => {
+    it('renders empty message when no customer reviews are available', async () => {
+      vi.mocked(watchlistApi.getProductReviews).mockResolvedValueOnce({ reviews: [], has_more: false, source: 'cached' });
       const product = {
         ...baseProduct,
         reviews: [],
@@ -246,12 +248,39 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
         </MemoryRouter>
       );
 
-      expect(screen.getByTestId('empty-reviews')).toHaveTextContent('Chưa có đánh giá nào từ khách hàng');
+      expect(await screen.findByTestId('empty-reviews')).toHaveTextContent('Chưa có đánh giá nào từ khách hàng');
     });
   });
 
   describe('/watchlist Page UI (ProductRow)', () => {
-    it('displays shop trust label "Trusted" on tracked product row for a trusted shop', () => {
+    it.each([
+      ['Good price', false, 'Giá tốt'],
+      [' Normal ', false, 'Bình thường'],
+      ['Expensive - wait', false, 'Giá cao - nên chờ'],
+      ['Not enough data to assess', false, 'Chưa đủ dữ liệu đánh giá'],
+      [undefined, false, 'Chưa đủ dữ liệu đánh giá'],
+      ['Good price', true, 'Chưa đủ dữ liệu đánh giá'],
+    ])('displays a single price assessment for %s with insufficient data %s', (priceLabel, notEnoughData, expected) => {
+      render(
+        <MemoryRouter>
+          <ProductRow
+            id="1"
+            name="  "
+            currentPrice={450000}
+            currency="VND"
+            priceLabel={priceLabel}
+            notEnoughData={notEnoughData}
+            onRemove={vi.fn()}
+          />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByRole('heading', { name: 'Sản phẩm chưa có tên' })).toBeInTheDocument();
+      expect(screen.getByText(expected)).toBeInTheDocument();
+      expect(screen.queryByText('Khuyến mãi ảo')).not.toBeInTheDocument();
+    });
+
+    it('shows one shop trust badge and prioritizes the fake discount as the only price label', () => {
       const onRemove = vi.fn();
       render(
         <MemoryRouter>
@@ -262,15 +291,19 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
             currency="VND"
             shopName="Logitech Store"
             shopTrustLabel="Trusted"
+            priceLabel="Expensive - wait"
+            isFakeDiscount
             onRemove={onRemove}
           />
         </MemoryRouter>
       );
 
-      const trustBadges = screen.getAllByTestId('shop-trust-badge');
-      expect(trustBadges.length).toBeGreaterThanOrEqual(1);
-      expect(trustBadges[0]).toHaveTextContent('Đáng tin cậy');
-      expect(trustBadges[0]).toHaveAttribute('data-trust-status', 'trusted');
+      const trustBadge = screen.getByTestId('shop-trust-badge');
+      expect(trustBadge).toHaveTextContent('Đáng tin cậy');
+      expect(trustBadge).toHaveAttribute('data-trust-status', 'trusted');
+      expect(screen.queryByText('Trusted')).not.toBeInTheDocument();
+      expect(screen.getByText('Khuyến mãi ảo')).toBeInTheDocument();
+      expect(screen.queryByText('Giá cao - nên chờ')).not.toBeInTheDocument();
     });
 
     it('computes and displays "Risky: few ratings" from shop rating and review count on product row', () => {
