@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     DATABASE_URL: Optional[str] = None
 
     # 4. Cấu hình kết nối Redis
-    HOST_PORT_REDIS: str
+    HOST_PORT_REDIS: Optional[str] = None
     REDIS_PASSWORD: Optional[str] = None
     REDIS_URL: Optional[str] = None
 
@@ -61,7 +61,12 @@ class Settings(BaseSettings):
     @property
     def get_redis_url(self) -> str:
         if self.REDIS_URL:
-            return self.REDIS_URL
+            redis_url = self.REDIS_URL.strip()
+            if not redis_url.startswith(("redis://", "rediss://")):
+                raise ValueError("REDIS_URL must use redis:// or rediss://.")
+            return redis_url
+        if not self.HOST_PORT_REDIS:
+            raise ValueError("Set REDIS_URL or HOST_PORT_REDIS for local Redis.")
         password_part = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
         return f"redis://{password_part}localhost:{self.HOST_PORT_REDIS}/0"
 

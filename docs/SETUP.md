@@ -109,6 +109,15 @@ The container entrypoint waits for the configured database, applies `alembic upg
 
 At startup, the entrypoint verifies database connectivity without printing connection exceptions, then runs `alembic upgrade head`. The application pool is limited to five persistent plus five overflow connections per backend instance; account for this per-instance maximum when choosing the Supabase database plan and scaling the Render service. Never put the connection URL in source control or client-side variables.
 
+### Configure Render Key Value for Redis
+
+1. In Render, create a **Key Value** instance in the same region as the backend service.
+2. Open the Key Value service's **Connect** menu and copy its **Internal URL**.
+3. Add that value to the backend service as `REDIS_URL`. Render internal URLs may use `redis://`; externally exposed Redis URLs may use `rediss://` with TLS. The Redis client accepts both schemes through `REDIS_URL`.
+4. Redeploy the backend and confirm its logs report a successful Redis connection. Do not print or commit the URL because it can contain credentials.
+
+If Redis is unavailable during startup, the backend logs a generic connection error and remains up; endpoints requiring Redis respond with HTTP 503 until the dependency is available. When `REDIS_URL` is set, `HOST_PORT_REDIS` is not required.
+
 Lệnh này sẽ tiến hành build Docker images cho cả Backend và Frontend, sau đó khởi động 4 dịch vụ độc lập trong các container:
 - **db-postgre** (PostgreSQL 15): Cổng `5432` — Lưu trữ cơ sở dữ liệu quan hệ.
 - **redis** (Redis 7): Cổng `6379` — Quản lý phiên OTP, hàng đợi thông báo giá và rate limiting.

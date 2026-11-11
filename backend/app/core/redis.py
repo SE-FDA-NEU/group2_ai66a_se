@@ -1,5 +1,6 @@
 import redis.asyncio as aioredis
 from typing import Optional
+from fastapi import HTTPException, status
 from app.core.config import settings
 from app.core.logger import logger
 
@@ -21,10 +22,11 @@ class RedisClient:
             # Ping thử kết nối để đảm bảo hoạt động
             await self.redis.ping()
             logger.info("Kết nối tới Redis thành công!")
-        except Exception as e:
-            logger.error(f"Lỗi khởi tạo kết nối Redis: {str(e)}")
+        except Exception:
+            # Connection exceptions may contain a credential-bearing Redis URL.
+            logger.error("Redis connection failed; check REDIS_URL and service availability.")
             self.redis = None
-            raise e
+            raise
 
     async def close(self) -> None:
         """
@@ -34,8 +36,8 @@ class RedisClient:
             try:
                 await self.redis.aclose()
                 logger.info("Đóng kết nối Redis thành công!")
-            except Exception as e:
-                logger.error(f"Lỗi đóng kết nối Redis: {str(e)}")
+            except Exception:
+                logger.error("Redis connection cleanup failed.")
             finally:
                 self.redis = None
 
@@ -47,5 +49,8 @@ async def get_redis() -> aioredis.Redis:
     Dependency helper cho FastAPI Endpoints.
     """
     if redis_client.redis is None:
-        raise RuntimeError("Redis client chưa được khởi tạo!")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Redis is unavailable. Please try again later.",
+        )
     return redis_client.redis
