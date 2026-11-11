@@ -10,7 +10,7 @@ from app.core.logger import logger
 from app.schemas.notification_schema import NotificationErrors, NotificationKind
 
 sender_email = settings.ADMIN_EMAIL
-sender_password = settings.ADMIN_PASSWORD
+sender_password = settings.SMTP_PASSWORD or settings.ADMIN_PASSWORD
 
 
 def _format_price(price: Decimal | str, currency: str) -> str:

@@ -10,7 +10,7 @@ from app.core.logger import logger
 from app.schemas.otp_schema import OTPErrors
 
 sender_email = settings.ADMIN_EMAIL
-sender_password = settings.ADMIN_PASSWORD
+sender_password = settings.SMTP_PASSWORD or settings.ADMIN_PASSWORD
 
 def _get_otp_html_content(otp: str) -> tuple[str, str]:
     """Trả về (Tiêu đề email, Nội dung HTML email) cho xác minh tài khoản"""

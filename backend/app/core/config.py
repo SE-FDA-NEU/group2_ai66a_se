@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str
     ADMIN_EMAIL: str
     ADMIN_PASSWORD: str
+    # Prefer a dedicated Gmail App Password; retain ADMIN_PASSWORD as a local fallback.
+    SMTP_PASSWORD: Optional[str] = None
 
     # 2. Cấu hình Bảo mật (JWT)
     SECRET_KEY: str
