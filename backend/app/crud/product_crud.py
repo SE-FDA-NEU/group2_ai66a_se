@@ -1,14 +1,21 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import Date, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.product_model import PriceHistory, Product
+from app.helper.product_details import merge_details
 from app.schemas.watchlist_schema import ProductMarketplace
 
 
 class CRUDProduct:
+    @staticmethod
+    def merge_product_details(product: Product, incoming: dict) -> None:
+        if incoming:
+            product.details = merge_details(getattr(product, "details", None) or {}, incoming)
+            product.details_updated_at = datetime.now(timezone.utc)
+
     async def get_by_id(
         self, db: AsyncSession, product_id: int, *, for_update: bool = False
     ) -> Product | None:
@@ -61,6 +68,8 @@ class CRUDProduct:
             original_price=item.original_price,
             currency=item.currency,
             in_stock=item.in_stock,
+            details=item.details,
+            details_updated_at=datetime.now(timezone.utc) if item.details else None,
             top_reviews=item.top_reviews,
             tracked_by_count=0,
             price_low=item.current_price,
@@ -87,6 +96,7 @@ class CRUDProduct:
         product.original_price = item.original_price
         product.currency = item.currency
         product.in_stock = item.in_stock
+        self.merge_product_details(product, item.details)
         product.top_reviews = item.top_reviews
         product.price_low = min(Decimal(product.price_low), item.current_price)
         product.price_high = max(Decimal(product.price_high), item.current_price)
@@ -144,6 +154,7 @@ class CRUDProduct:
         product.original_price = item.original_price
         product.currency = item.currency
         product.in_stock = item.in_stock
+        self.merge_product_details(product, item.details)
         product.top_reviews = item.top_reviews
         product.price_low = min(Decimal(product.price_low), item.current_price)
         product.price_high = max(Decimal(product.price_high), item.current_price)

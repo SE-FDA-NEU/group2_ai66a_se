@@ -153,6 +153,8 @@ class AuthService:
         try:
             await send_email(email=email, otp=code)
         except Exception as e:
+            if isinstance(e, CustomAppException) and e.code == "OTP_DELIVERY_UNCERTAIN":
+                raise
             await redis.delete(otp_key)
             await redis.delete(cooldown_key)
             if hourly_count > 0:

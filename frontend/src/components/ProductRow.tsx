@@ -1,3 +1,4 @@
+import { InlinePending } from './LoadingState';
 import React from 'react';
 import { AlertTriangle, ExternalLink, Star, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -200,8 +201,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
           aria-label="Ngừng theo dõi sản phẩm"
           title="Ngừng theo dõi sản phẩm"
         >
-          <Trash2 size={14} aria-hidden="true" />
-          {isRemoving ? 'Đang xử lý...' : 'Ngừng theo dõi'}
+          {isRemoving ? <InlinePending message="Đang xử lý..." /> : 'Ngừng theo dõi'}
         </button>
       </div>
     </div>

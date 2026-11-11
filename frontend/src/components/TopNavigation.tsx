@@ -1,3 +1,4 @@
+import { InlinePending } from './LoadingState';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Bell,
@@ -288,9 +289,11 @@ export const TopNavigation: React.FC = () => {
                   <h2>Thông báo</h2>
                   {unreadIds.length > 0 && <span>{unreadIds.length > 9 ? '9+' : unreadIds.length} chưa đọc</span>}
                 </div>
-                {isLoadingNotifications ? (
-                  <p className={styles.menuMessage} role="status">Đang tải thông báo…</p>
-                ) : notificationError ? (
+                {isLoadingNotifications && notifications.length > 0 && <div className={styles.menuMessage}><InlinePending message="Đang cập nhật thông báo…" /></div>}
+                {notificationError && notifications.length > 0 && <p role="alert">Không thể cập nhật thông báo. <button type="button" onClick={() => void loadNotifications()}>Thử lại</button></p>}
+                {isLoadingNotifications && notifications.length === 0 ? (
+                  <div className={styles.menuMessage}><InlinePending message="Đang tải thông báo…" /></div>
+                ) : notificationError && notifications.length === 0 ? (
                   <div className={styles.menuMessage} role="alert">
                     <span>Chưa tải được thông báo.</span>
                     <button type="button" role="menuitem" className={styles.retryButton} onClick={() => void loadNotifications()}>

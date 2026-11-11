@@ -13,6 +13,7 @@ from app.schemas.watchlist_schema import (
     PriceHistoryResponse,
     Product,
     ProductCreate,
+    ProductDetail,
     ProductList,
     TargetPriceUpdate,
 )
@@ -70,16 +71,17 @@ async def list_watchlist(
 
 @router.get(
     "/{product_id}",
-    response_model=ApiResponse[Product],
+    response_model=ApiResponse[ProductDetail],
     status_code=status.HTTP_200_OK,
     summary="Lấy thông tin chi tiết của một sản phẩm đang theo dõi (/detail)",
 )
 async def get_product_detail(
     product_id: int,
+    refresh: bool = Query(default=False),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    product = await watchlist_service.get_product(db, current_user, product_id)
+    product = await watchlist_service.get_product(db, current_user, product_id, refresh=refresh)
     return ApiResponse(message="Product detail loaded successfully.", data=product)
 
 

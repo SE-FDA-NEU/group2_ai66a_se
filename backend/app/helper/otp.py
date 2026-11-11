@@ -1,9 +1,11 @@
+import asyncio
 import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from redis.asyncio import Redis
 
 from app.core.config import settings
+from app.core.exceptions import ErrorDetail
 from app.core.logger import logger
 from app.schemas.otp_schema import OTPErrors
 
@@ -153,20 +155,21 @@ async def _send_email(to_email: str, subject: str, html_content: str) -> None:
     part = MIMEText(html_content, "html", "utf-8")
     message.attach(part)
 
-    try:
-        server = aiosmtplib.SMTP(
-            hostname="smtp.gmail.com",
-            port=587,
-            start_tls=True,
-        )
+    server = aiosmtplib.SMTP(hostname="smtp.gmail.com", port=587, start_tls=True, timeout=5)
+    async def deliver():
         await server.connect()
         await server.login(sender_email, sender_password)
         await server.send_message(message)
-        await server.quit()
-        logger.info(f"Gửi mã OTP qua email đến {to_email} thành công.")
-    except Exception as e:
-        logger.error(f"Lỗi gửi email đến {to_email}: {e}", exc_info=True)
-        raise OTPErrors.EMAIL_SEND_FAILED.throw()
+    try:
+        await asyncio.wait_for(deliver(), timeout=15)
+    except (asyncio.TimeoutError, aiosmtplib.errors.SMTPTimeoutError) as exc:
+        raise ErrorDetail("OTP_DELIVERY_UNCERTAIN", 504, "Chưa xác định được email đã gửi hay chưa. Vui lòng kiểm tra hộp thư và chờ trước khi yêu cầu gửi lại mã.").throw() from exc
+    except Exception as exc:
+        logger.error("Không thể gửi email OTP.", exc_info=True)
+        raise OTPErrors.EMAIL_SEND_FAILED.throw() from exc
+    finally:
+        server.close()
+
 
 async def send_email(email: str, otp: str) -> None:
     """Hàm gửi mã OTP cho người dùng bất đồng bộ"""

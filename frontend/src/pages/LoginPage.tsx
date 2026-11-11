@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { AlertCircle, Bell, Eye, EyeOff, ShoppingCart, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { login, loginWithGoogle } from '../api/authApi';
-import { getUserProfile } from '../api/userApi';
+import { AuthPendingScreen } from '../components/LoadingState';
 import { useAuth } from '../context/AuthContext';
 import { GoogleAuthButton } from '../components/GoogleAuthButton';
 import styles from './LoginPage.module.css';
@@ -52,28 +52,29 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGooglePrompting, setIsGooglePrompting] = useState(false);
   const [apiError, setApiError] = useState<string | undefined>();
 
+  const operation = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const handleGoogleSuccess = async (idToken: string) => {
+    if (operation.current) return;
+    operation.current = true;
     setIsGoogleLoading(true);
     setApiError(undefined);
     try {
       const res = await loginWithGoogle(idToken);
-      saveToken(res.access_token);
-      localStorage.setItem('access_token', res.access_token);
-      try {
-        const user = await getUserProfile();
-        if (user?.data?.email) {
-          localStorage.setItem('user_email', user.data.email);
-        }
-      } catch (e) {
-        console.error('Failed to get user profile', e);
-      }
+      if (!mounted.current) return;
+      await saveToken(res.access_token);
+      if (!mounted.current) return;
       navigate('/watchlist', { replace: true });
     } catch (err: any) {
+      if (!mounted.current) return;
       const detail = err?.detail ?? err?.message ?? '';
       setApiError(detail || 'Đăng nhập bằng Google thất bại. Vui lòng thử lại.');
     } finally {
+      operation.current = false;
       setIsGoogleLoading(false);
     }
   };
@@ -111,24 +112,18 @@ const LoginPage: React.FC = () => {
 
     if (Object.values(allErrors).some(Boolean)) return;
 
+    if (operation.current || isGooglePrompting) return;
+    operation.current = true;
     setIsLoading(true);
     setApiError(undefined);
     try {
       const res = await login(values.email, values.password);
-      saveToken(res.access_token);
-      localStorage.setItem('access_token', res.access_token);
-      try {
-        const user = await getUserProfile();
-        if (user?.data?.email) {
-          localStorage.setItem('user_email', user.data.email);
-        } else {
-          localStorage.setItem('user_email', values.email);
-        }
-      } catch {
-        localStorage.setItem('user_email', values.email);
-      }
+      if (!mounted.current) return;
+      await saveToken(res.access_token);
+      if (!mounted.current) return;
       navigate('/watchlist', { replace: true });
     } catch (err: any) {
+      if (!mounted.current) return;
       console.error('Login error:', err);
       const detail = err?.detail ?? err?.message ?? '';
       if (typeof detail === 'string' && (detail.toLowerCase().includes('incorrect') || detail.toLowerCase().includes('password'))) {
@@ -139,6 +134,7 @@ const LoginPage: React.FC = () => {
         setApiError(typeof detail === 'string' && detail ? detail : 'Không thể kết nối máy chủ. Vui lòng thử lại.');
       }
     } finally {
+      operation.current = false;
       setIsLoading(false);
     }
   };
@@ -147,7 +143,9 @@ const LoginPage: React.FC = () => {
     [styles.input, touched[field] && errors[field] ? styles.inputError : ''].filter(Boolean).join(' ');
 
   return (
-    <div className={styles.pageContainer}>
+    <>
+      {(isLoading || isGoogleLoading) && <AuthPendingScreen message={isGoogleLoading ? 'Đang xác thực Google...' : 'Đang đăng nhập...'} />}
+      <div hidden={isLoading || isGoogleLoading} className={styles.pageContainer}>
       {/* Navbar */}
       <nav className={styles.navbar}>
         <div className={styles.navLeft}>
@@ -285,9 +283,8 @@ const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 className={styles.submitBtn}
-                disabled={isLoading || isGoogleLoading}
+                disabled={isLoading || isGoogleLoading || isGooglePrompting}
               >
-                {isLoading && <span className={styles.spinner} aria-hidden="true" />}
                 {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </button>
             </form>
@@ -303,9 +300,10 @@ const LoginPage: React.FC = () => {
             <div className={styles.socialAuthContainer}>
               <GoogleAuthButton
                 mode="login"
+                onInteractionChange={setIsGooglePrompting}
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
-                isLoading={isGoogleLoading}
+                isLoading={isGoogleLoading || isLoading}
               />
             </div>
 
@@ -320,6 +318,7 @@ const LoginPage: React.FC = () => {
 
       </main>
     </div>
+    </>
   );
 };
 

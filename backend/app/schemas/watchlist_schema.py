@@ -51,6 +51,13 @@ class Product(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ProductDetail(Product):
+    details: dict[str, Any] = Field(default_factory=dict)
+    details_updated_at: datetime | None = None
+    details_refresh_failed: bool = False
+    is_demo: bool = False
+
+
 class ProductList(BaseModel):
     total: int
     products: list[Product]
@@ -87,6 +94,7 @@ class ProductMarketplace(BaseModel):
     original_price: Decimal | None = Field(default=None, gt=0)
     currency: str = Field(min_length=1, max_length=10)
     in_stock: bool = True
+    details: dict[str, Any] = Field(default_factory=dict)
     top_reviews: list[dict[str, Any]] = Field(default_factory=list)
 
 

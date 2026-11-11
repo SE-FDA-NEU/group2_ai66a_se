@@ -8,6 +8,7 @@ import { WatchlistProduct } from '../api/watchlistApi';
 
 vi.mock('../api/watchlistApi', () => ({
   getWatchlist: vi.fn(),
+  getProductDetail: vi.fn().mockRejectedValue(new Error("Offline fixture")),
   removeProductFromWatchlist: vi.fn(),
 }));
 vi.mock('../components/PriceHistoryChart', () => ({ PriceHistoryChart: () => null }));

@@ -6,6 +6,7 @@ from typing import Any
 import httpx
 from pydantic import ValidationError
 
+from app.helper.product_details import extract_details
 from app.core.config import settings
 from app.core.exceptions import ErrorDetail
 from app.schemas.watchlist_schema import ProductMarketplace
@@ -77,6 +78,7 @@ def _normalize_product(payload: dict[str, Any]) -> ProductMarketplace:
 
     return ProductMarketplace.model_validate(
         {
+            "details": extract_details(payload),
             "external_id": payload.get("asin"),
             "url": payload.get("product_url"),
             "name": payload.get("product_title"),
@@ -103,6 +105,7 @@ def _find_demo_product(asin: str) -> ProductMarketplace | None:
             if asin.upper() in (raw_id.upper(), item["external_id"].upper()):
                 return ProductMarketplace.model_validate(
                     {
+                        "details": item.get("details", {}),
                         "external_id": asin,
                         "url": item.get("url") or f"https://www.amazon.com/dp/{asin}",
                         "name": item["name"],
@@ -126,6 +129,27 @@ def _find_demo_product(asin: str) -> ProductMarketplace | None:
 class RapidAPIClient:
     """Fetches a product by ASIN through the Real-Time Amazon Data API."""
 
+    async def _request_product(self, asin: str, country: str) -> dict:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            response = await client.get(
+                settings.RAPIDAPI_PRODUCT_ENDPOINT or "https://real-time-amazon-data.p.rapidapi.com/product-details",
+                params={"asin": asin, "country": country, "autoselect_variant": "true"},
+                headers={"X-RapidAPI-Key": settings.RAPIDAPI_KEY,
+                         "X-RapidAPI-Host": settings.RAPIDAPI_HOST or "real-time-amazon-data.p.rapidapi.com"},
+            )
+            response.raise_for_status()
+            payload = response.json()
+            product = payload.get("data") if isinstance(payload, dict) else None
+            if not isinstance(product, dict) or product.get("asin") != asin:
+                raise ValueError("Marketplace returned an invalid or mismatched product.")
+            return product
+
+    async def fetch_details(self, asin: str, country: str = "US") -> dict:
+        # Details can be available even when the product has no purchasable price.
+        if not settings.RAPIDAPI_KEY:
+            raise MARKETPLACE_UNAVAILABLE.throw()
+        try:
+            return extract_details(await self._request_product(asin, country))
     async def fetch_reviews(self, asin: str, page: int, stars: int | None):
         from app.helper.review_normalizer import normalize_review
         if not settings.RAPIDAPI_KEY:
@@ -159,24 +183,8 @@ class RapidAPIClient:
             raise MARKETPLACE_UNAVAILABLE.throw()
 
         try:
-            async with httpx.AsyncClient(timeout=8.0) as client:
-                response = await client.get(
-                    settings.RAPIDAPI_PRODUCT_ENDPOINT or "https://real-time-amazon-data.p.rapidapi.com/product-details",
-                    params={"asin": asin, "country": country, "autoselect_variant": "true"},
-                    headers={
-                        "X-RapidAPI-Key": settings.RAPIDAPI_KEY,
-                        "X-RapidAPI-Host": settings.RAPIDAPI_HOST or "real-time-amazon-data.p.rapidapi.com",
-                    },
-                )
-                response.raise_for_status()
-                payload = response.json()
-                product = payload.get("data") if isinstance(payload, dict) else None
-                if not isinstance(product, dict):
-                    raise ValueError("RapidAPI response must contain a product object in 'data'.")
-                normalized = _normalize_product(product)
-                if normalized.external_id != asin:
-                    raise ValueError("RapidAPI returned a different ASIN than requested.")
-                return normalized
+            product = await self._request_product(asin, country)
+            return _normalize_product(product)
         except (httpx.HTTPError, ValueError, ValidationError) as exc:
             if demo:
                 return demo

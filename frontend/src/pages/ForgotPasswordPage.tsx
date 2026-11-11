@@ -1,3 +1,4 @@
+import { AuthPendingScreen, InlinePending } from '../components/LoadingState';
 import React, { useState, useEffect, useRef } from 'react';
 import { AlertCircle, Eye, EyeOff, KeyRound, LockKeyhole, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -84,6 +85,7 @@ const ForgotPasswordPage: React.FC = () => {
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading || isResending) return;
     setApiError(undefined);
 
     const trimmed = email.trim();
@@ -110,7 +112,7 @@ const ForgotPasswordPage: React.FC = () => {
     } catch (err: any) {
       const detail = getErrorMessage(err);
       if (
-        err?.error?.code === 'OTP_COOLDOWN_ACTIVE' ||
+        err?.error?.code === 'OTP_COOLDOWN_ACTIVE' || err?.error?.code === 'OTP_DELIVERY_UNCERTAIN' ||
         detail.toLowerCase().includes('đợi') ||
         detail.toLowerCase().includes('giây')
       ) {
@@ -122,6 +124,7 @@ const ForgotPasswordPage: React.FC = () => {
         setOtp(Array(OTP_LENGTH).fill(''));
         setOtpError(undefined);
         setCurrentStep(2);
+        if (err?.error?.code === 'OTP_DELIVERY_UNCERTAIN') setApiError(detail);
         return;
       }
       if (
@@ -180,6 +183,7 @@ const ForgotPasswordPage: React.FC = () => {
 
   const handleOtpPaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
+    if (isLoading || isResending) return;
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH);
     if (!pasted) return;
 
@@ -197,7 +201,7 @@ const ForgotPasswordPage: React.FC = () => {
 
   // Resend OTP
   const handleResendOtp = async () => {
-    if (cooldown > 0 || isResending) return;
+    if (cooldown > 0 || isResending || isLoading) return;
     setIsResending(true);
     setApiError(undefined);
 
@@ -214,7 +218,7 @@ const ForgotPasswordPage: React.FC = () => {
     } catch (err: any) {
       const detail = getErrorMessage(err);
       if (
-        err?.error?.code === 'OTP_COOLDOWN_ACTIVE' ||
+        err?.error?.code === 'OTP_COOLDOWN_ACTIVE' || err?.error?.code === 'OTP_DELIVERY_UNCERTAIN' ||
         detail.toLowerCase().includes('đợi') ||
         detail.toLowerCase().includes('giây')
       ) {
@@ -235,6 +239,7 @@ const ForgotPasswordPage: React.FC = () => {
   // Submit OTP (Verify OTP)
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading || isResending) return;
     const code = otp.join('');
 
     if (code.length < OTP_LENGTH) {
@@ -279,6 +284,7 @@ const ForgotPasswordPage: React.FC = () => {
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading || isResending) return;
     let hasError = false;
 
     if (!newPassword) {
@@ -372,7 +378,9 @@ const ForgotPasswordPage: React.FC = () => {
   // ─── Main Render ────────────────────────────────────────────────────────────
 
   return (
-    <div className={styles.pageContainer}>
+    <>
+      {isLoading && <AuthPendingScreen message={currentStep === 1 ? 'Đang gửi mã đặt lại mật khẩu...' : currentStep === 2 ? 'Đang xác minh mã OTP...' : 'Đang cập nhật mật khẩu...'} />}
+      <div hidden={isLoading} className={styles.pageContainer}>
       {/* Background Orbs */}
       <div className={styles.bgOrb1} aria-hidden="true" />
       <div className={styles.bgOrb2} aria-hidden="true" />
@@ -457,9 +465,8 @@ const ForgotPasswordPage: React.FC = () => {
                   </div>
                 )}
 
-                <button type="submit" className={styles.submitBtn} disabled={isLoading}>
-                  {isLoading && <span className={styles.spinner} aria-hidden="true" />}
-                  {isLoading ? 'Đang gửi mã OTP...' : 'Tiếp tục'}
+                <button type="submit" className={styles.submitBtn} disabled={isLoading || isResending}>
+                    {isLoading ? 'Đang gửi mã OTP...' : 'Tiếp tục'}
                 </button>
               </form>
 
@@ -488,7 +495,7 @@ const ForgotPasswordPage: React.FC = () => {
                   <span className={styles.emailHighlight}>{email}</span>
                   <button
                     type="button"
-                    className={styles.changeEmailBtn}
+                    disabled={isLoading || isResending} className={styles.changeEmailBtn}
                     onClick={() => {
                       setCurrentStep(1);
                       setApiError(undefined);
@@ -518,7 +525,7 @@ const ForgotPasswordPage: React.FC = () => {
                         otpError ? styles.otpInputError : ''
                       }`}
                       aria-label={`Số OTP thứ ${idx + 1}`}
-                      disabled={isLoading}
+                      disabled={isLoading || isResending}
                     />
                   ))}
                 </div>
@@ -538,7 +545,7 @@ const ForgotPasswordPage: React.FC = () => {
                     onClick={handleResendOtp}
                     disabled={cooldown > 0 || isResending || isLoading}
                   >
-                    {isResending ? 'Đang gửi...' : cooldown > 0 ? `Gửi lại mã (${cooldown}s)` : 'Gửi lại mã'}
+                    {isResending ? <InlinePending message="Đang gửi lại mã..." /> : cooldown > 0 ? `Gửi lại mã (${cooldown}s)` : 'Gửi lại mã'}
                   </button>
                 </div>
 
@@ -553,10 +560,9 @@ const ForgotPasswordPage: React.FC = () => {
                 <button
                   type="submit"
                   className={styles.submitBtn}
-                  disabled={isLoading || otp.some((d) => d === '')}
+                  disabled={isLoading || isResending || otp.some((d) => d === '')}
                 >
-                  {isLoading && <span className={styles.spinner} aria-hidden="true" />}
-                  {isLoading ? 'Đang xác thực...' : 'Xác nhận OTP'}
+                    {isLoading ? 'Đang xác thực...' : 'Xác nhận OTP'}
                 </button>
               </form>
 
@@ -564,7 +570,7 @@ const ForgotPasswordPage: React.FC = () => {
                 <button
                   type="button"
                   className={styles.backLink}
-                  onClick={() => setCurrentStep(1)}
+                  disabled={isLoading || isResending} onClick={() => setCurrentStep(1)}
                 >
                   ← Nhập lại email khác
                 </button>
@@ -698,9 +704,8 @@ const ForgotPasswordPage: React.FC = () => {
                   </div>
                 )}
 
-                <button type="submit" className={styles.submitBtn} disabled={isLoading}>
-                  {isLoading && <span className={styles.spinner} aria-hidden="true" />}
-                  {isLoading ? 'Đang cập nhật mật khẩu...' : 'Đặt lại mật khẩu'}
+                <button type="submit" className={styles.submitBtn} disabled={isLoading || isResending}>
+                    {isLoading ? 'Đang cập nhật mật khẩu...' : 'Đặt lại mật khẩu'}
                 </button>
               </form>
 
@@ -708,7 +713,7 @@ const ForgotPasswordPage: React.FC = () => {
                 <button
                   type="button"
                   className={styles.backLink}
-                  onClick={() => setCurrentStep(2)}
+                  disabled={isLoading || isResending} onClick={() => setCurrentStep(2)}
                 >
                   ← Quay lại bước OTP
                 </button>
@@ -738,6 +743,7 @@ const ForgotPasswordPage: React.FC = () => {
         </div>
       </main>
     </div>
+    </>
   );
 };
 

@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import App from '../App';
+import { getUserProfile } from '../api/userApi';
 import { isTokenValid, clearAuthStorage } from '../utils/auth';
+
+vi.mock('../api/userApi', () => ({ getUserProfile: vi.fn().mockResolvedValue({ data: { id: 123, email: 'user@test.com', nickname: 'Test' } }) }));
 
 // Helper tạo JWT mock
 const createMockJwt = (expInSecondsFromNow: number): string => {
@@ -49,6 +52,7 @@ describe('Route Guard & Navigation Protection', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
+    vi.mocked(getUserProfile).mockResolvedValue({ data: { id: 123, email: 'user@test.com', nickname: 'Test' } } as Awaited<ReturnType<typeof getUserProfile>>);
   });
 
   it('redirects to /login when visiting /watchlist without any token', async () => {
@@ -116,7 +120,7 @@ describe('Route Guard & Navigation Protection', () => {
     render(<App />);
 
     expect(window.location.pathname).toBe('/watchlist');
-    expect(screen.getByRole('heading', { name: /danh sách theo dõi/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /danh sách theo dõi/i })).toBeInTheDocument();
   });
 
   it('redirects /login to /watchlist when user already has a valid token', async () => {
@@ -125,7 +129,7 @@ describe('Route Guard & Navigation Protection', () => {
     window.history.pushState({}, '', '/login');
     render(<App />);
 
-    expect(window.location.pathname).toBe('/watchlist');
+    await waitFor(() => expect(window.location.pathname).toBe('/watchlist'));
   });
 
   it('allows visiting /login when token in storage is expired', async () => {
@@ -145,7 +149,7 @@ describe('Route Guard & Navigation Protection', () => {
     render(<App />);
 
     expect(window.location.pathname).toBe('/profile');
-    const accountMenuButton = screen.getByRole('button', { name: /tài khoản/i });
+    const accountMenuButton = await screen.findByRole('button', { name: /tài khoản/i });
     fireEvent.click(accountMenuButton);
     expect(await screen.findByRole('menu', { name: 'Menu tài khoản' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /hồ sơ cá nhân/i })).toBeInTheDocument();

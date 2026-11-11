@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ProductSettingsModal } from '../components/ProductSettingsModal';
 import * as watchlistApi from '../api/watchlistApi';
+import apiClient from '../api/config';
 
 vi.mock('../api/config', () => ({ default: { get: vi.fn().mockResolvedValue({ data: { email_enabled: false, quiet_hours_enabled: false } }), patch: vi.fn().mockResolvedValue({}) } }));
 
@@ -145,6 +146,13 @@ describe('ProductSettingsModal (US02 - Target Price & Settings)', () => {
         screen.getByText('Không thể cập nhật giá mục tiêu vào lúc này.')
       ).toBeInTheDocument();
     });
+  });
+  it('offers retry after notification settings fail to load', async () => {
+    vi.mocked(apiClient.get).mockRejectedValueOnce(new Error('offline'));
+    render(<ProductSettingsModal {...defaultProps} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Thử lại' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Lưu cấu hình thông báo' })).toBeEnabled());
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
 

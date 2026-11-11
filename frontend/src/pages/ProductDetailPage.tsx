@@ -1,8 +1,10 @@
+import { SectionLoadingState, InlinePending } from '../components/LoadingState';
+import { ProductGallery, ProductInformation } from '../components/ProductInformation';
 import { ProductReviews } from '../components/ProductReviews';
 import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Bell, Settings, Star } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { removeProductFromWatchlist, getWatchlist, WatchlistProduct } from '../api/watchlistApi';
+import { removeProductFromWatchlist, getProductDetail, WatchlistProduct, DetailedProduct } from '../api/watchlistApi';
 import styles from './ProductDetailPage.module.css';
 import { formatVnd } from '../utils/currency';
 import { PriceHistoryChart } from '../components/PriceHistoryChart';
@@ -22,6 +24,7 @@ export const ProductDetailPage: React.FC = () => {
   const matchingRouteProduct = routeProduct && String(routeProduct.id) === id ? routeProduct : undefined;
 
   const [product, setProduct] = useState<WatchlistProduct | undefined>(matchingRouteProduct);
+  const [detail, setDetail] = useState<DetailedProduct>();
   const [isRemoving, setIsRemoving] = useState(false);
   const [isLoading, setIsLoading] = useState(!matchingRouteProduct);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -32,16 +35,8 @@ export const ProductDetailPage: React.FC = () => {
   useEffect(() => {
     let isCurrentRequest = true;
 
-    if (matchingRouteProduct) {
-      setProduct(matchingRouteProduct);
-      setLoadError(null);
-      setIsLoading(false);
-      return () => {
-        isCurrentRequest = false;
-      };
-    }
-
-    setProduct(undefined);
+    setProduct(previous => previous?.id === Number(id) ? previous : matchingRouteProduct);
+    setDetail(previous => previous?.id === Number(id) ? previous : undefined);
     setLoadError(null);
     setIsLoading(true);
 
@@ -52,10 +47,10 @@ export const ProductDetailPage: React.FC = () => {
       }
 
       try {
-        const response = await getWatchlist();
+        const response = await getProductDetail(Number(id), retryCount > 0);
         if (!isCurrentRequest) return;
-        const foundProduct = response?.products?.find((item) => String(item.id) === id);
-        setProduct(foundProduct);
+        setProduct(response);
+        setDetail(response);
       } catch (error: any) {
         if (!isCurrentRequest) return;
         console.error('Failed to fetch product details', error);
@@ -75,18 +70,15 @@ export const ProductDetailPage: React.FC = () => {
     };
   }, [id, matchingRouteProduct, navigate, retryCount]);
 
-  if (isLoading) {
+  if (isLoading && !product) {
     return (
       <div className={styles.pageContainer}>
-        <div className={styles.loadingContainer} role="status" aria-live="polite">
-          <div className={styles.spinner} aria-hidden="true" />
-          <span>Đang tải thông tin sản phẩm...</span>
-        </div>
+        <SectionLoadingState message="Đang tải thông tin sản phẩm..." />
       </div>
     );
   }
 
-  if (loadError) {
+  if (loadError && !product) {
     return (
       <div className={styles.pageContainer}>
         <section className={styles.stateCard} role="alert">
@@ -146,13 +138,7 @@ export const ProductDetailPage: React.FC = () => {
 
       <div className={styles.productCard}>
         <div className={styles.imageContainer}>
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className={styles.productImage} />
-          ) : (
-            <div className={styles.imagePlaceholder} role="img" aria-label="Không có ảnh sản phẩm">
-              Chưa có ảnh
-            </div>
-          )}
+          <ProductGallery key={product.id} product={product} detail={detail} />
         </div>
 
         <div className={styles.productInfo}>
@@ -253,7 +239,7 @@ export const ProductDetailPage: React.FC = () => {
             </div>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Tình trạng:</span>
-              <span className={styles.metaValue}>{product.in_stock ? 'Còn hàng' : 'Hết hàng'}</span>
+              <span className={styles.metaValue}>{typeof detail?.details.product_availability === 'string' && detail.details.product_availability ? detail.details.product_availability : detail ? 'Chưa có thông tin' : product.in_stock ? 'Còn hàng' : 'Hết hàng'}</span>
             </div>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Theo dõi giá tốt:</span>
@@ -279,7 +265,7 @@ export const ProductDetailPage: React.FC = () => {
               disabled={isRemoving}
               aria-busy={isRemoving}
             >
-              {isRemoving ? 'Đang ngừng theo dõi...' : 'Ngừng theo dõi (Unfollow)'}
+              {isRemoving ? <InlinePending message="Đang ngừng theo dõi..." /> : 'Ngừng theo dõi (Unfollow)'}
             </button>
             {marketplaceUrl && (
               <a
@@ -294,6 +280,8 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ProductInformation detail={detail} loading={isLoading} error={loadError} onRefresh={() => setRetryCount(count => count + 1)} />
 
       <div className={styles.chartSection}>
         <PriceHistoryChart

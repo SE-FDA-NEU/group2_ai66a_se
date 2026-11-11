@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { SectionLoadingState, InlinePending } from '../components/LoadingState';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { AlertTriangle, ArrowUpDown, Plus, RotateCw, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProductRow } from '../components/ProductRow';
@@ -55,14 +56,17 @@ export const WatchlistPage: React.FC = () => {
   // State cho Modal thêm sản phẩm
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  const requestId = useRef(0);
   const fetchProducts = useCallback(async () => {
+    const version = ++requestId.current;
     setIsLoading(true);
     setError(null);
 
     try {
       const data = await getWatchlist();
-      setProducts(data.products || []);
+      if (version === requestId.current) setProducts(data.products || []);
     } catch (err: any) {
+      if (version !== requestId.current) return;
       console.error('Fetch watchlist error:', err);
       if (err.status === 401 || err.detail === 'Could not validate credentials') {
         navigate('/login', { replace: true });
@@ -70,12 +74,13 @@ export const WatchlistPage: React.FC = () => {
       }
       setError(err.message || err.detail || 'Không thể tải danh sách theo dõi từ máy chủ.');
     } finally {
-      setIsLoading(false);
+      if (version === requestId.current) setIsLoading(false);
     }
   }, [navigate]);
 
   useEffect(() => {
-    fetchProducts();
+    void fetchProducts();
+    return () => { requestId.current++; };
   }, [fetchProducts]);
 
   const handleRemove = (id: string) => {
@@ -191,8 +196,8 @@ export const WatchlistPage: React.FC = () => {
 
       <div className={combinedStyles.toolbar}>
         <div className={combinedStyles.toolbarLeft}>
-          <button className={combinedStyles.toolbarBtn} onClick={fetchProducts}>
-            <RotateCw size={16} aria-hidden="true" /> Làm mới
+          <button className={combinedStyles.toolbarBtn} onClick={fetchProducts} disabled={isLoading}>
+            {isLoading ? <InlinePending message="Đang làm mới..." /> : <><RotateCw size={16} aria-hidden="true" /> Làm mới</>}
           </button>
         </div>
         <div className={combinedStyles.toolbarRight}>
@@ -233,32 +238,11 @@ export const WatchlistPage: React.FC = () => {
           <div>Thao tác</div>
         </div>
 
-        <div className={combinedStyles.tableBody}>
-          {isLoading ? (
-            <div className={combinedStyles.emptyState} data-testid="watchlist-loading" style={{ padding: '36px 16px' }}>
-              <div className={combinedStyles.spinner} aria-hidden="true" />
-              <div className={combinedStyles.emptyStateTitle}>Đang tải danh sách theo dõi...</div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '4px 0 20px' }}>
-                Hệ thống đang đồng bộ dữ liệu giá và trạng thái từ máy chủ, vui lòng chờ trong giây lát.
-              </p>
-              {/* Skeleton Placeholder Rows */}
-              <div style={{ width: '100%', maxWidth: '720px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    style={{
-                      height: '52px',
-                      background: 'linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)',
-                      backgroundSize: '200% 100%',
-                      animation: 'shimmer 1.5s infinite',
-                      borderRadius: '8px',
-                      opacity: 0.8,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : error ? (
+        <div className={combinedStyles.tableBody} aria-busy={isLoading}>
+          {error && products.length > 0 && <p role="alert">{error}</p>}
+          {isLoading && products.length === 0 ? (
+            <div data-testid="watchlist-loading"><SectionLoadingState message="Đang tải danh sách theo dõi..." /></div>
+          ) : error && products.length === 0 ? (
             <div className={combinedStyles.emptyState}>
               <div className={combinedStyles.emptyStateTitle}>{error}</div>
               <button

@@ -16,7 +16,8 @@ import { NotificationCenter } from './components/NotificationCenter';
 import { isTokenValid } from './utils/auth';
 
 const FallbackRoute = () => {
-  const { isLoggedIn, token } = useAuth();
+  const { isLoggedIn, token, isInitializing, authError } = useAuth();
+  if (isInitializing || authError) return null;
   return isLoggedIn && isTokenValid(token) ? (
     <Navigate to="/watchlist" replace />
   ) : (

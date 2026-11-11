@@ -8,8 +8,10 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isLoggedIn, token } = useAuth();
+  const { isLoggedIn, token, isInitializing, authError } = useAuth();
   const location = useLocation();
+
+  if (isInitializing || authError) return null;
 
   if (!isLoggedIn || !isTokenValid(token)) {
     clearAuthStorage();

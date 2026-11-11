@@ -9,6 +9,7 @@ import * as watchlistApi from '../api/watchlistApi';
 
 vi.mock('../api/watchlistApi', () => ({
   getWatchlist: vi.fn(),
+  getProductDetail: vi.fn().mockRejectedValue(new Error("Offline fixture")),
   getProductReviews: vi.fn().mockRejectedValue(new Error("offline fixture")),
   removeProductFromWatchlist: vi.fn(),
 }));

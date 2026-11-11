@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AlertCircle, Mail } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { verifyOTP, registerUser, login, sendOTP, OTPReason } from '../api/authApi';
-import { getUserProfile } from '../api/userApi';
+import { AuthPendingScreen, InlinePending } from '../components/LoadingState';
 import { useAuth } from '../context/AuthContext';
 import styles from './OTPPage.module.css';
 
@@ -13,6 +13,7 @@ interface OTPLocationState {
   nickname: string;
   password: string;
   reason: OTPReason;
+  deliveryUncertain?: boolean;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -25,7 +26,7 @@ const RESEND_COOLDOWN = 60; // seconds
 const OTPPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { saveToken, setUser } = useAuth();
+  const { saveToken } = useAuth();
 
   const state = location.state as OTPLocationState | null;
 
@@ -54,6 +55,11 @@ const OTPPage: React.FC = () => {
 
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [isLoading, setIsLoading] = useState(false);
+  const [stage, setStage] = useState('Đang xác minh mã OTP...');
+  const [accountCreated, setAccountCreated] = useState(false);
+  const busy = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [apiError, setApiError] = useState<string | undefined>();
   const [cooldown, setCooldown] = useState<number>(getInitialCooldown);
   const [isResending, setIsResending] = useState(false);
@@ -117,31 +123,34 @@ const OTPPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy.current || isResending) return;
     const otpValue = otp.join('');
-    if (otpValue.length < OTP_LENGTH) {
+    if (!accountCreated && otpValue.length < OTP_LENGTH) {
       setApiError('Vui lòng nhập đầy đủ mã OTP 6 chữ số.');
       return;
     }
 
+    busy.current = true;
     setIsLoading(true);
     setApiError(undefined);
 
     try {
-      // Step 2: Verify OTP → get verified_token
-      const verifyRes = await verifyOTP(email, otpValue, reason);
-      const verifiedToken = verifyRes.data?.verified_token;
-      if (!verifiedToken) throw new Error('Không nhận được verified_token.');
-
-      // Step 3: Complete registration
-      await registerUser({ email, nickname, password }, verifiedToken);
-
-      // Auto-login after successful registration
-      const loginRes = await login(email, password);
-      saveToken(loginRes.access_token);
-      const user = await getUserProfile();
-      if (user.data) {
-        setUser(user.data);
+      if (!accountCreated) {
+        setStage('Đang xác minh mã OTP...');
+        const verifyRes = await verifyOTP(email, otpValue, reason);
+        if (!mounted.current) return;
+        const verifiedToken = verifyRes.data?.verified_token;
+        if (!verifiedToken) throw new Error('Phiên xác thực không hợp lệ.');
+        setStage('Đang tạo tài khoản của bạn...');
+        await registerUser({ email, nickname, password }, verifiedToken);
+        setAccountCreated(true);
       }
+      if (!mounted.current) return;
+      setStage('Đang đăng nhập tài khoản mới...');
+      const loginRes = await login(email, password);
+      if (!mounted.current) return;
+      setStage('Đang chuẩn bị tài khoản của bạn...');
+      await saveToken(loginRes.access_token);
 
       navigate('/watchlist', { replace: true });
     } catch (err: any) {
@@ -154,6 +163,7 @@ const OTPPage: React.FC = () => {
         setApiError(detail || 'Mã OTP không chính xác hoặc đã hết hạn.');
       }
     } finally {
+      busy.current = false;
       setIsLoading(false);
     }
   };
@@ -161,7 +171,7 @@ const OTPPage: React.FC = () => {
   // ─── Resend OTP ──────────────────────────────────────────────────────────
 
   const handleResend = async () => {
-    if (cooldown > 0 || isResending) return;
+    if (cooldown > 0 || isResending || busy.current || accountCreated) return;
     setIsResending(true);
     setApiError(undefined);
     try {
@@ -173,7 +183,7 @@ const OTPPage: React.FC = () => {
       inputRefs.current[0]?.focus();
     } catch (err: any) {
       const detail = err?.error?.message ?? err?.detail ?? err?.message ?? '';
-      if (err?.error?.code === 'OTP_COOLDOWN_ACTIVE' || detail.toLowerCase().includes('đợi') || detail.toLowerCase().includes('giây')) {
+      if (err?.error?.code === 'OTP_COOLDOWN_ACTIVE' || err?.error?.code === 'OTP_DELIVERY_UNCERTAIN' || detail.toLowerCase().includes('đợi') || detail.toLowerCase().includes('giây')) {
         const match = detail.match(/(\d+)\s*giây/);
         if (match) {
           const rem = parseInt(match[1], 10);
@@ -193,7 +203,9 @@ const OTPPage: React.FC = () => {
   // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <div className={styles.pageContainer}>
+    <>
+      {isLoading && <AuthPendingScreen message={stage} />}
+      <div hidden={isLoading} className={styles.pageContainer}>
       {/* Navbar */}
       <nav className={styles.navbar}>
         <div className={styles.navLeft}>
@@ -216,7 +228,7 @@ const OTPPage: React.FC = () => {
 
           <h1 className={styles.title}>Xác minh email</h1>
           <p className={styles.subtitle}>
-            Chúng tôi đã gửi mã OTP 6 chữ số đến
+            {state?.deliveryUncertain ? 'Hãy kiểm tra hộp thư trong khi yêu cầu gửi mã được xác nhận:' : 'Chúng tôi đã gửi mã OTP 6 chữ số đến'}
           </p>
           <p className={styles.emailHighlight}>{email}</p>
 
@@ -237,11 +249,12 @@ const OTPPage: React.FC = () => {
                   className={`${styles.otpInput} ${apiError ? styles.otpInputError : ''}`}
                   aria-label={`Chữ số OTP thứ ${i + 1}`}
                   autoComplete="one-time-code"
-                  disabled={isLoading}
+                  disabled={isLoading || isResending || accountCreated}
                 />
               ))}
             </div>
 
+            {accountCreated && <p role="status">Tài khoản đã được tạo. Nếu đăng nhập chưa hoàn tất, bạn có thể thử lại hoặc quay về trang đăng nhập.</p>}
             {/* API error */}
             {apiError && (
               <p className={styles.errorMsg} role="alert"><AlertCircle size={16} aria-hidden="true" /> {apiError}</p>
@@ -250,10 +263,9 @@ const OTPPage: React.FC = () => {
             <button
               type="submit"
               className={styles.submitBtn}
-              disabled={isLoading || !otpComplete}
+              disabled={isLoading || isResending || (!accountCreated && !otpComplete)}
             >
-              {isLoading ? <span className={styles.spinner} aria-hidden="true" /> : null}
-              {isLoading ? 'Đang xác minh...' : 'Xác nhận'}
+              {isLoading ? stage : accountCreated ? 'Đăng nhập tài khoản mới' : 'Xác nhận'}
             </button>
           </form>
 
@@ -265,9 +277,9 @@ const OTPPage: React.FC = () => {
                 type="button"
                 className={styles.resendBtn}
                 onClick={handleResend}
-                disabled={cooldown > 0 || isResending || isLoading}
+                disabled={cooldown > 0 || isResending || isLoading || accountCreated}
               >
-                {isResending ? 'Đang gửi...' : cooldown > 0 ? `Gửi lại mã (${cooldown}s)` : 'Gửi lại OTP'}
+                {isResending ? <InlinePending message="Đang gửi lại mã..." /> : cooldown > 0 ? `Gửi lại mã (${cooldown}s)` : 'Gửi lại OTP'}
               </button>
             </p>
 
@@ -276,7 +288,7 @@ const OTPPage: React.FC = () => {
 
           <button
             type="button"
-            className={styles.backBtn}
+            disabled={isLoading || isResending} className={styles.backBtn}
             onClick={() => navigate('/register', { state: { email, fullName: nickname } })}
           >
             ← Quay lại đăng ký
@@ -284,6 +296,7 @@ const OTPPage: React.FC = () => {
         </div>
       </main>
     </div>
+    </>
   );
 };
 

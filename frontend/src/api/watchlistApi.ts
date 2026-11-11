@@ -1,5 +1,6 @@
 import apiClient from './config';
 
+export type ProductValue = string | number | boolean | null | ProductValue[] | { [key: string]: ProductValue };
 export interface WatchlistProduct {
   id: number;
   name: string;
@@ -26,6 +27,13 @@ export interface WatchlistProduct {
   shop_trust_label?: string | null;
   top_reviews?: CustomerReview[];
   reviews?: CustomerReview[];
+}
+
+export interface DetailedProduct extends WatchlistProduct {
+  details: Record<string, ProductValue>;
+  details_updated_at?: string | null;
+  details_refresh_failed?: boolean;
+  is_demo?: boolean;
 }
 
 export interface CustomerReview {
@@ -80,8 +88,8 @@ export const getWatchlist = async (): Promise<WatchlistResponse> => {
 /**
  * Lấy thông tin chi tiết của 1 sản phẩm theo dõi (/detail)
  */
-export const getProductDetail = async (productId: number): Promise<WatchlistProduct> => {
-  const res = await apiClient.get<any, { message: string; data: WatchlistProduct }>(`/watchlist/${productId}`);
+export const getProductDetail = async (productId: number, refresh = false): Promise<DetailedProduct> => {
+  const res = await apiClient.get<any, { message: string; data: DetailedProduct }>(`/watchlist/${productId}`, { params: { refresh } });
   return res.data;
 };
 

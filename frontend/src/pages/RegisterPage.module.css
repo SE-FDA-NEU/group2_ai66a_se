@@ -309,17 +309,6 @@
 }
 
 /* Loading spinner */
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #ffffff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
 /* ─── API Error Banner ────────────────────────────────────────────────────── */
 
 .apiErrorBanner {
@@ -615,10 +604,6 @@
   0%   { transform: translateY(0px); }
   50%  { transform: translateY(-12px); }
   100% { transform: translateY(0px); }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 /* ─── Responsive ──────────────────────────────────────────────────────────── */

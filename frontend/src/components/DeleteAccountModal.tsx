@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { InlinePending } from './LoadingState';
+import React, { useState, useEffect } from 'react';
 import { sendOTP, verifyOTP } from '../api/authApi';
 import { deleteAccount } from '../api/userApi';
 import styles from './DeleteAccountModal.module.css';
@@ -26,6 +27,9 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
   const [otpSent, setOtpSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  useEffect(() => { if (!cooldown) return; const timer = setTimeout(() => setCooldown(value => value - 1), 1000); return () => clearTimeout(timer); }, [cooldown]);
 
   if (!isOpen) return null;
 
@@ -39,20 +43,26 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
   };
 
   const handleSendOtp = async () => {
+    if (isSubmitting || cooldown > 0) return;
+    setIsSending(true);
     setError('');
     setIsSubmitting(true);
     try {
       await sendOTP(email, 'delete-account');
       setOtpSent(true);
+      setCooldown(60);
     } catch (err: any) {
+      if (err?.error?.code === 'OTP_DELIVERY_UNCERTAIN') { setOtpSent(true); setCooldown(60); }
       setError(err?.detail || err?.message || 'Không thể gửi mã OTP. Vui lòng thử lại.');
     } finally {
+      setIsSending(false);
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setError('');
     setIsSubmitting(true);
     try {
@@ -75,7 +85,7 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
     !isSubmitting && (mode === 'password' ? password.length > 0 : otp.length === 6);
 
   return (
-    <div className={styles.overlay} onClick={resetAndClose} role="dialog" aria-modal="true" aria-label="Xóa tài khoản">
+    <div className={styles.overlay} onClick={isSubmitting ? undefined : resetAndClose} role="dialog" aria-modal="true" aria-label="Xóa tài khoản">
       <div className={styles.content} onClick={(e) => e.stopPropagation()}>
         <h2 className={styles.title}>Xóa tài khoản vĩnh viễn</h2>
         <p className={styles.description}>
@@ -86,14 +96,14 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
           <div className={styles.modeSwitch}>
             <button
               type="button"
-              className={mode === 'password' ? styles.modeActive : styles.modeBtn}
+              disabled={isSubmitting} className={mode === 'password' ? styles.modeActive : styles.modeBtn}
               onClick={() => { setMode('password'); setError(''); }}
             >
               Mật khẩu
             </button>
             <button
               type="button"
-              className={mode === 'otp' ? styles.modeActive : styles.modeBtn}
+              disabled={isSubmitting} className={mode === 'otp' ? styles.modeActive : styles.modeBtn}
               onClick={() => { setMode('otp'); setError(''); }}
             >
               OTP qua email
@@ -112,7 +122,7 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Mật khẩu hiện tại"
-                autoFocus
+                disabled={isSubmitting} autoFocus
               />
             </div>
           ) : (
@@ -128,15 +138,15 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                   placeholder="6 chữ số"
-                  autoFocus
+                  disabled={isSubmitting} autoFocus
                 />
                 <button
                   type="button"
                   className={styles.sendOtpBtn}
                   onClick={handleSendOtp}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || cooldown > 0}
                 >
-                  {otpSent ? 'Gửi lại' : 'Gửi mã'}
+                  {isSending ? <InlinePending message="Đang gửi mã..." /> : cooldown > 0 ? `Gửi lại (${cooldown}s)` : otpSent ? 'Gửi lại' : 'Gửi mã'}
                 </button>
               </div>
               {otpSent && <span className={styles.hint}>Mã đã được gửi. Vui lòng kiểm tra email.</span>}
@@ -152,7 +162,7 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
               Hủy
             </button>
             <button type="submit" className={styles.confirmBtn} disabled={!canSubmit}>
-              {isSubmitting ? 'Đang xử lý...' : 'Xóa vĩnh viễn'}
+              {isSubmitting && !isSending ? <InlinePending message="Đang xóa tài khoản..." /> : 'Xóa vĩnh viễn'}
             </button>
           </div>
         </form>

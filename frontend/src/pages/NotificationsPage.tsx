@@ -1,3 +1,4 @@
+import { SectionLoadingState, InlinePending } from '../components/LoadingState';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bell, Check, RotateCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -44,13 +45,14 @@ export default function NotificationsPage() {
     <header className={styles.header}>
       <div><h1>Thông báo</h1><p>10 thông báo gần nhất về sản phẩm bạn theo dõi.</p></div>
       <button className={styles.refresh} onClick={() => void load()} disabled={loading}>
-        <RotateCw size={16} aria-hidden="true" />{loading ? 'Đang tải…' : 'Tải lại'}
+        {loading ? <InlinePending message="Đang tải…" /> : <><RotateCw size={16} aria-hidden="true" />Tải lại</>}
       </button>
     </header>
     <section className={styles.card} aria-label="Lịch sử thông báo" aria-busy={loading}>
       <div className={styles.cardHeader}><h2>Lịch sử thông báo</h2><span>{items.length}/10 thông báo</span></div>
-      {loading ? <p className={styles.empty} role="status">Đang tải thông báo…</p>
-        : error ? <div className={styles.empty} role="alert"><Bell size={28} /><h3>Chưa tải được thông báo</h3><p>Vui lòng kiểm tra kết nối và chọn Tải lại.</p></div>
+      {error && items.length > 0 && <p role="alert">Không thể cập nhật thông báo. Danh sách đã tải vẫn được giữ lại.</p>}
+      {loading && items.length === 0 ? <SectionLoadingState message="Đang tải thông báo…" />
+        : error && items.length === 0 ? <div className={styles.empty} role="alert"><Bell size={28} /><h3>Chưa tải được thông báo</h3><p>Vui lòng kiểm tra kết nối và chọn Tải lại.</p></div>
         : items.length === 0 ? <div className={styles.empty}><Bell size={32} /><h3>Bạn chưa có thông báo nào</h3><p>Các cập nhật về giá và sản phẩm sẽ xuất hiện tại đây.</p><Link to="/watchlist">Xem danh sách theo dõi</Link></div>
         : <ol className={styles.list}>{items.map((item) => <li key={item.id} className={styles.item}>
           <div className={styles.icon}><Bell size={18} aria-hidden="true" /></div>
