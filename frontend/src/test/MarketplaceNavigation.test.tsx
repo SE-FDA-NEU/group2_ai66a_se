@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ProductRow } from '../components/ProductRow';
 import ProductDetailPage from '../pages/ProductDetailPage';
@@ -48,7 +49,7 @@ describe('marketplace navigation', () => {
       </MemoryRouter>,
     );
 
-    expectSafeMarketplaceLink(screen.getByRole('link', { name: 'Xem trên marketplace' }));
+    expectSafeMarketplaceLink(screen.getByRole('link', { name: 'Xem nơi bán' }));
   });
 
   it('opens the product marketplace URL from the detail page', () => {
@@ -61,5 +62,35 @@ describe('marketplace navigation', () => {
     );
 
     expectSafeMarketplaceLink(screen.getByRole('link', { name: 'Xem trên Amazon' }));
+  });
+
+  it('activates unfollow with the keyboard without navigating to product details', async () => {
+    const user = userEvent.setup();
+    const onRemove = vi.fn();
+    render(
+      <MemoryRouter>
+        <Routes>
+          <Route path="/" element={
+            <ProductRow
+              id={String(product.id)}
+              name={product.name}
+              currentPrice={product.current_price}
+              currency={product.currency}
+              onRemove={onRemove}
+            />
+          } />
+          <Route path="/detail/:id" element={<h1>Chi tiết sản phẩm</h1>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.tab();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Ngừng theo dõi sản phẩm' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+
+    expect(onRemove).toHaveBeenCalledOnce();
+    expect(onRemove).toHaveBeenCalledWith(String(product.id));
+    expect(screen.queryByRole('heading', { name: 'Chi tiết sản phẩm' })).not.toBeInTheDocument();
   });
 });

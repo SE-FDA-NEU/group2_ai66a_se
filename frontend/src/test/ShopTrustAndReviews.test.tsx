@@ -252,7 +252,34 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
   });
 
   describe('/watchlist Page UI (ProductRow)', () => {
-    it('displays shop trust label "Trusted" on tracked product row for a trusted shop', () => {
+    it.each([
+      ['Good price', false, 'Giá tốt'],
+      [' Normal ', false, 'Bình thường'],
+      ['Expensive - wait', false, 'Giá cao - nên chờ'],
+      ['Not enough data to assess', false, 'Chưa đủ dữ liệu đánh giá'],
+      [undefined, false, 'Chưa đủ dữ liệu đánh giá'],
+      ['Good price', true, 'Chưa đủ dữ liệu đánh giá'],
+    ])('displays a single price assessment for %s with insufficient data %s', (priceLabel, notEnoughData, expected) => {
+      render(
+        <MemoryRouter>
+          <ProductRow
+            id="1"
+            name="  "
+            currentPrice={450000}
+            currency="VND"
+            priceLabel={priceLabel}
+            notEnoughData={notEnoughData}
+            onRemove={vi.fn()}
+          />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByRole('heading', { name: 'Sản phẩm chưa có tên' })).toBeInTheDocument();
+      expect(screen.getByText(expected)).toBeInTheDocument();
+      expect(screen.queryByText('Khuyến mãi ảo')).not.toBeInTheDocument();
+    });
+
+    it('shows one shop trust badge and prioritizes the fake discount as the only price label', () => {
       const onRemove = vi.fn();
       render(
         <MemoryRouter>
@@ -263,15 +290,19 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
             currency="VND"
             shopName="Logitech Store"
             shopTrustLabel="Trusted"
+            priceLabel="Expensive - wait"
+            isFakeDiscount
             onRemove={onRemove}
           />
         </MemoryRouter>
       );
 
-      const trustBadges = screen.getAllByTestId('shop-trust-badge');
-      expect(trustBadges.length).toBeGreaterThanOrEqual(1);
-      expect(trustBadges[0]).toHaveTextContent('Đáng tin cậy');
-      expect(trustBadges[0]).toHaveAttribute('data-trust-status', 'trusted');
+      const trustBadge = screen.getByTestId('shop-trust-badge');
+      expect(trustBadge).toHaveTextContent('Đáng tin cậy');
+      expect(trustBadge).toHaveAttribute('data-trust-status', 'trusted');
+      expect(screen.queryByText('Trusted')).not.toBeInTheDocument();
+      expect(screen.getByText('Khuyến mãi ảo')).toBeInTheDocument();
+      expect(screen.queryByText('Giá cao - nên chờ')).not.toBeInTheDocument();
     });
 
     it('computes and displays "Risky: few ratings" from shop rating and review count on product row', () => {
