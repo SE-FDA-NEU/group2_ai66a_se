@@ -1,11 +1,11 @@
 #!/bin/sh
 set -e
 
-echo "=== [1/3] Kiem tra ket noi Database... ==="
+echo "=== [1/3] Checking database connection... ==="
 python wait_db.py
 
-echo "=== [2/3] Tu dong cap nhat cau truc Database (Alembic Migration)... ==="
+echo "=== [2/3] Applying database migrations (Alembic)... ==="
 alembic upgrade head
 
-echo "=== [3/3] Khoi chay ung dung FastAPI... ==="
+echo "=== [3/3] Starting FastAPI... ==="
 exec "$@"

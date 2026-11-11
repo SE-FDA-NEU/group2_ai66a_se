@@ -23,5 +23,6 @@ COPY . /app/
 # Giăng bệ phóng Entrypoint (Mỗi lần boot container đều phải đi qua đây)
 ENTRYPOINT ["sh", "/app/entrypoint.sh"]
 
-# Khởi chạy server FastAPI bằng Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Render provides PORT at runtime. Keep a local default for Docker Compose.
+# Production must run without auto-reload.
+CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
