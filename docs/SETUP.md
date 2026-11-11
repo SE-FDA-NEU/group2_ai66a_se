@@ -118,6 +118,12 @@ At startup, the entrypoint verifies database connectivity without printing conne
 
 If Redis is unavailable during startup, the backend logs a generic connection error and remains up; endpoints requiring Redis respond with HTTP 503 until the dependency is available. When `REDIS_URL` is set, `HOST_PORT_REDIS` is not required.
 
+### Gate Render production deploys on GitHub Actions
+
+The repository CI workflow runs on pushes and pull requests targeting `main` or `develop`. It publishes separate GitHub checks for Python tests, frontend build/tests, and secret scanning. In Render, open each production Web Service and Static Site, then go to **Settings → Build & Deploy → Auto-Deploy** and select **After CI Checks Pass**. Keep the production branch set to `main`; Render will wait for the GitHub Actions checks on that commit and skip deployment when a check fails. Repeat this setting for every production service.
+
+To troubleshoot, open the pull request's **Checks** tab or the repository's **Actions** page and inspect the failed job logs. For a failed Render deploy, open the service's **Events** or **Deploys** page and its **Logs**. To roll back, open **Deploys**, select the last known-good deploy, and choose **Rollback** (or manually redeploy that prior commit if the rollback action is unavailable). After fixing the cause, merge a new commit through a pull request; do not bypass failing CI by deploying the commit directly.
+
 Lệnh này sẽ tiến hành build Docker images cho cả Backend và Frontend, sau đó khởi động 4 dịch vụ độc lập trong các container:
 - **db-postgre** (PostgreSQL 15): Cổng `5432` — Lưu trữ cơ sở dữ liệu quan hệ.
 - **redis** (Redis 7): Cổng `6379` — Quản lý phiên OTP, hàng đợi thông báo giá và rate limiting.
