@@ -88,6 +88,18 @@ Khởi chạy đồng thời toàn bộ hệ thống bằng Docker Compose:
 docker compose up -d --build
 ```
 
+### Deploy backend to Render with Docker
+
+Create a Render **Web Service**, connect the GitHub repository and production branch, and choose Docker as the runtime. Configure:
+
+- **Root Directory:** `backend`
+- **Dockerfile Path:** `Dockerfile` (relative to the Root Directory)
+- **Docker Command:** leave blank to use the production `CMD` in the Dockerfile
+- **Health Check Path:** `/`
+- Add the backend environment variables in Render's Environment settings before the first deploy.
+
+The container entrypoint waits for the configured database, applies `alembic upgrade head`, and then starts Uvicorn. Uvicorn binds to `0.0.0.0` and uses Render's runtime `PORT` value; when running locally without `PORT`, it defaults to `8000`. The production command does not enable auto-reload.
+
 Lệnh này sẽ tiến hành build Docker images cho cả Backend và Frontend, sau đó khởi động 4 dịch vụ độc lập trong các container:
 - **db-postgre** (PostgreSQL 15): Cổng `5432` — Lưu trữ cơ sở dữ liệu quan hệ.
 - **redis** (Redis 7): Cổng `6379` — Quản lý phiên OTP, hàng đợi thông báo giá và rate limiting.
