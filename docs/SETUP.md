@@ -95,7 +95,7 @@ Create a Render **Web Service**, connect the GitHub repository and production br
 - **Root Directory:** `backend`
 - **Dockerfile Path:** `Dockerfile` (relative to the Root Directory)
 - **Docker Command:** leave blank to use the production `CMD` in the Dockerfile
-- **Health Check Path:** `/`
+- **Health Check Path:** `/health`
 - Add the backend environment variables in Render's Environment settings before the first deploy.
 
 The container entrypoint waits for the configured database, applies `alembic upgrade head`, and then starts Uvicorn. Uvicorn binds to `0.0.0.0` and uses Render's runtime `PORT` value; when running locally without `PORT`, it defaults to `8000`. The production command does not enable auto-reload.
