@@ -150,6 +150,9 @@ class RapidAPIClient:
             raise MARKETPLACE_UNAVAILABLE.throw()
         try:
             return extract_details(await self._request_product(asin, country))
+        except (httpx.HTTPError, ValueError, ValidationError) as exc:
+            raise MARKETPLACE_UPSTREAM_ERROR.throw() from exc
+
     async def fetch_reviews(self, asin: str, page: int, stars: int | None):
         from app.helper.review_normalizer import normalize_review
         if not settings.RAPIDAPI_KEY:

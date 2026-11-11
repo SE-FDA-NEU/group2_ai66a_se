@@ -197,7 +197,8 @@ Tạo file `.env` từ `.env.example` trước khi chạy. Không commit giá tr
 | `COMPOSE_PROJECT_NAME` | Tên project Docker Compose. |
 | `ADMIN_USERNAME` | Nickname tài khoản developer/admin mặc định. |
 | `ADMIN_EMAIL` | Email đăng nhập của developer/admin mặc định. |
-| `ADMIN_PASSWORD` | Mật khẩu developer/admin mặc định và mật khẩu SMTP Gmail hiện tại. |
+| `ADMIN_PASSWORD` | Mật khẩu developer/admin mặc định; cũng là mật khẩu SMTP dự phòng khi chưa cấu hình `SMTP_PASSWORD`. |
+| `SMTP_PASSWORD` | Gmail App Password dùng cho SMTP. Nên cấu hình riêng trên production; nếu bỏ trống, backend dùng `ADMIN_PASSWORD` để tương thích cấu hình cũ. |
 | `HOST_PORT_FRONTEND` | Port frontend trên máy host, mặc định `3000`. |
 | `HOST_PORT_BACKEND` | Port backend trên máy host, mặc định `8000`. |
 | `HOST_PORT_DB` | Port PostgreSQL trên máy host. Compose mặc định sử dụng `15432`; `.env.example` hiện đặt `5432`, nên cần thống nhất trước khi chạy local. |
@@ -212,7 +213,7 @@ Tạo file `.env` từ `.env.example` trước khi chạy. Không commit giá tr
 | `ALGORITHM` | Thuật toán JWT, hiện là `HS256`. |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Thời gian sống của access token theo phút. |
 
-Lưu ý về email: `backend/app/helper/otp.py` đang dùng SMTP Gmail tại `smtp.gmail.com:587`, sử dụng `ADMIN_EMAIL` và `ADMIN_PASSWORD`. Khi dùng Gmail thực tế, nên dùng App Password thay vì mật khẩu tài khoản chính và nên tách riêng biến `SMTP_USER`, `SMTP_PASSWORD` trong một bước cấu hình tiếp theo.
+Lưu ý về email: OTP và email thông báo dùng Gmail SMTP tại `smtp.gmail.com:587` với STARTTLS. `ADMIN_EMAIL` là địa chỉ gửi; đặt Gmail App Password vào `SMTP_PASSWORD` trên môi trường production. Nếu `SMTP_PASSWORD` không được cấu hình, ứng dụng dùng `ADMIN_PASSWORD` làm phương án tương thích cho môi trường cũ. Gmail App Password yêu cầu bật Xác minh 2 bước cho tài khoản Google. Không dùng mật khẩu Gmail thông thường và không commit App Password vào repository.
 
 ## 6. Cách khởi chạy môi trường phát triển
 
@@ -359,7 +360,7 @@ API prefix hiện tại là `/api/v1`.
 - Đây là skeleton có nền tảng backend và hạ tầng, chưa phải sản phẩm hoàn chỉnh.
 - Frontend chưa kết nối các luồng nghiệp vụ thực tế.
 - API OTP hiện gửi email trực tiếp qua Gmail và phụ thuộc cấu hình SMTP hợp lệ.
-- `ADMIN_PASSWORD` hiện được dùng trong cả việc tạo admin và gửi SMTP; cần tách hai mục đích này khi đưa lên môi trường thật.
+- `SMTP_PASSWORD` cho phép tách Gmail App Password khỏi `ADMIN_PASSWORD` khi triển khai; cấu hình cũ vẫn được hỗ trợ làm phương án dự phòng.
 - `make clean` xóa volume database và Redis, vì vậy không dùng trên dữ liệu cần giữ lại.
 - Migration phải được commit cùng với thay đổi model để các môi trường khác có thể dựng lại cùng schema.
 - Khi thêm model mới, cần bảo đảm model được import vào metadata mà Alembic sử dụng để `--autogenerate` nhận diện đúng.
