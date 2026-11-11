@@ -208,6 +208,7 @@ Tạo file `.env` từ `.env.example` trước khi chạy. Không commit giá tr
 | `POSTGRES_DB` | Tên database. |
 | `REDIS_PASSWORD` | Mật khẩu Redis. |
 | `API_V1_STR` | Prefix API, hiện là `/api/v1`. |
+| `CORS_ORIGINS` | Danh sách origin được phép gọi API, phân cách bằng dấu phẩy; ví dụ `http://localhost:3000,https://your-frontend.onrender.com`. Trên production, đặt domain frontend Render chính xác, không thêm dấu `/` ở cuối và không dùng wildcard. |
 | `VITE_API_URL` | URL API frontend dự kiến sử dụng. Proxy Vite hiện xử lý request bắt đầu bằng `/api`. |
 | `SECRET_KEY` | Khóa ký JWT; cần thay bằng giá trị đủ dài và riêng cho từng môi trường. |
 | `ALGORITHM` | Thuật toán JWT, hiện là `HS256`. |
