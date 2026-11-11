@@ -150,3 +150,28 @@ def test_product_details_http_error_is_reported_as_upstream_error(monkeypatch):
         assert error.value.code == "MARKETPLACE_UPSTREAM_ERROR"
 
     asyncio.run(scenario())
+
+
+def test_review_page_request_and_mapping(monkeypatch):
+    async def scenario():
+        monkeypatch.setattr(settings, "RAPIDAPI_KEY", "test-key")
+        class Response:
+            def raise_for_status(self): pass
+            def json(self):
+                return {"data": {"reviews": [{"review_id": "R1", "review_comment": "Useful", "review_star_rating": "2"}]}}
+        class Client:
+            def __init__(self, **kwargs): pass
+            async def __aenter__(self): return self
+            async def __aexit__(self, *args): pass
+            async def get(self, url, **kwargs):
+                assert url.endswith("/product-reviews")
+                assert kwargs["params"]["star_rating"] == "2_STARS"
+                assert kwargs["params"]["page"] == "2"
+                assert kwargs["params"]["sort_by"] == "MOST_RECENT"
+                return Response()
+        monkeypatch.setattr(rapidapi_module.httpx, "AsyncClient", Client)
+        result = await rapidapi_module.RapidAPIClient().fetch_reviews("B012345678", 2, 2)
+        assert result["reviews"][0]["text"] == "Useful"
+        assert result["reviews"][0]["rating"] == 2
+        assert result["has_more"] is False
+    asyncio.run(scenario())

@@ -9,6 +9,7 @@ import * as watchlistApi from '../api/watchlistApi';
 
 vi.mock('../api/watchlistApi', () => ({
   getWatchlist: vi.fn(),
+  getProductReviews: vi.fn().mockRejectedValue(new Error("offline fixture")),
   removeProductFromWatchlist: vi.fn(),
 }));
 
@@ -192,7 +193,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       expect(screen.getByTestId('reviews-total-ratings')).toHaveTextContent('1,200 lượt đánh giá');
     });
 
-    it('renders the list of 5 most recent customer reviews and limits to 5', () => {
+    it('renders all six cached reviews within the initial ten', () => {
       const sampleReviews = [
         { id: 1, author: 'Alice', rating: 5, title: 'Amazing audio', comment: 'Best noise cancellation ever!' },
         { id: 2, author: 'Bob', rating: 4, title: 'Good value', comment: 'Comfortable to wear all day.' },
@@ -216,7 +217,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       );
 
       const reviewCards = screen.getAllByTestId('review-card');
-      expect(reviewCards).toHaveLength(5);
+      expect(reviewCards).toHaveLength(6);
 
       expect(screen.getByText('Alice')).toBeInTheDocument();
       expect(screen.getByText('Amazing audio')).toBeInTheDocument();
@@ -225,12 +226,13 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       expect(screen.getByText('Eve')).toBeInTheDocument();
       expect(screen.getByText('Perfect purchase')).toBeInTheDocument();
 
-      // The 6th review should not be rendered
-      expect(screen.queryByText('Frank')).not.toBeInTheDocument();
-      expect(screen.queryByText('6th review')).not.toBeInTheDocument();
+      // The initial batch now includes the sixth review.
+      expect(screen.getByText('Frank')).toBeInTheDocument();
+      expect(screen.getByText('6th review')).toBeInTheDocument();
     });
 
-    it('renders empty message when no customer reviews are available', () => {
+    it('renders empty message when no customer reviews are available', async () => {
+      vi.mocked(watchlistApi.getProductReviews).mockResolvedValueOnce({ reviews: [], has_more: false, source: 'cached' });
       const product = {
         ...baseProduct,
         reviews: [],
@@ -245,7 +247,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
         </MemoryRouter>
       );
 
-      expect(screen.getByTestId('empty-reviews')).toHaveTextContent('Chưa có đánh giá nào từ khách hàng');
+      expect(await screen.findByTestId('empty-reviews')).toHaveTextContent('Chưa có đánh giá nào từ khách hàng');
     });
   });
 
