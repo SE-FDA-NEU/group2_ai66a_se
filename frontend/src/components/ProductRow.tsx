@@ -1,6 +1,6 @@
 import { InlinePending } from './LoadingState';
 import React from 'react';
-import { AlertTriangle, ExternalLink, Star, Trash2 } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ProductRow.module.css';
 import { formatVnd } from '../utils/currency';
