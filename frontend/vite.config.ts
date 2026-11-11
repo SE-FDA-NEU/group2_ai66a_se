@@ -27,6 +27,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/health': {
+        target: backendTarget,
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 })

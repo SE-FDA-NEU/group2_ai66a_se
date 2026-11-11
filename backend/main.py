@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 from admin import create_admin_user
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
+from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
@@ -15,10 +17,11 @@ from app.core.exceptions import (
     unhandled_exception_handler,
 )
 from app.core.logger import logger
-from app.core.database import AsyncSessionLocal, engine
-from app.core.redis import redis_client
+from app.core.database import AsyncSessionLocal, engine, get_db
+from app.core.redis import get_redis, redis_client
 
 from app.api.v1.api import api_router
+from app.services.dev_service import dev_service
 from app.services.price_monitor_service import price_monitor_service
 from app.services.notification_service import run_email_delivery_forever
 
@@ -76,3 +79,15 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 @app.get("/", tags=["Root"])
 def read_root():
     return {"success": f"Welcome to {settings.PROJECT_NAME} API!"}
+
+
+@app.get("/health", tags=["Health"])
+@app.get(f"{settings.API_V1_STR}/health", tags=["Health"], include_in_schema=False)
+async def public_health_check(
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+):
+    """Public health check returning 200 when PostgreSQL and Redis are healthy, 503 otherwise."""
+    await dev_service.check_health(db=db, redis=redis)
+    return {"status": "ok", "database": "connected", "redis": "connected"}
+
