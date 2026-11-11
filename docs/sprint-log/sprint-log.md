@@ -28,7 +28,19 @@ SM Sprint 5: @Dai-Nguyen1506
 
 ## Sprint 5 (weeks 13–14)
 
-Goal: _
-Committed _ · Completed _ · Velocity _
-Not finished: - <#-id-issue> - issue.
-SM Sprint 6: none.
+Goal: Deploy the complete Trakora application to a public HTTPS URL gated by automated GitHub Actions CI checks, polish the UI from M3 feedback, and document production operations, monitoring, and rollback procedures for release v1.0.
+Committed 39 · Completed 39 · Velocity: 39.
+Not finished: None.
+SM Sprint 6: none (final sprint).
+
+---
+
+## Summary of All Five Sprints
+
+| Sprint | Weeks | Scrum Master | Sprint Goal | Committed | Completed | Velocity | Unfinished |
+| :----: | :---: | :----------- | :---------- | :-------: | :-------: | :------: | :--------: |
+| **Sprint 1** | 5–6 | @Dai-Nguyen1506 | Agree on product vision, personas, checkable user stories, and fixed business rules (M1). | 9 | 21 | N/A | None |
+| **Sprint 2** | 7–8 | @happyhusky3303 | Establish system architecture, database schema, REST API, and end-to-end walking skeleton (M2). | 91 | 91 | 91 | None |
+| **Sprint 3** | 9–10 | @maimanhbel | Deliver core P0 user flows through a responsive UI backed by real database data and notifications (M3). | 46 | 46 | 46 | None |
+| **Sprint 4** | 11–12 | @huydang2006 | Guard every P0 story and business-rule boundary with fast offline automated tests (M4). | 33 | 33 | 33 | None |
+| **Sprint 5** | 13–14 | @Dai-Nguyen1506 | Polish UI from M3 feedback, enforce CI-gated production deployment on Render, and finalize operations manual for `v1.0` (M5). | 39 | 39 | 39 | None |
