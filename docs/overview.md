@@ -206,6 +206,7 @@ Tạo file `.env` từ `.env.example` trước khi chạy. Không commit giá tr
 | `POSTGRES_USER` | Tên user PostgreSQL. |
 | `POSTGRES_PASSWORD` | Mật khẩu PostgreSQL. |
 | `POSTGRES_DB` | Tên database. |
+| `DATABASE_URL` | Chuỗi kết nối PostgreSQL cho backend. Nhận URL `postgresql://`, `postgres://` hoặc `postgresql+asyncpg://`; backend chuẩn hóa sang asyncpg. Khi khai báo biến này, các biến `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` và `HOST_PORT_DB` không bắt buộc. |
 | `REDIS_PASSWORD` | Mật khẩu Redis. |
 | `API_V1_STR` | Prefix API, hiện là `/api/v1`. |
 | `CORS_ORIGINS` | Danh sách origin được phép gọi API, phân cách bằng dấu phẩy; ví dụ `http://localhost:3000,https://your-frontend.onrender.com`. Trên production, đặt domain frontend Render chính xác, không thêm dấu `/` ở cuối và không dùng wildcard. |
