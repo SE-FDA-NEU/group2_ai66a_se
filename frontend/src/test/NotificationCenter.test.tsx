@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { NotificationCenter } from '../components/NotificationCenter';
 import { getUnseenNotifications, markNotificationsSeen } from '../api/notificationApi';
@@ -49,7 +49,7 @@ describe('NotificationCenter target price notifications', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     expect(link).toHaveTextContent('1.200.000 VND');
     expect(link).toHaveTextContent('1.500.000 VND');
-    expect(markNotificationsSeen).toHaveBeenCalledWith([7]);
+    await waitFor(() => expect(markNotificationsSeen).toHaveBeenCalledWith([7]));
 
     fireEvent.click(link);
     expect(link).toHaveAttribute('href', productUrl);
