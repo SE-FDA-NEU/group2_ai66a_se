@@ -6,7 +6,7 @@ import subprocess
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 CASES = [
     "N185-UI-01", "N185-UI-02", "N185-UI-03", "N185-UI-04", "N185-UI-05",
     "N185-UI-06", "N185-UI-07", "N185-UI-08", "N185-UI-09", "N185-UI-10",
