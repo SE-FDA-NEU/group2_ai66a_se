@@ -17,10 +17,21 @@ const operationMessage = (method?: string, url = ''): string | null => {
   return 'Thao tác đã hoàn tất.';
 };
 
+export function getApiBaseUrl(): string {
+  const raw = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
+  if (!raw) return '/api/v1';
+  if ((raw.startsWith('http://') || raw.startsWith('https://')) && !raw.endsWith('/api/v1')) {
+    return `${raw}/api/v1`;
+  }
+  return raw;
+}
+
+export const API_BASE_URL = getApiBaseUrl();
+
 // Khởi tạo một đối tượng axios với các cấu hình mặc định
 const apiClient = axios.create({
-  // URL gốc sẽ được lấy từ biến môi trường VITE_API_URL (ví dụ: http://localhost:8000/api/v1)
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  // URL gốc sẽ được lấy từ biến môi trường VITE_API_URL (ví dụ: https://trakora-backend.onrender.com/api/v1)
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

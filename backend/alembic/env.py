@@ -14,7 +14,14 @@ from alembic import context
 config = context.config
 
 db_url = settings.get_database_url
-config.set_main_option("sqlalchemy.url", db_url)
+if db_url.startswith("postgres://"):
+    db_url = "postgresql+asyncpg://" + db_url[len("postgres://"):]
+elif db_url.startswith("postgresql://"):
+    db_url = "postgresql+asyncpg://" + db_url[len("postgresql://"):]
+# Alembic stores options in ConfigParser, where `%` starts interpolation.
+# Percent-encoded credentials (e.g. `%40` for `@`) must be escaped here;
+# ConfigParser restores the original URL when the option is read later.
+config.set_main_option("sqlalchemy.url", db_url.replace("%", "%%"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

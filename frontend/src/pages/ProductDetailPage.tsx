@@ -217,7 +217,7 @@ export const ProductDetailPage: React.FC = () => {
                 <span className={`${styles.badge} ${
                   product.price_label === 'Good price'
                     ? styles.badgeSuccess
-                    : product.price_label === 'Expensive' || product.fake_discount
+                    : product.price_label === 'Expensive - wait' || product.price_label === 'Expensive' || product.fake_discount
                     ? styles.badgeWarning
                     : styles.badgeNeutral
                 }`}>

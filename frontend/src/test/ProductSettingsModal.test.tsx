@@ -128,6 +128,43 @@ describe('ProductSettingsModal (US02 - Target Price & Settings)', () => {
     });
   });
 
+  it('correctly handles multi-dot VND input (e.g. 1.200.000) and keeps submit enabled', async () => {
+    const millionProduct: watchlistApi.WatchlistProduct = {
+      ...mockProduct,
+      current_price: 2000000,
+      target_price: 1500000,
+    };
+    const updated = {
+      ...millionProduct,
+      target_price: 1200000,
+    };
+    vi.mocked(watchlistApi.updateTargetPrice).mockResolvedValue(updated);
+
+    render(
+      <ProductSettingsModal
+        {...defaultProps}
+        product={millionProduct}
+      />
+    );
+
+    const input = screen.getByLabelText(/Mức giá mục tiêu mới/i);
+    const submitBtn = screen.getByRole('button', { name: /Lưu giá mục tiêu/i });
+
+    fireEvent.change(input, { target: { value: '1.200.000' } });
+
+    expect(
+      screen.queryByText(/Giá mục tiêu phải thấp hơn giá hiện tại/i)
+    ).not.toBeInTheDocument();
+    expect(submitBtn).not.toBeDisabled();
+
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(watchlistApi.updateTargetPrice).toHaveBeenCalledWith(101, 1200000);
+      expect(defaultProps.onTargetPriceUpdated).toHaveBeenCalledWith(updated);
+    });
+  });
+
   it('displays API error if updateTargetPrice fails', async () => {
     vi.mocked(watchlistApi.updateTargetPrice).mockRejectedValue({
       detail: 'Không thể cập nhật giá mục tiêu vào lúc này.',

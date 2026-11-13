@@ -2,7 +2,7 @@ import { SectionLoadingState, InlinePending } from './LoadingState';
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Bell, Moon, Settings, Tag, X, Zap } from 'lucide-react';
 import { updateTargetPrice, WatchlistProduct } from '../api/watchlistApi';
-import { formatVnd, parseVndInput } from '../utils/currency';
+import { convertToVnd, formatVnd, parseVndInput } from '../utils/currency';
 import styles from './ProductSettingsModal.module.css';
 import apiClient from '../api/config';
 
@@ -19,11 +19,11 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
   product,
   onTargetPriceUpdated,
 }) => {
-  const currentPriceVnd = Math.round(Number(product.current_price));
+  const currentPriceVnd = Math.round(convertToVnd(Number(product.current_price), product.currency));
   const currentPriceFormatted = formatVnd(product.current_price, product.currency);
 
   const initialTargetVnd = product.target_price != null
-    ? String(Math.round(Number(product.target_price)))
+    ? String(Math.round(convertToVnd(Number(product.target_price), product.currency)))
     : '';
 
   const [targetPriceInput, setTargetPriceInput] = useState<string>(initialTargetVnd);
@@ -42,7 +42,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       const initVnd = product.target_price != null
-        ? String(Math.round(Number(product.target_price)))
+        ? String(Math.round(convertToVnd(Number(product.target_price), product.currency)))
         : '';
       setTargetPriceInput(initVnd);
       setValidationError(null);
@@ -148,11 +148,12 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
     } finally { setSavingSettings(false); }
   };
 
+  const parsedTargetPrice = parseVndInput(targetPriceInput);
   const isFormValid =
-    targetPriceInput.trim() !== '' &&
+    parsedTargetPrice !== null &&
     validationError === null &&
-    Number(targetPriceInput.trim()) < currentPriceVnd &&
-    Number(targetPriceInput.trim()) > 0;
+    parsedTargetPrice < currentPriceVnd &&
+    parsedTargetPrice > 0;
 
   return (
     <div className={styles.modalOverlay} onClick={isSubmitting || savingSettings ? undefined : onClose} role="dialog" aria-modal="true">

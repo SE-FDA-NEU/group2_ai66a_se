@@ -118,6 +118,26 @@ At startup, the entrypoint verifies database connectivity without printing conne
 
 If Redis is unavailable during startup, the backend logs a generic connection error and remains up; endpoints requiring Redis respond with HTTP 503 until the dependency is available. When `REDIS_URL` is set, `HOST_PORT_REDIS` is not required.
 
+### Deploy Frontend Static Site & Blueprint (`render.yaml`)
+
+1. The repository root includes [`render.yaml`](../render.yaml) defining `trakora-redis` (Render Key Value), `trakora-backend` (Docker Web Service), and `trakora-frontend` (Static Site with SPA rewrite rule `/* -> /index.html`).
+2. When deploying via **New → Blueprint** on Render (or creating the Static Site manually):
+   - **Root Directory:** `frontend`
+   - **Build Command:** `npm ci && npm run build`
+   - **Publish Directory:** `dist`
+   - **Rewrite Rule:** `/*` → `/index.html` (Type: **Rewrite**; also included in `frontend/public/_redirects`).
+3. Set the required environment variables on `trakora-frontend` **before** building (Vite inlines `VITE_*` variables at build time):
+   - `VITE_API_URL`: `https://<your-backend-service>.onrender.com/api/v1`
+   - `VITE_GOOGLE_CLIENT_ID`: Your Google OAuth 2.0 Web Client ID (must match `GOOGLE_CLIENT_ID` on the backend)
+4. Set `CORS_ORIGINS` on `trakora-backend` to the exact origin URL of your Static Site (e.g. `https://<your-frontend-service>.onrender.com`, no trailing slash).
+5. In **Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs**, add `https://<your-frontend-service>.onrender.com` to **Authorized JavaScript origins** so Google Sign-In works in production.
+
+### Gate Render production deploys on GitHub Actions
+
+The repository CI workflow runs on pushes and pull requests targeting `main` or `develop`. It publishes separate GitHub checks for Python tests, frontend build/tests, and secret scanning. In Render, open each production Web Service and Static Site, then go to **Settings → Build & Deploy → Auto-Deploy** and select **After CI Checks Pass**. Keep the production branch set to `main`; Render will wait for the GitHub Actions checks on that commit and skip deployment when a check fails. Repeat this setting for every production service.
+
+To troubleshoot, open the pull request's **Checks** tab or the repository's **Actions** page and inspect the failed job logs. For a failed Render deploy, open the service's **Events** or **Deploys** page and its **Logs**. To roll back, open **Deploys**, select the last known-good deploy, and choose **Rollback** (or manually redeploy that prior commit if the rollback action is unavailable). After fixing the cause, merge a new commit through a pull request; do not bypass failing CI by deploying the commit directly.
+
 Lệnh này sẽ tiến hành build Docker images cho cả Backend và Frontend, sau đó khởi động 4 dịch vụ độc lập trong các container:
 - **db-postgre** (PostgreSQL 15): Cổng `5432` — Lưu trữ cơ sở dữ liệu quan hệ.
 - **redis** (Redis 7): Cổng `6379` — Quản lý phiên OTP, hàng đợi thông báo giá và rate limiting.
