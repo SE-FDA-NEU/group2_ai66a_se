@@ -10,6 +10,8 @@ from app.core.config import settings
 from app.core.logger import logger
 from app.schemas.google_schema import GoogleErrorResponse
 
+_GOOGLE_REQUEST = google_requests.Request()
+
 
 def _decode_unverified_claims(token: str) -> dict[str, Any]:
 	"""Giải mã phần claims (payload) mà không cần xác minh chữ ký nhằm mục đích logging/debug."""
@@ -38,7 +40,7 @@ async def verify_google_id_token(token: str) -> dict[str, Any]:
 		payload = await asyncio.to_thread(
 			id_token.verify_oauth2_token,
 			token,
-			google_requests.Request(),
+			_GOOGLE_REQUEST,
 			expected_client_id,
 			clock_skew_in_seconds=120,
 		)

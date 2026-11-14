@@ -20,8 +20,19 @@ const operationMessage = (method?: string, url = ''): string | null => {
 export function getApiBaseUrl(): string {
   const raw = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
   if (!raw) return '/api/v1';
-  if ((raw.startsWith('http://') || raw.startsWith('https://')) && !raw.endsWith('/api/v1')) {
-    return `${raw}/api/v1`;
+  if (raw.startsWith('http://') || raw.startsWith('https://')) {
+    try {
+      const parsed = new URL(raw);
+      if (parsed.hostname.endsWith('.onrender.com')) {
+        parsed.protocol = 'https:';
+        if (parsed.port === '8000') parsed.port = '';
+      }
+      const pathname = parsed.pathname.replace(/\/+$/, '');
+      const normalizedPath = pathname.endsWith('/api/v1') ? pathname : `${pathname}/api/v1`;
+      return `${parsed.origin}${normalizedPath}`;
+    } catch {
+      return raw.endsWith('/api/v1') ? raw : `${raw}/api/v1`;
+    }
   }
   return raw;
 }
@@ -35,7 +46,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // Hủy request nếu quá 10 giây không có phản hồi
+  timeout: 60000, // Cho phép backend Render Free Tier đủ thời gian khởi động (cold start)
 });
 
 // Interceptor cho REQUEST (Gắn thêm token nếu có)
@@ -82,11 +93,17 @@ apiClient.interceptors.response.use(
     
     const errorData = (error.response?.data as Record<string, unknown>) || {};
     const backendError = errorData.error as Record<string, unknown> | undefined;
-    const errorMessage =
+    const isTimeoutError =
+      error.code === 'ECONNABORTED' ||
+      (typeof error.message === 'string' && error.message.toLowerCase().includes('timeout'));
+    const rawErrorMessage =
       (backendError?.message as string) ||
       (errorData.detail as string) ||
       (errorData.message as string) ||
       error.message;
+    const errorMessage = isTimeoutError
+      ? 'Máy chủ phản hồi quá thời gian chờ (Timeout). Vui lòng kiểm tra kết nối tới Backend (VITE_API_URL) hoặc thử lại sau vài giây khi máy chủ khởi động xong.'
+      : rawErrorMessage;
 
     if (operationMessage(error.config?.method, error.config?.url)) {
       const detail = typeof errorMessage === 'string' && /[À-ỹ]/.test(errorMessage)
