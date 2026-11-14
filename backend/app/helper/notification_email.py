@@ -285,28 +285,36 @@ def _get_notification_html_content(
 
 async def _send_email(to_email: str, subject: str, html_content: str) -> None:
     """Hàm gửi email bất đồng bộ qua SMTP."""
+    active_sender_email = settings.ADMIN_EMAIL or sender_email
+    active_sender_password = settings.SMTP_PASSWORD or settings.ADMIN_PASSWORD or sender_password
+
     message = MIMEMultipart("alternative")
     message["Subject"] = subject
-    message["From"] = f"Trakora App <{sender_email}>"
+    message["From"] = f"Trakora App <{active_sender_email}>"
     message["To"] = to_email
 
     part = MIMEText(html_content, "html", "utf-8")
     message.attach(part)
 
+    server = None
     try:
         server = aiosmtplib.SMTP(
             hostname="smtp.gmail.com",
             port=587,
             start_tls=True,
+            timeout=15,
         )
         await server.connect()
-        await server.login(sender_email, sender_password)
+        await server.login(active_sender_email, active_sender_password)
         await server.send_message(message)
         await server.quit()
         logger.info(f"Gửi email thông báo đến {to_email} thành công.")
     except Exception as e:
         logger.error(f"Lỗi gửi email thông báo đến {to_email}: {e}", exc_info=True)
         raise NotificationErrors.EMAIL_SEND_FAILED.throw()
+    finally:
+        if server is not None:
+            server.close()
 
 
 async def send_notification_email(

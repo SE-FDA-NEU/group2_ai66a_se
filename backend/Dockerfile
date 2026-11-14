@@ -20,6 +20,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy toàn bộ source code
 COPY . /app/
 
+# Normalize line endings and ensure entrypoint script is executable in Linux containers
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
 # Giăng bệ phóng Entrypoint (Mỗi lần boot container đều phải đi qua đây)
 ENTRYPOINT ["sh", "/app/entrypoint.sh"]
 

@@ -3,6 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 
 from app.crud.base import CRUDBase
+from app.crud.product_crud import product_crud
+from app.models.product_model import Product, TrackedProduct
 from app.models.user_model import User
 
 class CRUDUser(CRUDBase[User]):
@@ -61,7 +63,17 @@ class CRUDUser(CRUDBase[User]):
         await db.commit()
 
     async def remove(self, db: AsyncSession, db_obj: User) -> None:
-        """Xóa người dùng (các bản ghi liên quan cascade theo FK)"""
+        """Xóa người dùng và cập nhật lại tracked_by_count trên các sản phẩm đang theo dõi."""
+        if hasattr(db, "scalars"):
+            statement = (
+                select(Product)
+                .join(TrackedProduct, TrackedProduct.product_id == Product.id)
+                .where(TrackedProduct.user_id == db_obj.id)
+                .with_for_update()
+            )
+            tracked_products = await db.scalars(statement)
+            for product in tracked_products:
+                await product_crud.decrement_tracked_count_or_untrack(db, product)
         await db.delete(db_obj)
         await db.commit()
 

@@ -97,6 +97,15 @@ class PriceMonitorService:
                         ),
                     )
                     await tracked_product_crud.mark_good_price_notified(db, tracker)
+                    await enqueue_price_email(
+                        db,
+                        user_id=tracker.user_id,
+                        kind="good_price",
+                        product_name=product.name,
+                        current_price=product.current_price,
+                        currency=product.currency,
+                        product_url=product.url,
+                    )
 
             target_trackers = await tracked_product_crud.list_pending_target_price_trackers(
                 db, product.id, product.current_price, for_update=True
