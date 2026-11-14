@@ -1,13 +1,15 @@
+import json
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 class Settings(BaseSettings):
     # 1. Cấu hình API chung
-    PROJECT_NAME: str
-    API_V1_STR: str
+    PROJECT_NAME: str = "Trakora"
+    API_V1_STR: str = "/api/v1"
 
     # 2. Tài khoản Admin
-    ADMIN_USERNAME: str
+    ADMIN_USERNAME: str = "Admin"
     ADMIN_EMAIL: str
     ADMIN_PASSWORD: str
     # Prefer a dedicated Gmail App Password; retain ADMIN_PASSWORD as a local fallback.
@@ -15,8 +17,8 @@ class Settings(BaseSettings):
 
     # 2. Cấu hình Bảo mật (JWT)
     SECRET_KEY: str
-    ALGORITHM: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 11520
 
     # 3. Cấu hình kết nối Cơ sở dữ liệu
     POSTGRES_USER: Optional[str] = None
@@ -34,8 +36,13 @@ class Settings(BaseSettings):
 
     # 5. Cấu hình Google Auth
     GOOGLE_CLIENT_ID: str
-    # Comma-separated browser origins allowed to call this API.
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    # Comma-separated or JSON array of browser origins allowed to call this API.
+    CORS_ORIGINS: list[str] | str = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
 
     # RapidAPI product lookup adapter (optional in local/test environments)
     RAPIDAPI_KEY: Optional[str] = None
@@ -54,8 +61,40 @@ class Settings(BaseSettings):
     OTP_MAX_ATTEMPTS: int = 5
     OTP_MAX_REQUESTS_PER_HOUR: int = 5
 
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, value: list[str] | str) -> list[str]:
+        if isinstance(value, str):
+            raw = value.strip()
+            if not raw:
+                return []
+            if raw.startswith("["):
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    return [str(origin).strip().rstrip("/") for origin in parsed if str(origin).strip()]
+            return [origin.strip().rstrip("/") for origin in raw.split(",") if origin.strip()]
+        if isinstance(value, list):
+            return [str(origin).strip().rstrip("/") for origin in value if str(origin).strip()]
+        return []
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def _normalize_database_url(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        normalized = str(value).strip()
+        if not normalized:
+            return None
+        if normalized.startswith("postgres://"):
+            return "postgresql+asyncpg://" + normalized[len("postgres://"):]
+        if normalized.startswith("postgresql://"):
+            return "postgresql+asyncpg://" + normalized[len("postgresql://"):]
+        return normalized
+
     @property
     def cors_origins(self) -> list[str]:
+        if isinstance(self.CORS_ORIGINS, list):
+            return [origin.strip().rstrip("/") for origin in self.CORS_ORIGINS if origin.strip()]
         return [origin.strip().rstrip("/") for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
     @property
