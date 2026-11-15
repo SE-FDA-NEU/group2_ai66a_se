@@ -267,7 +267,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
     it.each([
       ['Good price', false, 'Giá tốt'],
       [' Normal ', false, 'Bình thường'],
-      ['Expensive - wait', false, 'Giá cao - nên chờ'],
+      ['Expensive - wait', false, 'Giá cao'],
       ['Not enough data to assess', false, 'Chưa đủ dữ liệu đánh giá'],
       [undefined, false, 'Chưa đủ dữ liệu đánh giá'],
       ['Good price', true, 'Chưa đủ dữ liệu đánh giá'],
@@ -314,7 +314,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       expect(trustBadge).toHaveAttribute('data-trust-status', 'trusted');
       expect(screen.queryByText('Trusted')).not.toBeInTheDocument();
       expect(screen.getByText('Khuyến mãi ảo')).toBeInTheDocument();
-      expect(screen.queryByText('Giá cao - nên chờ')).not.toBeInTheDocument();
+      expect(screen.queryByText('Giá cao')).not.toBeInTheDocument();
     });
 
     it('computes and displays "Risky: few ratings" from shop rating and review count on product row', () => {
