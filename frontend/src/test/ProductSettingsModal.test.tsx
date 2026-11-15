@@ -4,7 +4,21 @@ import { ProductSettingsModal } from '../components/ProductSettingsModal';
 import * as watchlistApi from '../api/watchlistApi';
 import apiClient from '../api/config';
 
-vi.mock('../api/config', () => ({ default: { get: vi.fn().mockResolvedValue({ data: { email_enabled: false, quiet_hours_enabled: false } }), patch: vi.fn().mockResolvedValue({}) } }));
+vi.mock('../api/config', () => ({
+  default: {
+    get: vi.fn().mockResolvedValue({
+      data: {
+        email_enabled: false,
+        quiet_hours_enabled: false,
+        sale_alert_enabled: false,
+        quiet_start: '23:00',
+        quiet_end: '07:00',
+        timezone: 'Asia/Ho_Chi_Minh',
+      },
+    }),
+    patch: vi.fn().mockResolvedValue({ data: {} }),
+  },
+}));
 
 vi.mock('../api/watchlistApi', () => ({
   updateTargetPrice: vi.fn(),
@@ -188,8 +202,80 @@ describe('ProductSettingsModal (US02 - Target Price & Settings)', () => {
     vi.mocked(apiClient.get).mockRejectedValueOnce(new Error('offline'));
     render(<ProductSettingsModal {...defaultProps} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Thử lại' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Lưu cấu hình thông báo' })).toBeEnabled());
+    await waitFor(() => expect(screen.getByLabelText('Thông báo qua Email')).toBeEnabled());
+    expect(screen.getByLabelText('Giờ yên tĩnh')).toBeEnabled();
+    expect(screen.getByLabelText('Cảnh báo đợt giảm giá lớn')).toBeEnabled();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('does not render manual save button and auto-saves when toggling notification switches', async () => {
+    render(<ProductSettingsModal {...defaultProps} />);
+
+    expect(
+      screen.queryByRole('button', { name: /Lưu cấu hình thông báo/i })
+    ).not.toBeInTheDocument();
+
+    const emailToggle = screen.getByLabelText('Thông báo qua Email') as HTMLInputElement;
+    const quietToggle = screen.getByLabelText('Giờ yên tĩnh') as HTMLInputElement;
+    const saleToggle = screen.getByLabelText('Cảnh báo đợt giảm giá lớn') as HTMLInputElement;
+
+    await waitFor(() => expect(emailToggle).toBeEnabled());
+    expect(emailToggle.checked).toBe(false);
+    expect(quietToggle.checked).toBe(false);
+    expect(saleToggle.checked).toBe(false);
+
+    fireEvent.click(emailToggle);
+    await waitFor(() =>
+      expect(apiClient.patch).toHaveBeenLastCalledWith('/notifications/settings', {
+        email_enabled: true,
+        quiet_hours_enabled: false,
+        sale_alert_enabled: false,
+        quiet_start: '23:00',
+        quiet_end: '07:00',
+        timezone: 'Asia/Ho_Chi_Minh',
+      })
+    );
+    expect(emailToggle.checked).toBe(true);
+
+    fireEvent.click(quietToggle);
+    await waitFor(() =>
+      expect(apiClient.patch).toHaveBeenLastCalledWith('/notifications/settings', {
+        email_enabled: true,
+        quiet_hours_enabled: true,
+        sale_alert_enabled: false,
+        quiet_start: '23:00',
+        quiet_end: '07:00',
+        timezone: 'Asia/Ho_Chi_Minh',
+      })
+    );
+    expect(quietToggle.checked).toBe(true);
+
+    fireEvent.click(saleToggle);
+    await waitFor(() =>
+      expect(apiClient.patch).toHaveBeenLastCalledWith('/notifications/settings', {
+        email_enabled: true,
+        quiet_hours_enabled: true,
+        sale_alert_enabled: true,
+        quiet_start: '23:00',
+        quiet_end: '07:00',
+        timezone: 'Asia/Ho_Chi_Minh',
+      })
+    );
+    expect(saleToggle.checked).toBe(true);
+  });
+
+  it('reverts toggle state when auto-save request fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(apiClient.patch).mockRejectedValueOnce(new Error('save failed'));
+
+    render(<ProductSettingsModal {...defaultProps} />);
+    const saleToggle = screen.getByLabelText('Cảnh báo đợt giảm giá lớn') as HTMLInputElement;
+    await waitFor(() => expect(saleToggle).toBeEnabled());
+
+    fireEvent.click(saleToggle);
+    await waitFor(() => expect(apiClient.patch).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(saleToggle.checked).toBe(false));
+    consoleSpy.mockRestore();
   });
 });
 

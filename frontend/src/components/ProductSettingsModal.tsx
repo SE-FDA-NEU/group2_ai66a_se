@@ -33,6 +33,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
   // Account-wide notification preferences.
   const [emailEnabled, setEmailEnabled] = useState<boolean>(true);
   const [quietHoursEnabled, setQuietHoursEnabled] = useState<boolean>(false);
+  const [saleAlertEnabled, setSaleAlertEnabled] = useState<boolean>(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [settingsError, setSettingsError] = useState(false);
@@ -55,11 +56,21 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
     setSettingsLoaded(false);
     setSettingsError(false);
     void apiClient.get('/notifications/settings').then((response) => {
-      const body = response as unknown as { data: { email_enabled: boolean; quiet_hours_enabled: boolean; quiet_start?: string | null; quiet_end?: string | null; timezone?: string } };
+      const body = response as unknown as {
+        data: {
+          email_enabled: boolean;
+          quiet_hours_enabled: boolean;
+          sale_alert_enabled?: boolean;
+          quiet_start?: string | null;
+          quiet_end?: string | null;
+          timezone?: string;
+        };
+      };
       if (active && !body.data) throw new Error('Missing settings');
       if (active && body.data) {
         setEmailEnabled(body.data.email_enabled);
         setQuietHoursEnabled(body.data.quiet_hours_enabled);
+        setSaleAlertEnabled(Boolean(body.data.sale_alert_enabled));
         setQuietWindow({ quiet_start: body.data.quiet_start || '23:00', quiet_end: body.data.quiet_end || '07:00', timezone: body.data.timezone || 'Asia/Ho_Chi_Minh' });
         setSettingsLoaded(true);
       }
@@ -134,18 +145,38 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
     }
   };
 
-  const handleSaveNotifications = async () => {
+  type NotificationToggleField = 'email_enabled' | 'quiet_hours_enabled' | 'sale_alert_enabled';
+
+  const handleToggleSetting = async (field: NotificationToggleField, nextValue: boolean) => {
     if (!settingsLoaded || savingSettings) return;
+    const previousState = {
+      email_enabled: emailEnabled,
+      quiet_hours_enabled: quietHoursEnabled,
+      sale_alert_enabled: saleAlertEnabled,
+    };
+    const nextState = {
+      ...previousState,
+      [field]: nextValue,
+    };
+
+    if (field === 'email_enabled') setEmailEnabled(nextValue);
+    else if (field === 'quiet_hours_enabled') setQuietHoursEnabled(nextValue);
+    else setSaleAlertEnabled(nextValue);
+
     setSavingSettings(true);
     try {
       await apiClient.patch('/notifications/settings', {
-        email_enabled: emailEnabled,
-        quiet_hours_enabled: quietHoursEnabled,
+        ...nextState,
         ...quietWindow,
       });
     } catch (error) {
       console.error('Không thể lưu cài đặt thông báo:', error);
-    } finally { setSavingSettings(false); }
+      setEmailEnabled(previousState.email_enabled);
+      setQuietHoursEnabled(previousState.quiet_hours_enabled);
+      setSaleAlertEnabled(previousState.sale_alert_enabled);
+    } finally {
+      setSavingSettings(false);
+    }
   };
 
   const parsedTargetPrice = parseVndInput(targetPriceInput);
@@ -175,7 +206,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>
               <Tag size={16} color="var(--primary-color)" aria-hidden="true" />
-              Thiết lập giá mục tiêu (Target Price)
+              Thiết lập giá mục tiêu
             </h3>
             <p className={styles.sectionDesc}>
               Hệ thống sẽ tự động quét giá định kỳ mỗi 5 phút và gửi cảnh báo ngay khi giá sản phẩm chạm hoặc thấp hơn mức này (BR1, BR4).
@@ -249,14 +280,14 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
             </form>
           </section>
 
-          {/* Section 2: Notification Settings (Placeholder chuẩn bị cho US10) */}
+          {/* Section 2: Notification Settings (US10, US11) */}
           <section className={styles.section} style={{ borderTop: '1px solid var(--border-light)', paddingTop: 16 }}>
             <h3 className={styles.sectionTitle}>
               <Bell size={16} color="var(--primary-color)" aria-hidden="true" />
               Tùy chọn nhận thông báo
             </h3>
             <p className={styles.sectionDesc}>
-              Cấu hình các kênh và khung giờ nhận thông báo khi có biến động giá.
+              Cấu hình các kênh và khung giờ nhận thông báo khi có biến động giá. Thay đổi sẽ được tự động lưu ngay khi bạn bật/tắt.
             </p>
             {!settingsLoaded && !settingsError && <SectionLoadingState message="Đang tải cài đặt thông báo..." skeleton={false} />}
             {settingsError && <p role="alert">Không thể tải cài đặt thông báo. <button type="button" onClick={() => setSettingsRetry(value => value + 1)}>Thử lại</button></p>}
@@ -269,8 +300,10 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
               <label className={styles.toggleSwitch}>
                 <input
                   type="checkbox"
-                  disabled={!settingsLoaded || savingSettings} checked={emailEnabled}
-                  onChange={(e) => setEmailEnabled(e.target.checked)}
+                  aria-label="Thông báo qua Email"
+                  disabled={!settingsLoaded || savingSettings}
+                  checked={emailEnabled}
+                  onChange={(e) => void handleToggleSetting('email_enabled', e.target.checked)}
                 />
                 <span className={styles.toggleSlider}></span>
               </label>
@@ -287,8 +320,10 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
               <label className={styles.toggleSwitch}>
                 <input
                   type="checkbox"
-                  disabled={!settingsLoaded || savingSettings} checked={quietHoursEnabled}
-                  onChange={(e) => setQuietHoursEnabled(e.target.checked)}
+                  aria-label="Giờ yên tĩnh"
+                  disabled={!settingsLoaded || savingSettings}
+                  checked={quietHoursEnabled}
+                  onChange={(e) => void handleToggleSetting('quiet_hours_enabled', e.target.checked)}
                 />
                 <span className={styles.toggleSlider}></span>
               </label>
@@ -298,30 +333,20 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
               <div className={styles.settingInfo}>
                 <span className={styles.settingTitle}>
                   <Zap size={13} style={{ display: 'inline', verticalAlign: '-1px', marginRight: 4 }} />
-                  Cảnh báo đợt giảm giá lớn (sắp có)
+                  Cảnh báo đợt giảm giá lớn
                 </span>
                 <span className={styles.settingSubtitle}>Nhận thông báo trước 48 giờ khi sắp có ngày hội sale</span>
               </div>
               <label className={styles.toggleSwitch}>
                 <input
                   type="checkbox"
-                  checked={false} disabled
+                  aria-label="Cảnh báo đợt giảm giá lớn"
+                  disabled={!settingsLoaded || savingSettings}
+                  checked={saleAlertEnabled}
+                  onChange={(e) => void handleToggleSetting('sale_alert_enabled', e.target.checked)}
                 />
                 <span className={styles.toggleSlider}></span>
               </label>
-            </div>
-
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-              <button
-                type="button"
-                className={styles.btnCancel}
-                style={{ fontSize: '0.825rem' }}
-                onClick={handleSaveNotifications}
-                disabled={savingSettings || !settingsLoaded}
-              >
-                {savingSettings ? <InlinePending message="Đang lưu cấu hình..." /> : 'Lưu cấu hình thông báo'}
-              </button>
             </div>
           </section>
         </div>
