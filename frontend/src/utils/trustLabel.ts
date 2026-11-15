@@ -39,7 +39,7 @@ export function formatShopTrustDisplay(label?: string | null): string {
   const trimmed = label.trim();
   const lower = trimmed.toLowerCase();
   if (lower.includes('trusted') || lower.includes('đáng tin cậy')) return 'Đáng tin cậy';
-  if (lower.includes('risk') || lower.includes('rủi ro')) return 'Rủi ro: ít đánh giá';
+  if (lower.includes('risk') || lower.includes('rủi ro')) return 'Rủi ro';
   if (lower.includes('caution') || lower.includes('thận trọng')) return 'Cần thận trọng';
   return trimmed;
 }
@@ -60,7 +60,7 @@ export function computeShopTrustLabel(
     if (trimmed === 'Trusted' || trimmed === 'Đáng tin cậy') return 'Trusted';
     if (
       trimmed === 'Risky: few ratings' ||
-      trimmed === 'Rủi ro: ít đánh giá' ||
+      trimmed === 'Rủi ro' ||
       trimmed.toLowerCase().includes('risk') ||
       trimmed.toLowerCase().includes('rủi ro')
     ) {
