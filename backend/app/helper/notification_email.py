@@ -101,6 +101,19 @@ def _get_notification_html_content(
         meta_text = (
             "Chúng tôi sẽ thông báo lại khi giá quay về dưới mức mục tiêu."
         )
+    elif kind == NotificationKind.SALE_ALERT:
+        accent_color = "#dc2626"
+        badge_text = "Sắp có đợt giảm giá lớn"
+        subject = f"Cảnh báo đợt giảm giá lớn cho {safe_name} - Trakora App"
+        title = "Sắp có đợt giảm giá lớn!"
+        description = (
+            f"Một đợt giảm giá lớn sắp diễn ra trong vòng 48 giờ tới. "
+            f"Sản phẩm bạn đang theo dõi <strong>{safe_name}</strong> hiện có giá "
+            f"<strong>{price_text}</strong>."
+        )
+        highlight_label = "Giá hiện tại"
+        highlight_value = price_text
+        meta_text = "Hãy theo dõi sát mức giá và săn sale ngay khi chương trình bắt đầu!"
     else:  # NotificationKind.GOOD_PRICE
         accent_color = "#15803d"
         badge_text = "Đang có giá tốt"

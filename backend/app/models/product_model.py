@@ -82,16 +82,17 @@ class UserNotification(Base):
 
 
 class NotificationPreference(Base):
-    """Email notification and local quiet-hour settings for a user."""
+    """Email notification, quiet-hour, and sale-alert settings for a user."""
 
     __tablename__ = "notification_preferences"
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    email_enabled = Column(Boolean, nullable=False, server_default=text("false"))
-    quiet_hours_enabled = Column(Boolean, nullable=False, server_default=text("false"))
+    email_enabled = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    quiet_hours_enabled = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    sale_alert_enabled = Column(Boolean, nullable=False, default=False, server_default=text("false"))
     quiet_start = Column(String(5), nullable=True)
     quiet_end = Column(String(5), nullable=True)
-    timezone = Column(String(64), nullable=False, server_default=text("'Asia/Ho_Chi_Minh'"))
+    timezone = Column(String(64), nullable=False, default="Asia/Ho_Chi_Minh", server_default=text("'Asia/Ho_Chi_Minh'"))
 
 
 class PendingNotificationEmail(Base):
@@ -110,3 +111,35 @@ class PendingNotificationEmail(Base):
     target_price = Column(String(40), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     sent_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class SaleEvent(Base):
+    """Admin-managed big sale calendar events used for 48h advance alerts."""
+
+    __tablename__ = "sale_events"
+    __table_args__ = (Index("idx_sale_events_start_at", "start_at"),)
+
+    id = Column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    marketplace = Column(String(50), nullable=True)
+    start_at = Column(DateTime(timezone=True), nullable=False)
+    end_at = Column(DateTime(timezone=True), nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True, server_default=text("true"))
+    created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=True, onupdate=func.now())
+
+
+class SaleEventNotification(Base):
+    """Deduplication log recording which users have been alerted for a sale event."""
+
+    __tablename__ = "sale_event_notifications"
+
+    sale_event_id = Column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        ForeignKey("sale_events.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    notified_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
