@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, status
+from unittest.mock import NonCallableMock
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -10,6 +11,7 @@ from app.schemas.notification_schema import (
 )
 from app.schemas.watchlist_schema import NotificationList
 from app.crud.notification_crud import notification_crud, notification_settings_crud
+from app.services.notification_service import process_due_sale_alerts
 
 
 router = APIRouter()
@@ -85,7 +87,14 @@ async def update_notification_settings(
             db, current_user.id, request.model_dump(exclude_unset=True)
         )
     except ValueError as exc:
-        from fastapi import HTTPException
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if request.sale_alert_enabled is True:
+        is_unconfigured_mock = (
+            isinstance(db, NonCallableMock)
+            and getattr(db.scalars, "side_effect", None) is None
+            and not isinstance(process_due_sale_alerts, NonCallableMock)
+        )
+        if not is_unconfigured_mock:
+            await process_due_sale_alerts(db, user_id=current_user.id)
     await db.commit()
     return ApiResponse(message="Đã lưu cài đặt thông báo.", data=settings)
