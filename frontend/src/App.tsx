@@ -7,6 +7,7 @@ import OTPPage from './pages/OTPPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import { Layout } from './components/Layout';
 import { WatchlistPage } from './pages/WatchlistPage';
+import OverviewPage from './pages/OverviewPage';
 import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
@@ -39,6 +40,16 @@ function App() {
           <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
 
           {/* Dashboard / App routes (Only for authenticated users) */}
+          <Route
+            path="/overview"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <OverviewPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/watchlist"
             element={

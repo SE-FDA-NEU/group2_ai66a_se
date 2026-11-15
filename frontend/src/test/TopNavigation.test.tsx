@@ -47,9 +47,17 @@ describe('TopNavigation', () => {
   afterEach(cleanup);
 
   it('marks the current watchlist route as the current page', () => {
-    renderNavigation();
+    renderNavigation('/watchlist');
     expect(screen.getByRole('link', { name: 'Danh sách theo dõi' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Tổng quan' })).not.toHaveAttribute('aria-current', 'page');
+  });
+
+  it('marks the current overview route as the current page and points Tổng quan to /overview', () => {
+    renderNavigation('/overview');
+    const overviewLink = screen.getByRole('link', { name: 'Tổng quan' });
+    expect(overviewLink).toHaveAttribute('href', '/overview');
+    expect(overviewLink).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Danh sách theo dõi' })).not.toHaveAttribute('aria-current', 'page');
   });
 
   it.each([

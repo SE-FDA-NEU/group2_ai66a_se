@@ -154,4 +154,21 @@ describe('Route Guard & Navigation Protection', () => {
     expect(await screen.findByRole('menu', { name: 'Menu tài khoản' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /hồ sơ cá nhân/i })).toBeInTheDocument();
   });
+
+  it('redirects to /login when visiting /overview without any token', async () => {
+    window.history.pushState({}, '', '/overview');
+    render(<App />);
+
+    expect(window.location.pathname).toBe('/login');
+  });
+
+  it('allows access to /overview when token is valid', async () => {
+    const validToken = createMockJwt(3600);
+    localStorage.setItem('access_token', validToken);
+    window.history.pushState({}, '', '/overview');
+    render(<App />);
+
+    expect(window.location.pathname).toBe('/overview');
+    expect(await screen.findByRole('heading', { name: /tổng quan & hướng dẫn sử dụng/i })).toBeInTheDocument();
+  });
 });

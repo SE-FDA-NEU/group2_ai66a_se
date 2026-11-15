@@ -20,9 +20,9 @@ export function formatPriceLabel(label?: string | null): string {
     trimmed === 'expensive' ||
     trimmed === 'giá cao' ||
     trimmed === 'giá đắt - nên chờ' ||
-    trimmed === 'giá cao - nên chờ'
+    trimmed === 'Giá cao'
   ) {
-    return 'Giá cao - nên chờ';
+    return 'Giá cao';
   }
   if (trimmed === 'normal' || trimmed === 'bình thường') return 'Bình thường';
   if (trimmed === 'not enough data to assess' || trimmed === 'chưa đủ dữ liệu đánh giá') {
