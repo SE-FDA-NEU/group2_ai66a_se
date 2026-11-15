@@ -5,6 +5,7 @@ from app.crud.notification_crud import (
     notification_crud,
     notification_settings_crud,
     pending_notification_email_crud,
+    sale_event_crud,
 )
 
 __all__ = [
@@ -14,5 +15,6 @@ __all__ = [
     "notification_crud",
     "notification_settings_crud",
     "pending_notification_email_crud",
+    "sale_event_crud",
 ]
 

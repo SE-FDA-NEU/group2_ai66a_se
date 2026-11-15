@@ -3,4 +3,5 @@ from app.models.user_model import User
 from app.models.product_model import (
     Product, PriceHistory, TrackedProduct, UserNotification,
     NotificationPreference, PendingNotificationEmail,
+    SaleEvent, SaleEventNotification,
 )

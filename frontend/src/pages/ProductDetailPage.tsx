@@ -145,10 +145,9 @@ export const ProductDetailPage: React.FC = () => {
           <div className={styles.brand} data-testid="product-brand">{product.brand || product.marketplace || 'Amazon'}</div>
           <h1 className={styles.title} data-testid="product-name">{product.name}</h1>
 
-          <div className={styles.shopRow} data-testid="shop-details">
+          <div className={styles.shopRow}>
             <span className={styles.shopLabel}>Cửa hàng:</span>
             <span className={styles.shopName} data-testid="shop-name">{product.shop_name || 'Không xác định'}</span>
-            {trustLabel && <ShopTrustBadge label={trustLabel} size="medium" />}
           </div>
 
           <div className={styles.priceSection}>
@@ -168,9 +167,12 @@ export const ProductDetailPage: React.FC = () => {
           <div className={styles.metaGrid}>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Cửa hàng</span>
-              <div className={styles.shopMetaBlock}>
-                <span className={styles.metaValue}>{product.shop_name || 'Không xác định'}</span>
-                {trustLabel && <ShopTrustBadge label={trustLabel} size="small" />}
+              <div className={styles.shopMetaBlock} data-testid="shop-details">
+                {trustLabel ? (
+                  <ShopTrustBadge label={trustLabel} size="small" />
+                ) : (
+                  <span className={styles.metaValue}>Chưa có đánh giá</span>
+                )}
               </div>
             </div>
             <div className={styles.metaItem}>
@@ -265,7 +267,7 @@ export const ProductDetailPage: React.FC = () => {
               disabled={isRemoving}
               aria-busy={isRemoving}
             >
-              {isRemoving ? <InlinePending message="Đang ngừng theo dõi..." /> : 'Ngừng theo dõi (Unfollow)'}
+              {isRemoving ? <InlinePending message="Đang ngừng theo dõi..." /> : 'Ngừng theo dõi'}
             </button>
             {marketplaceUrl && (
               <a
@@ -281,8 +283,6 @@ export const ProductDetailPage: React.FC = () => {
         </div>
       </div>
 
-      <ProductInformation detail={detail} loading={isLoading} error={loadError} onRefresh={() => setRetryCount(count => count + 1)} />
-
       <div className={styles.chartSection}>
         <PriceHistoryChart
           productId={product.id}
@@ -290,6 +290,8 @@ export const ProductDetailPage: React.FC = () => {
           targetPrice={product.target_price}
         />
       </div>
+
+      <ProductInformation detail={detail} loading={isLoading} error={loadError} onRefresh={() => setRetryCount(count => count + 1)} />
 
       <ProductReviews key={product.id} product={product} />
 

@@ -12,6 +12,13 @@ const operationMessage = (method?: string, url = ''): string | null => {
 
   if (url.includes('/user/me')) return method.toLowerCase() === 'delete' ? 'Đã xóa tài khoản thành công.' : 'Đã cập nhật hồ sơ cá nhân.';
   if (url.includes('/notifications/settings')) return 'Đã lưu cài đặt thông báo.';
+  if (url.includes('/sales/trigger-alerts')) return 'Đã kích hoạt gửi cảnh báo đợt giảm giá lớn.';
+  if (url.includes('/sales')) {
+    const lowerMethod = method.toLowerCase();
+    if (lowerMethod === 'delete') return 'Đã xóa lịch ngày hội sale.';
+    if (lowerMethod === 'post') return 'Đã tạo lịch ngày hội sale.';
+    return 'Đã cập nhật lịch ngày hội sale.';
+  }
   if (url.includes('/target-price')) return 'Đã lưu giá mục tiêu.';
   if (url.includes('/watchlist')) return method.toLowerCase() === 'delete' ? 'Đã ngừng theo dõi sản phẩm.' : 'Đã thêm sản phẩm vào danh sách theo dõi.';
   return 'Thao tác đã hoàn tất.';

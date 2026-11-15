@@ -5,7 +5,7 @@ from decimal import Decimal
 from app.core.database import AsyncSessionLocal
 from app.core.logger import logger
 from app.crud import notification_crud, product_crud, tracked_product_crud
-from app.services.notification_service import enqueue_price_email
+from app.services.notification_service import enqueue_price_email, process_due_sale_alerts
 from app.services.price_stream_service import price_stream_service
 from app.helper.rapidapi_client import rapidapi_client
 from app.services.exchange_rate_service import exchange_rate_service
@@ -204,6 +204,14 @@ class PriceMonitorService:
                 await self.cleanup_expired_products()
             except Exception:
                 logger.exception("Price monitor: Lỗi khi dọn dẹp sản phẩm hết hạn theo dõi")
+            try:
+                async with AsyncSessionLocal() as db:
+                    notified = await process_due_sale_alerts(db)
+                    await db.commit()
+                    if notified:
+                        logger.info("Price monitor: Đã gửi %d cảnh báo đợt giảm giá lớn.", notified)
+            except Exception:
+                logger.exception("Price monitor: Lỗi khi gửi cảnh báo đợt giảm giá lớn")
             await asyncio.sleep(REFRESH_INTERVAL_SECONDS)
 
 

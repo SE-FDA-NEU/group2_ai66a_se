@@ -29,6 +29,7 @@ def _common_kwargs():
         NotificationKind.TARGET_PRICE_REACHED,
         NotificationKind.PRICE_ABOVE_TARGET,
         NotificationKind.GOOD_PRICE,
+        NotificationKind.SALE_ALERT,
     ],
 )
 def test_notification_template_contains_product_price_and_link(kind):

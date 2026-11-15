@@ -72,7 +72,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
     it('renders "Risky: few ratings" with appropriate class and icon', () => {
       render(<ShopTrustBadge label="Risky: few ratings" />);
       const badge = screen.getByTestId('shop-trust-badge');
-      expect(badge).toHaveTextContent('Rủi ro: ít đánh giá');
+      expect(badge).toHaveTextContent('Rủi ro');
       expect(badge).toHaveAttribute('data-trust-status', 'risky');
     });
 
@@ -104,7 +104,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       fake_discount: false,
     };
 
-    it('displays shop name, brand, product name and "Trusted" label for 4.8★ and 1,200 ratings', () => {
+    it('displays brand, product name, shop name under title without trust badge, single shop trust label in meta grid, and places chart above product details', () => {
       const product = {
         ...baseProduct,
         shop_rating: 4.8,
@@ -119,16 +119,27 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
         </MemoryRouter>
       );
 
-      // Shop name, brand, product name
+      // Brand, product name, and shop name under title
       expect(screen.getByTestId('product-brand')).toHaveTextContent('Sony');
-      expect(screen.getByTestId('product-name')).toHaveTextContent('Sony WH-1000XM5 Wireless Headphones');
-      expect(screen.getByTestId('shop-name')).toHaveTextContent('Official Sony Store');
+      const productName = screen.getByTestId('product-name');
+      expect(productName).toHaveTextContent('Sony WH-1000XM5 Wireless Headphones');
+      const shopName = screen.getByTestId('shop-name');
+      expect(shopName).toHaveTextContent('Official Sony Store');
+      expect(shopName.parentElement).not.toHaveTextContent('Đáng tin cậy');
 
-      // Shop trust label "Trusted"
+      // Only one shop trust badge is shown inside shop-details (meta grid)
+      const shopDetails = screen.getByTestId('shop-details');
       const trustBadges = screen.getAllByTestId('shop-trust-badge');
-      expect(trustBadges.length).toBeGreaterThanOrEqual(1);
+      expect(trustBadges).toHaveLength(1);
+      expect(shopDetails).toContainElement(trustBadges[0]);
       expect(trustBadges[0]).toHaveTextContent('Đáng tin cậy');
       expect(trustBadges[0]).toHaveAttribute('data-trust-status', 'trusted');
+
+      // Chart appears below product card and above Chi tiết sản phẩm
+      const chart = screen.getByTestId('mock-chart');
+      const detailsHeading = screen.getByRole('heading', { name: 'Chi tiết sản phẩm' });
+      expect(productName.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(chart.compareDocumentPosition(detailsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
     it('displays "Risky: few ratings" for a shop with 4.9★ and 12 ratings', () => {
@@ -148,7 +159,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
       );
 
       const trustBadges = screen.getAllByTestId('shop-trust-badge');
-      expect(trustBadges[0]).toHaveTextContent('Rủi ro: ít đánh giá');
+      expect(trustBadges[0]).toHaveTextContent('Rủi ro');
       expect(trustBadges[0]).toHaveAttribute('data-trust-status', 'risky');
     });
 
@@ -325,7 +336,7 @@ describe('US09 & BR10: Shop Trust Labels and Reviews', () => {
 
       const trustBadges = screen.getAllByTestId('shop-trust-badge');
       expect(trustBadges.length).toBeGreaterThanOrEqual(1);
-      expect(trustBadges[0]).toHaveTextContent('Rủi ro: ít đánh giá');
+      expect(trustBadges[0]).toHaveTextContent('Rủi ro');
       expect(trustBadges[0]).toHaveAttribute('data-trust-status', 'risky');
     });
   });
