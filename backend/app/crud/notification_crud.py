@@ -1,9 +1,10 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import delete, select, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.product_model import (
-    NotificationPreference, PendingNotificationEmail, TrackedProduct, UserNotification,
+    NotificationPreference, PendingNotificationEmail, SaleEvent, SaleEventNotification,
+    TrackedProduct, UserNotification,
 )
 
 
@@ -158,5 +159,72 @@ class CRUDPendingNotificationEmail:
         db.add(item)
 
 
+class CRUDSaleEvent:
+    async def list_all(self, db: AsyncSession, *, active_only: bool = False) -> list[SaleEvent]:
+        statement = select(SaleEvent)
+        if active_only:
+            statement = statement.where(SaleEvent.is_active.is_(True))
+        statement = statement.order_by(SaleEvent.start_at.asc(), SaleEvent.id.asc())
+        result = await db.scalars(statement)
+        return list(result.all())
+
+    async def get(self, db: AsyncSession, sale_id: int) -> SaleEvent | None:
+        return await db.get(SaleEvent, sale_id)
+
+    async def create(self, db: AsyncSession, **values) -> SaleEvent:
+        sale_event = SaleEvent(**values)
+        db.add(sale_event)
+        await db.flush()
+        return sale_event
+
+    async def update(self, db: AsyncSession, sale_event: SaleEvent, values: dict) -> SaleEvent:
+        effective_start = values.get("start_at", sale_event.start_at)
+        effective_end = values.get("end_at", sale_event.end_at)
+        if effective_start is not None and effective_end is not None:
+            start_cmp = effective_start if effective_start.tzinfo else effective_start.replace(tzinfo=timezone.utc)
+            end_cmp = effective_end if effective_end.tzinfo else effective_end.replace(tzinfo=timezone.utc)
+            if end_cmp <= start_cmp:
+                raise ValueError("End date must be after the start date")
+        for key, value in values.items():
+            setattr(sale_event, key, value)
+        db.add(sale_event)
+        await db.flush()
+        return sale_event
+
+    async def delete(self, db: AsyncSession, sale_event: SaleEvent) -> None:
+        await db.delete(sale_event)
+        await db.flush()
+
+    async def list_due_within_48h(self, db: AsyncSession, now: datetime) -> list[SaleEvent]:
+        horizon = now + timedelta(hours=48)
+        result = await db.scalars(
+            select(SaleEvent)
+            .where(
+                SaleEvent.is_active.is_(True),
+                SaleEvent.start_at > now,
+                SaleEvent.start_at <= horizon,
+            )
+            .order_by(SaleEvent.start_at.asc(), SaleEvent.id.asc())
+        )
+        return list(result.all())
+
+    async def is_notified(self, db: AsyncSession, sale_event_id: int, user_id: int) -> bool:
+        existing = await db.get(SaleEventNotification, (sale_event_id, user_id))
+        return existing is not None
+
+    async def mark_notified(
+        self, db: AsyncSession, sale_event_id: int, user_id: int, notified_at: datetime
+    ) -> SaleEventNotification:
+        record = SaleEventNotification(
+            sale_event_id=sale_event_id,
+            user_id=user_id,
+            notified_at=notified_at,
+        )
+        db.add(record)
+        await db.flush()
+        return record
+
+
 notification_settings_crud = CRUDNotificationSettings()
 pending_notification_email_crud = CRUDPendingNotificationEmail()
+sale_event_crud = CRUDSaleEvent()

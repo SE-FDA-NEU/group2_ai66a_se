@@ -32,7 +32,7 @@ export const ShopTrustBadge: React.FC<ShopTrustBadgeProps> = ({
   } else if (lower.includes('risk') || lower.includes('rủi ro')) {
     variantClass = styles.risky;
     statusKey = 'risky';
-    displayLabel = 'Rủi ro: ít đánh giá';
+    displayLabel = 'Rủi ro';
     Icon = AlertTriangle;
   } else if (lower.includes('caution') || lower.includes('thận trọng')) {
     variantClass = styles.caution;

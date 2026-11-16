@@ -18,7 +18,7 @@ import { showToast } from '../utils/toast';
 import styles from './TopNavigation.module.css';
 
 const primaryNavigation = [
-  { label: 'Tổng quan', to: '/', icon: LayoutDashboard, end: true },
+  { label: 'Tổng quan', to: '/overview', icon: LayoutDashboard, end: true },
   { label: 'Danh sách theo dõi', to: '/watchlist', icon: Bookmark, end: true },
 ];
 
