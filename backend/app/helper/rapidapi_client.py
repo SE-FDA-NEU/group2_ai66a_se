@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from app.helper.product_details import extract_details
 from app.core.config import settings
 from app.core.exceptions import ErrorDetail
+from app.core.logger import logger
 from app.schemas.watchlist_schema import ProductMarketplace
 
 
@@ -79,7 +80,7 @@ def _normalize_product(payload: dict[str, Any]) -> ProductMarketplace:
     return ProductMarketplace.model_validate(
         {
             "details": extract_details(payload),
-            "external_id": payload.get("asin"),
+            "external_id": str(payload.get("asin", "")).upper(),
             "url": payload.get("product_url"),
             "name": payload.get("product_title"),
             "image_url": payload.get("product_photo"),
@@ -140,7 +141,12 @@ class RapidAPIClient:
             response.raise_for_status()
             payload = response.json()
             product = payload.get("data") if isinstance(payload, dict) else None
-            if not isinstance(product, dict) or product.get("asin") != asin:
+            if (
+                not isinstance(payload, dict)
+                or str(payload.get("status", "")).upper() == "ERROR"
+                or not isinstance(product, dict)
+                or str(product.get("asin", "")).upper() != asin.upper()
+            ):
                 raise ValueError("Marketplace returned an invalid or mismatched product.")
             return product
 
@@ -189,6 +195,15 @@ class RapidAPIClient:
             product = await self._request_product(asin, country)
             return _normalize_product(product)
         except (httpx.HTTPError, ValueError, ValidationError) as exc:
+            status_code = (
+                exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else None
+            )
+            logger.warning(
+                "Amazon product lookup failed (asin=%s, status=%s, error_type=%s)",
+                asin,
+                status_code or "response_or_network_error",
+                type(exc).__name__,
+            )
             if demo:
                 return demo
             raise MARKETPLACE_UPSTREAM_ERROR.throw() from exc
