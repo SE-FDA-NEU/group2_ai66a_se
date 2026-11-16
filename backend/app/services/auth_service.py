@@ -105,6 +105,7 @@ class AuthService:
                 raise UserErrors.USER_NOT_FOUND.throw()
 
         now = time.time()
+        otp_key = f"otp:{reason}:{email}"
         cooldown_key = f"otp-cooldown:{email}"
         hourly_key = f"otp-hourly:{email}"
 
@@ -122,9 +123,10 @@ class AuthService:
                 dynamic_message=f"Bạn đã yêu cầu gửi mã OTP quá {settings.OTP_MAX_REQUESTS_PER_HOUR} lần trong vòng 1 giờ. Vui lòng thử lại sau."
             )
 
-        # 2. Kiểm tra Cooldown giữa các lần gửi (Tối thiểu settings.OTP_RESEND_COOLDOWN_SECONDS giây)
+        # 2. Kiểm tra Cooldown giữa các lần gửi cho cùng một mục đích (Tối thiểu settings.OTP_RESEND_COOLDOWN_SECONDS giây)
         cooldown_data = await redis.get(cooldown_key)
-        if cooldown_data:
+        existing_otp = await redis.get(otp_key) if cooldown_data else None
+        if cooldown_data and existing_otp:
             try:
                 expire_at = float(cooldown_data)
                 remaining = max(1, int(expire_at - now))
@@ -139,7 +141,6 @@ class AuthService:
         # 3. Tạo mã OTP mới
         code = "".join(secrets.choice("0123456789") for _ in range(6))
         payload = json.dumps({"code": code, "attempts": 0})
-        otp_key = f"otp:{reason}:{email}"
 
         # Lưu OTP và trạng thái Cooldown & Rate Limit vào Redis
         await redis.set(otp_key, payload, ex=settings.OTP_EXPIRE_SECONDS)
@@ -213,6 +214,7 @@ class AuthService:
 
         await redis.set(f"verified-token:{reason}:{email}", verification_token, ex=settings.OTP_EXPIRE_SECONDS)
         await redis.delete(redis_key)
+        await redis.delete(f"otp-cooldown:{email}")
 
         return verification_token
 

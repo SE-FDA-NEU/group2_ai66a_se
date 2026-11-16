@@ -1,4 +1,5 @@
 import asyncio
+import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -7,6 +8,7 @@ import pytest
 
 from app.core.exceptions import CustomAppException, ErrorDetail
 from app.helper import otp as email_module
+from app.schemas.otp_schema import OTPReason
 from app.services import auth_service as auth_module
 
 
@@ -141,3 +143,56 @@ def test_brevo_http_error_raises_email_send_failed(monkeypatch):
 
     assert exc.value.code == "EMAIL_SEND_FAILED"
     assert exc.value.status_code == 500
+
+
+def test_send_otp_allows_new_reason_when_previous_reason_had_cooldown_or_was_verified(monkeypatch):
+    class Redis:
+        def __init__(self):
+            self.values = {}
+
+        async def get(self, key):
+            return self.values.get(key)
+
+        async def set(self, key, value, **kwargs):
+            self.values[key] = value
+
+        async def delete(self, key):
+            self.values.pop(key, None)
+
+    redis = Redis()
+    send_mock = AsyncMock()
+    monkeypatch.setattr(auth_module, "send_email", send_mock)
+    monkeypatch.setattr(
+        auth_module.user_crud,
+        "get_by_email",
+        AsyncMock(side_effect=[SimpleNamespace(id=1, email="user@example.test"), None, None]),
+    )
+
+    async def scenario():
+        # 1. User requests and verifies delete-account OTP -> cooldown key is cleared
+        await auth_module.auth_service.send_otp_email(
+            "user@example.test", OTPReason.DELETE_ACCOUNT, SimpleNamespace(), redis
+        )
+        delete_otp = json.loads(redis.values[f"otp:{OTPReason.DELETE_ACCOUNT}:user@example.test"])["code"]
+        assert "otp-cooldown:user@example.test" in redis.values
+        await auth_module.auth_service.verify_otp_email(
+            "user@example.test", OTPReason.DELETE_ACCOUNT, delete_otp, redis
+        )
+        assert "otp-cooldown:user@example.test" not in redis.values
+
+        # 2. Even if an active cooldown key exists from another reason, a fresh verify-email OTP is still sent
+        redis.values["otp-cooldown:user@example.test"] = "9999999999.0"
+        await auth_module.auth_service.send_otp_email(
+            "user@example.test", OTPReason.VERIFY_EMAIL, SimpleNamespace(), redis
+        )
+        assert send_mock.await_count == 2
+        assert f"otp:{OTPReason.VERIFY_EMAIL}:user@example.test" in redis.values
+
+        # 3. Sending a second verify-email OTP while the first is still active is blocked by cooldown
+        with pytest.raises(CustomAppException) as exc:
+            await auth_module.auth_service.send_otp_email(
+                "user@example.test", OTPReason.VERIFY_EMAIL, SimpleNamespace(), redis
+            )
+        assert exc.value.code == "OTP_COOLDOWN_ACTIVE"
+
+    asyncio.run(scenario())

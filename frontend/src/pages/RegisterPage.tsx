@@ -215,9 +215,8 @@ const RegisterPage: React.FC = () => {
       if (!mounted.current) return;
       const detail = err?.error?.message ?? err?.detail ?? err?.message ?? '';
       if (
-        err?.error?.code === 'OTP_COOLDOWN_ACTIVE' || err?.error?.code === 'OTP_DELIVERY_UNCERTAIN' ||
-        detail.toLowerCase().includes('đợi') ||
-        detail.toLowerCase().includes('giây')
+        err?.error?.code === 'OTP_COOLDOWN_ACTIVE' ||
+        /đợi\s+\d+\s*giây/i.test(detail)
       ) {
         // Mã OTP đã được gửi gần đây -> Đồng bộ thời gian và chuyển sang trang OTP để người dùng tiếp tục
         const match = detail.match(/(\d+)\s*giây/);
@@ -231,7 +230,6 @@ const RegisterPage: React.FC = () => {
             nickname: values.fullName,
             password: values.password,
             reason: 'verify-email',
-            deliveryUncertain: err?.error?.code === 'OTP_DELIVERY_UNCERTAIN',
           },
         });
         return;
