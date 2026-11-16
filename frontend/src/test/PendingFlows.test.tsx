@@ -5,9 +5,13 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { getUserProfile } from '../api/userApi';
 import * as api from '../api/authApi';
+import LandingPage from '../pages/LandingPage';
+import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import OTPPage from '../pages/OTPPage';
 import { GoogleAuthButton } from '../components/GoogleAuthButton';
+import { InlinePending, SectionLoadingState } from '../components/LoadingState';
 
 vi.mock('../api/userApi', () => ({ getUserProfile: vi.fn() }));
 vi.mock('../api/authApi', () => ({ login: vi.fn(), loginWithGoogle: vi.fn(), sendOTP: vi.fn(), verifyOTP: vi.fn(), registerUser: vi.fn() }));
@@ -124,4 +128,75 @@ it('shows SDK initialization, then offers retry and recovers when Google becomes
     expect(screen.getByText('Recovered Google')).toBeVisible();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   } finally { vi.useRealTimers(); }
+});
+
+it('unifies SectionLoadingState and InlinePending on the T brand mark and rising line', () => {
+  const { container, rerender } = render(<SectionLoadingState message="Đang tải mục..." />);
+  const status = screen.getByRole('status');
+  expect(status).toHaveTextContent('Đang tải mục...');
+  expect(status).toHaveTextContent('T');
+  expect(container.querySelectorAll('svg path[d="M0 28H25L42 16L59 24L78 10L99 18L121 6H160"]')).toHaveLength(2);
+
+  rerender(<InlinePending message="Đang lưu..." />);
+  const inlineStatus = screen.getByRole('status');
+  expect(inlineStatus).toHaveTextContent('Đang lưu...');
+  expect(inlineStatus).toHaveTextContent('T');
+  expect(container.querySelectorAll('svg path[d="M0 28H25L42 16L59 24L78 10L99 18L121 6H160"]')).toHaveLength(2);
+});
+
+it('shows Trực quan tính năng button on login, register, and forgot password pages and scrolls to #visuals', async () => {
+  const scrollIntoView = vi.fn();
+  const originalScrollIntoView = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = scrollIntoView;
+  try {
+    const { unmount } = render(
+      <AuthProvider>
+        <MemoryRouter initialEntries={['/login']}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Trực quan tính năng' }));
+    expect(await screen.findByRole('heading', { name: /Hình ảnh trực quan/i })).toBeInTheDocument();
+    expect(scrollIntoView).toHaveBeenCalled();
+    unmount();
+
+    scrollIntoView.mockClear();
+    const registerRender = render(
+      <AuthProvider>
+        <MemoryRouter initialEntries={['/register']}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Trực quan tính năng' }));
+    expect(await screen.findByRole('heading', { name: /Hình ảnh trực quan/i })).toBeInTheDocument();
+    expect(scrollIntoView).toHaveBeenCalled();
+    registerRender.unmount();
+
+    scrollIntoView.mockClear();
+    render(
+      <AuthProvider>
+        <MemoryRouter initialEntries={['/forgot-password']}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Trực quan tính năng' }));
+    expect(await screen.findByRole('heading', { name: /Hình ảnh trực quan/i })).toBeInTheDocument();
+    expect(scrollIntoView).toHaveBeenCalled();
+  } finally {
+    Element.prototype.scrollIntoView = originalScrollIntoView;
+  }
 });

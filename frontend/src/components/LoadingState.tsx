@@ -1,8 +1,16 @@
 import { ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
 import styles from './LoadingState.module.css';
 
-export function BrandLoadingIndicator() {
-  return <div className={styles.mark} aria-hidden="true"><span>T</span><svg viewBox="0 0 160 40"><path className={styles.track} d="M0 28H25L42 16L59 24L78 10L99 18L121 6H160" /><path className={styles.trace} d="M0 28H25L42 16L59 24L78 10L99 18L121 6H160" /></svg></div>;
+export function BrandLoadingIndicator({ compact = false }: { compact?: boolean }) {
+  return (
+    <span className={`${styles.mark} ${compact ? styles.markCompact : ''}`} aria-hidden="true">
+      <span>T</span>
+      <svg viewBox="0 0 160 40">
+        <path className={styles.track} d="M0 28H25L42 16L59 24L78 10L99 18L121 6H160" />
+        <path className={styles.trace} d="M0 28H25L42 16L59 24L78 10L99 18L121 6H160" />
+      </svg>
+    </span>
+  );
 }
 
 export function AuthPendingScreen({ message, error, onRetry, onExit }: { message: string; error?: string | null; onRetry?: () => void; onExit?: () => void }) {
@@ -29,12 +37,22 @@ export function AuthPendingScreen({ message, error, onRetry, onExit }: { message
   </main>;
 }
 
-export function SectionLoadingState({ message = 'Đang tải dữ liệu...', skeleton = true }: { message?: string; skeleton?: boolean }) {
-  return <div className={styles.section} role="status" aria-live="polite"><InlinePending message={message} announce={false} />{skeleton && <div className={styles.skeleton} aria-hidden="true"><i /><i /><i /></div>}</div>;
+export function SectionLoadingState({ message = 'Đang tải dữ liệu...' }: { message?: string; skeleton?: boolean }) {
+  return (
+    <div className={styles.section} role="status" aria-live="polite">
+      <BrandLoadingIndicator />
+      <p className={styles.sectionMessage}>{message}</p>
+    </div>
+  );
 }
 
 export function InlinePending({ message, announce = true }: { message: string; announce?: boolean }) {
-  return <span className={styles.inline} role={announce ? 'status' : undefined}><span className={styles.spinner} aria-hidden="true" />{message}</span>;
+  return (
+    <span className={styles.inline} role={announce ? 'status' : undefined}>
+      <BrandLoadingIndicator compact />
+      <span>{message}</span>
+    </span>
+  );
 }
 
 export function PendingButton({ pending, pendingLabel, children, disabled, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { pending: boolean; pendingLabel: string }) {

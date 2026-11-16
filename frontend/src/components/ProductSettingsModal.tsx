@@ -268,10 +268,7 @@ export const ProductSettingsModal: React.FC<ProductSettingsModalProps> = ({
                   aria-busy={isSubmitting}
                 >
                   {isSubmitting ? (
-                    <>
-                      <InlinePending message="Đang lưu giá mục tiêu..." />
-                      <span>Đang lưu...</span>
-                    </>
+                    <InlinePending message="Đang lưu giá mục tiêu..." />
                   ) : (
                     'Lưu giá mục tiêu'
                   )}

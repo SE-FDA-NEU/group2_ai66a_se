@@ -159,8 +159,9 @@ const LoginPage: React.FC = () => {
             Trakora
           </div>
           <div className={styles.navLinks}>
-            <button className={styles.navLink} onClick={() => navigate('/')}>Trang chủ</button>
-            <button className={styles.navLink} onClick={() => navigate('/')}>Giới thiệu</button>
+            <button className={styles.navLink} onClick={() => navigate('/#home')}>Trang chủ</button>
+            <button className={styles.navLink} onClick={() => navigate('/#introduction')}>Giới thiệu</button>
+            <button className={styles.navLink} onClick={() => navigate('/#visuals')}>Trực quan tính năng</button>
           </div>
         </div>
         <div className={styles.navButtons}>

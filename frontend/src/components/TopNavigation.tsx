@@ -1,4 +1,4 @@
-import { InlinePending } from './LoadingState';
+import { InlinePending, SectionLoadingState } from './LoadingState';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Bell,
@@ -292,7 +292,7 @@ export const TopNavigation: React.FC = () => {
                 {isLoadingNotifications && notifications.length > 0 && <div className={styles.menuMessage}><InlinePending message="Đang cập nhật thông báo…" /></div>}
                 {notificationError && notifications.length > 0 && <p role="alert">Không thể cập nhật thông báo. <button type="button" onClick={() => void loadNotifications()}>Thử lại</button></p>}
                 {isLoadingNotifications && notifications.length === 0 ? (
-                  <div className={styles.menuMessage}><InlinePending message="Đang tải thông báo…" /></div>
+                  <div className={styles.menuMessage}><SectionLoadingState message="Đang tải thông báo…" /></div>
                 ) : notificationError && notifications.length === 0 ? (
                   <div className={styles.menuMessage} role="alert">
                     <span>Chưa tải được thông báo.</span>
