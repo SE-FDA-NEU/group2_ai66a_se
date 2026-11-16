@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     # Prefer a dedicated Gmail App Password; retain ADMIN_PASSWORD as a local fallback.
     SMTP_PASSWORD: Optional[str] = None
 
+    # Brevo Transactional Email HTTP API (used in production/Render where SMTP ports 25/465/587 are blocked)
+    BREVO_API_KEY: Optional[str] = None
+    BREVO_API_URL: str = "https://api.brevo.com/v3/smtp/email"
+    BREVO_SENDER_EMAIL: Optional[str] = None
+    BREVO_SENDER_NAME: str = "Trakora Security"
+
     # 2. Cấu hình Bảo mật (JWT)
     SECRET_KEY: str
     ALGORITHM: str = "HS256"

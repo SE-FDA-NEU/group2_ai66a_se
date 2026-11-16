@@ -2,10 +2,12 @@ import html
 from decimal import Decimal
 
 import aiosmtplib
+import httpx
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from app.core.config import settings
+from app.core.exceptions import CustomAppException
 from app.core.logger import logger
 from app.schemas.notification_schema import NotificationErrors, NotificationKind
 
@@ -296,8 +298,45 @@ def _get_notification_html_content(
     return subject, html_content
 
 
+async def _send_email_via_brevo(to_email: str, subject: str, html_content: str) -> None:
+    """Hàm gửi email thông báo bất đồng bộ qua Brevo Transactional Email HTTP API."""
+    active_sender_email = (settings.BREVO_SENDER_EMAIL or settings.ADMIN_EMAIL or sender_email or "").strip()
+    api_key = (settings.BREVO_API_KEY or "").strip()
+
+    headers = {
+        "accept": "application/json",
+        "api-key": api_key,
+        "content-type": "application/json",
+    }
+    payload = {
+        "sender": {"name": "Trakora App", "email": active_sender_email},
+        "to": [{"email": to_email}],
+        "subject": subject,
+        "htmlContent": html_content,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(settings.BREVO_API_URL, headers=headers, json=payload)
+        if response.status_code >= 400:
+            logger.error(
+                f"Brevo API trả về lỗi {response.status_code} khi gửi email thông báo tới {to_email}: {response.text}"
+            )
+            raise NotificationErrors.EMAIL_SEND_FAILED.throw()
+        logger.info(f"Gửi email thông báo đến {to_email} qua Brevo API thành công.")
+    except CustomAppException:
+        raise
+    except Exception as e:
+        logger.error(f"Lỗi gửi email thông báo qua Brevo đến {to_email}: {e}", exc_info=True)
+        raise NotificationErrors.EMAIL_SEND_FAILED.throw() from e
+
+
 async def _send_email(to_email: str, subject: str, html_content: str) -> None:
-    """Hàm gửi email bất đồng bộ qua SMTP."""
+    """Hàm gửi email bất đồng bộ (ưu tiên Brevo HTTP API, dự phòng qua SMTP)."""
+    if settings.BREVO_API_KEY and settings.BREVO_API_KEY.strip():
+        await _send_email_via_brevo(to_email, subject, html_content)
+        return
+
     active_sender_email = settings.ADMIN_EMAIL or sender_email
     active_sender_password = settings.SMTP_PASSWORD or settings.ADMIN_PASSWORD or sender_password
 

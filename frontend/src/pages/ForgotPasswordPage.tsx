@@ -113,8 +113,7 @@ const ForgotPasswordPage: React.FC = () => {
       const detail = getErrorMessage(err);
       if (
         err?.error?.code === 'OTP_COOLDOWN_ACTIVE' || err?.error?.code === 'OTP_DELIVERY_UNCERTAIN' ||
-        detail.toLowerCase().includes('đợi') ||
-        detail.toLowerCase().includes('giây')
+        /đợi\s+\d+\s*giây/i.test(detail)
       ) {
         const match = detail.match(/(\d+)\s*giây/);
         const rem = match ? parseInt(match[1], 10) : 60;
@@ -219,8 +218,7 @@ const ForgotPasswordPage: React.FC = () => {
       const detail = getErrorMessage(err);
       if (
         err?.error?.code === 'OTP_COOLDOWN_ACTIVE' || err?.error?.code === 'OTP_DELIVERY_UNCERTAIN' ||
-        detail.toLowerCase().includes('đợi') ||
-        detail.toLowerCase().includes('giây')
+        /đợi\s+\d+\s*giây/i.test(detail)
       ) {
         const match = detail.match(/(\d+)\s*giây/);
         if (match) {

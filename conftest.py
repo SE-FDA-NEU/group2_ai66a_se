@@ -12,6 +12,7 @@ os.environ.update({
     "DATABASE_URL": "postgresql+asyncpg://test:test@127.0.0.1:1/test",
     "REDIS_URL": "redis://127.0.0.1:1/0", "REDIS_PASSWORD": "",
     "GOOGLE_CLIENT_ID": "test-client-id", "RAPIDAPI_KEY": "test-key",
+    "BREVO_API_KEY": "", "BREVO_SENDER_EMAIL": "",
 })
 
 
