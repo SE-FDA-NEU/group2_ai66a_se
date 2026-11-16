@@ -39,6 +39,7 @@ checkpoints/
 
 # Environments
 .env
+brevo-key.txt
 .venv
 env/
 venv/

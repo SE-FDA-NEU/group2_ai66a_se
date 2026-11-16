@@ -2,6 +2,7 @@ import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
+import httpx
 import pytest
 
 from app.core.exceptions import CustomAppException, ErrorDetail
@@ -51,3 +52,92 @@ def test_delivery_uncertainty_preserves_code_but_definite_failure_rolls_back(mon
         asyncio.run(auth_module.auth_service.send_otp_email("test@example.test", "verify-email", SimpleNamespace(), redis))
     assert ("otp:verify-email:test@example.test" in redis.values) == uncertain
     assert any("cooldown" in key for key in redis.values) == uncertain
+
+
+def test_brevo_api_sends_otp_when_brevo_api_key_is_set(monkeypatch):
+    calls = []
+
+    class FakeAsyncClient:
+        def __init__(self, **kwargs):
+            calls.append(("init", kwargs))
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def post(self, url, *, headers=None, json=None):
+            calls.append(("post", url, headers, json))
+            return SimpleNamespace(status_code=201, text='{"messageId":"<msg-1>"}')
+
+    monkeypatch.setattr(email_module.settings, "BREVO_API_KEY", "xkeysib-test-key")
+    monkeypatch.setattr(email_module.settings, "BREVO_SENDER_EMAIL", "sender@example.test")
+    monkeypatch.setattr(email_module.settings, "BREVO_SENDER_NAME", "Trakora Security")
+    monkeypatch.setattr(email_module.settings, "BREVO_API_URL", "https://api.brevo.com/v3/smtp/email")
+    monkeypatch.setattr(email_module.httpx, "AsyncClient", FakeAsyncClient)
+    monkeypatch.setattr(
+        email_module.aiosmtplib,
+        "SMTP",
+        lambda **_: (_ for _ in ()).throw(AssertionError("SMTP should not be called when BREVO_API_KEY is set")),
+    )
+
+    asyncio.run(email_module._send_email("user@example.test", "OTP Subject", "<p>123456</p>"))
+
+    assert calls[0] == ("init", {"timeout": 15.0})
+    post_call = calls[1]
+    assert post_call[0] == "post"
+    assert post_call[1] == "https://api.brevo.com/v3/smtp/email"
+    assert post_call[2]["api-key"] == "xkeysib-test-key"
+    assert post_call[3]["sender"] == {"name": "Trakora Security", "email": "sender@example.test"}
+    assert post_call[3]["to"] == [{"email": "user@example.test"}]
+    assert post_call[3]["subject"] == "OTP Subject"
+    assert post_call[3]["htmlContent"] == "<p>123456</p>"
+
+
+def test_brevo_timeout_is_reported_as_uncertain(monkeypatch):
+    class TimeoutAsyncClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def post(self, url, *, headers=None, json=None):
+            raise httpx.ReadTimeout("Brevo timed out")
+
+    monkeypatch.setattr(email_module.settings, "BREVO_API_KEY", "xkeysib-test-key")
+    monkeypatch.setattr(email_module.httpx, "AsyncClient", TimeoutAsyncClient)
+
+    with pytest.raises(CustomAppException) as exc:
+        asyncio.run(email_module._send_email("user@example.test", "OTP Subject", "<p>123456</p>"))
+
+    assert exc.value.code == "OTP_DELIVERY_UNCERTAIN"
+    assert exc.value.status_code == 504
+
+
+def test_brevo_http_error_raises_email_send_failed(monkeypatch):
+    class ErrorAsyncClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def post(self, url, *, headers=None, json=None):
+            return SimpleNamespace(status_code=401, text='{"message":"Key not found"}')
+
+    monkeypatch.setattr(email_module.settings, "BREVO_API_KEY", "xkeysib-invalid-key")
+    monkeypatch.setattr(email_module.httpx, "AsyncClient", ErrorAsyncClient)
+
+    with pytest.raises(CustomAppException) as exc:
+        asyncio.run(email_module._send_email("user@example.test", "OTP Subject", "<p>123456</p>"))
+
+    assert exc.value.code == "EMAIL_SEND_FAILED"
+    assert exc.value.status_code == 500

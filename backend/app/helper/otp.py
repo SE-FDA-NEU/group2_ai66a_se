@@ -1,11 +1,12 @@
 import asyncio
 import aiosmtplib
+import httpx
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from redis.asyncio import Redis
 
 from app.core.config import settings
-from app.core.exceptions import ErrorDetail
+from app.core.exceptions import CustomAppException, ErrorDetail
 from app.core.logger import logger
 from app.schemas.otp_schema import OTPErrors
 
@@ -145,8 +146,52 @@ def _get_otp_html_content(otp: str) -> tuple[str, str]:
 """
     return subject, html
 
+async def _send_email_via_brevo(to_email: str, subject: str, html_content: str) -> None:
+    """Hàm gửi email OTP bất đồng bộ qua Brevo Transactional Email HTTP API."""
+    active_sender_email = (settings.BREVO_SENDER_EMAIL or settings.ADMIN_EMAIL or sender_email or "").strip()
+    sender_name = (settings.BREVO_SENDER_NAME or "Trakora Security").strip()
+    api_key = (settings.BREVO_API_KEY or "").strip()
+
+    headers = {
+        "accept": "application/json",
+        "api-key": api_key,
+        "content-type": "application/json",
+    }
+    payload = {
+        "sender": {"name": sender_name, "email": active_sender_email},
+        "to": [{"email": to_email}],
+        "subject": subject,
+        "htmlContent": html_content,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(settings.BREVO_API_URL, headers=headers, json=payload)
+        if response.status_code >= 400:
+            logger.error(
+                f"Brevo API trả về lỗi {response.status_code} khi gửi email OTP tới {to_email}: {response.text}"
+            )
+            raise OTPErrors.EMAIL_SEND_FAILED.throw()
+        logger.info(f"Gửi email OTP đến {to_email} qua Brevo API thành công.")
+    except (asyncio.TimeoutError, httpx.TimeoutException) as exc:
+        raise ErrorDetail(
+            "OTP_DELIVERY_UNCERTAIN",
+            504,
+            "Chưa xác định được email đã gửi hay chưa. Vui lòng kiểm tra hộp thư và chờ trước khi yêu cầu gửi lại mã.",
+        ).throw() from exc
+    except CustomAppException:
+        raise
+    except Exception as exc:
+        logger.error("Không thể gửi email OTP qua Brevo.", exc_info=True)
+        raise OTPErrors.EMAIL_SEND_FAILED.throw() from exc
+
+
 async def _send_email(to_email: str, subject: str, html_content: str) -> None:
-    """Hàm gửi email bất đồng bộ qua SMTP"""
+    """Hàm gửi email bất đồng bộ (ưu tiên Brevo HTTP API, dự phòng qua SMTP)."""
+    if settings.BREVO_API_KEY and settings.BREVO_API_KEY.strip():
+        await _send_email_via_brevo(to_email, subject, html_content)
+        return
+
     active_sender_email = settings.ADMIN_EMAIL or sender_email
     active_sender_password = settings.SMTP_PASSWORD or settings.ADMIN_PASSWORD or sender_password
 
