@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { GOOGLE_CLIENT_ID } from '../config/auth';
-import { InlinePending } from './LoadingState';
+import { SectionLoadingState } from './LoadingState';
 import styles from './GoogleAuthButton.module.css';
 interface GoogleAuthButtonProps { mode: 'login' | 'register'; onSuccess: (idToken: string) => void; onError?: (message: string) => void; isLoading?: boolean; onInteractionChange?: (pending: boolean) => void }
 export const GoogleAuthButton = ({ mode, onSuccess, onError, isLoading = false, onInteractionChange }: GoogleAuthButtonProps) => {
@@ -41,8 +41,8 @@ export const GoogleAuthButton = ({ mode, onSuccess, onError, isLoading = false, 
   };
   return <div className={styles.container}>
     <div ref={container} className={styles.googleBtnWrapper} hidden={state !== 'ready'} aria-disabled={isLoading} style={{ pointerEvents: isLoading || providerPending ? 'none' : undefined }} />
-    {providerPending && <div><InlinePending message="Đang chờ bạn chọn tài khoản Google..." /><p>Nếu bạn đã đóng cửa sổ Google, hãy tiếp tục bằng email.</p><button className={styles.fallbackBtn} type="button" onClick={() => { credentialAllowed.current = false; setProviderPending(false); callbacks.current.onInteractionChange?.(false); }}>Tiếp tục bằng email</button></div>}
-    {state === 'loading'  && <InlinePending message="Đang kết nối với Google..." />}
+    {providerPending && <div><SectionLoadingState message="Đang chờ bạn chọn tài khoản Google..." /><p>Nếu bạn đã đóng cửa sổ Google, hãy tiếp tục bằng email.</p><button className={styles.fallbackBtn} type="button" onClick={() => { credentialAllowed.current = false; setProviderPending(false); callbacks.current.onInteractionChange?.(false); }}>Tiếp tục bằng email</button></div>}
+    {state === 'loading'  && <SectionLoadingState message="Đang kết nối với Google..." />}
     {state === 'error' && <div role="alert"><p>Chưa thể tải đăng nhập Google. Bạn có thể dùng email hoặc thử kết nối lại.</p><button className={styles.fallbackBtn} type="button" disabled={isLoading} onClick={retry}>Thử kết nối lại Google</button></div>}
   </div>;
 };

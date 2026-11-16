@@ -1,4 +1,4 @@
-import { InlinePending } from './LoadingState';
+import { SectionLoadingState } from './LoadingState';
 import React, { useState } from 'react';
 import { addProductToWatchlist, WatchlistProduct } from '../api/watchlistApi';
 import { formatVnd, parseVndInput } from '../utils/currency';
@@ -78,7 +78,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <h2 className={styles.modalTitle}>Thêm sản phẩm cần theo dõi</h2>
 
-        {isSubmitting && <InlinePending message="Đang lấy thông tin sản phẩm từ sàn thương mại điện tử..." />}
+        {isSubmitting && <SectionLoadingState message="Đang lấy thông tin sản phẩm từ sàn thương mại điện tử..." />}
 
         {addError && (
           <div className={styles.errorMessage} role="alert" style={{ marginBottom: 14 }}>

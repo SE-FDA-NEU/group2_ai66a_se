@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   AlertTriangle,
   Bell,
@@ -15,7 +15,7 @@ import {
   Star,
   Target,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { formatVnd } from '../utils/currency';
 import styles from './LandingPage.module.css';
 
@@ -166,10 +166,22 @@ const VISUAL_PRODUCTS: VisualProductPreview[] = [
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const hashId = location.hash ? location.hash.replace(/^#/, '') : '';
+    const stateTarget = (location.state as { scrollTo?: string } | null)?.scrollTo;
+    const targetId = hashId || stateTarget;
+    if (!targetId) return;
+    const element = document.getElementById(targetId);
+    if (element && typeof element.scrollIntoView === 'function') {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [location.hash, location.state]);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
-    if (element) {
+    if (element && typeof element.scrollIntoView === 'function') {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };

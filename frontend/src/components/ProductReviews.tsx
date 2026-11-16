@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CustomerReview, getProductReviews, WatchlistProduct } from '../api/watchlistApi';
 import { getSafeMarketplaceUrl } from '../utils/marketplace';
+import { SectionLoadingState } from './LoadingState';
 import styles from './ProductReviews.module.css';
 
 /** Also accepts older cached product-details payloads during migration. */
@@ -110,7 +111,7 @@ export function ProductReviews({ product }: { product: WatchlistProduct }) {
         </article>;
       })}
     </div>
-    {loading && <p role="status" className={styles.note}>Đang tải đánh giá...</p>}
+    {loading && <SectionLoadingState message="Đang tải đánh giá..." />}
     {error && <div role="alert" className={styles.error}>Không thể tải đánh giá. <button type="button" onClick={() => { if (!busy.current) void load(page + 1, stars, generation.current); }}>Thử lại</button></div>}
     {!loading && !error && reviews.length === 0 && <p data-testid="empty-reviews" className={styles.empty}>{stars ? `Chưa có đánh giá ${stars} sao cho sản phẩm này.` : 'Chưa có đánh giá nào từ khách hàng cho sản phẩm này.'}</p>}
     {hasMore && <button type="button" className={styles.more} disabled={loading} onClick={() => { if (!busy.current) void load(page + 1, stars, generation.current); }}>Xem thêm đánh giá</button>}
