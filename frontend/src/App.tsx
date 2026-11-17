@@ -11,6 +11,7 @@ import OverviewPage from './pages/OverviewPage';
 import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
+import AdminPage from './pages/AdminPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import { NotificationCenter } from './components/NotificationCenter';
@@ -79,6 +80,26 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <ProductDetailPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/sales"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AdminPage />
                 </Layout>
               </ProtectedRoute>
             }

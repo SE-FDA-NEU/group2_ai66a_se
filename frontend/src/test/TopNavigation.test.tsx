@@ -7,7 +7,7 @@ import { getNotificationHistory, getUnseenNotifications, markNotificationsSeen }
 const mocks = vi.hoisted(() => ({
   auth: {
     isLoggedIn: true,
-    user: { id: 8, email: 'giaan@example.com', nickname: 'an' },
+    user: { id: 8, email: 'giaan@example.com', nickname: 'an', is_developer: false },
     logout: vi.fn(),
   },
 }));
@@ -38,7 +38,7 @@ describe('TopNavigation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.auth.isLoggedIn = true;
-    mocks.auth.user = { id: 8, email: 'giaan@example.com', nickname: 'an' };
+    mocks.auth.user = { id: 8, email: 'giaan@example.com', nickname: 'an', is_developer: false };
     vi.mocked(getNotificationHistory).mockResolvedValue([]);
     vi.mocked(getUnseenNotifications).mockResolvedValue([]);
     vi.mocked(markNotificationsSeen).mockResolvedValue();
@@ -105,6 +105,7 @@ describe('TopNavigation', () => {
       id: 8,
       email: 'a.very.long.email.address.with.more.than.fifty.characters@example.com',
       nickname: 'ân',
+      is_developer: false,
     };
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
     renderNavigation();
@@ -124,5 +125,22 @@ describe('TopNavigation', () => {
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Đánh dấu đã đọc' }));
     await waitFor(() => expect(markNotificationsSeen).toHaveBeenCalledWith([1]));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Thông báo' })).toBeInTheDocument());
+  });
+
+  it('hides Quản trị link for regular users and shows it next to Danh sách theo dõi for admins', () => {
+    renderNavigation('/watchlist');
+    expect(screen.queryByRole('link', { name: 'Quản trị' })).not.toBeInTheDocument();
+
+    cleanup();
+    mocks.auth.user = { id: 1, email: 'admin@example.com', nickname: 'Admin', is_developer: true };
+    renderNavigation('/admin/sales');
+
+    const nav = screen.getByRole('navigation', { name: 'Điều hướng chính' });
+    const links = Array.from(nav.querySelectorAll('a')).map((link) => link.textContent?.trim());
+    expect(links).toEqual(['Tổng quan', 'Danh sách theo dõi', 'Quản trị']);
+
+    const adminLink = screen.getByRole('link', { name: 'Quản trị' });
+    expect(adminLink).toHaveAttribute('href', '/admin/sales');
+    expect(adminLink).toHaveAttribute('aria-current', 'page');
   });
 });

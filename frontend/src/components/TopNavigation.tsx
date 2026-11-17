@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  ShieldCheck,
   UserRound,
   X,
 } from 'lucide-react';
@@ -68,6 +69,13 @@ export const TopNavigation: React.FC = () => {
   const displayName = getDisplayName(user?.nickname, user?.email);
   const email = user?.email || '';
   const avatarColor = getAvatarColor(String(user?.id ?? displayName));
+  const isAdmin = Boolean(user?.is_developer);
+  const navigationItems = isAdmin
+    ? [
+        ...primaryNavigation,
+        { label: 'Quản trị', to: '/admin/sales', icon: ShieldCheck, end: false },
+      ]
+    : primaryNavigation;
 
   const loadNotifications = useCallback(async () => {
     const id = ++requestId.current;
@@ -220,7 +228,11 @@ export const TopNavigation: React.FC = () => {
     navigate('/login');
   };
 
-  const activeTab = (path: string) => path === '/' ? location.pathname === '/' : location.pathname === path;
+  const activeTab = (path: string) => {
+    if (path === '/') return location.pathname === '/';
+    if (path === '/admin/sales') return location.pathname.startsWith('/admin');
+    return location.pathname === path;
+  };
 
   return (
     <header className={styles.header}>
@@ -243,13 +255,13 @@ export const TopNavigation: React.FC = () => {
         </Link>
 
         <nav className={styles.desktopNav} aria-label="Điều hướng chính">
-          {primaryNavigation.map(({ label, to, icon: Icon, end }) => (
+          {navigationItems.map(({ label, to, icon: Icon, end }) => (
             <NavLink
               key={label}
               to={to}
               end={end}
               aria-current={activeTab(to) ? 'page' : undefined}
-              className={({ isActive }) => `${styles.navLink} ${isActive && activeTab(to) ? styles.active : ''}`}
+              className={`${styles.navLink} ${activeTab(to) ? styles.active : ''}`}
             >
               <Icon size={17} aria-hidden="true" />
               <span>{label}</span>
@@ -424,13 +436,13 @@ export const TopNavigation: React.FC = () => {
               </button>
             </div>
             <nav className={styles.drawerNav} aria-label="Điều hướng chính">
-              {primaryNavigation.map(({ label, to, icon: Icon, end }) => (
+              {navigationItems.map(({ label, to, icon: Icon, end }) => (
                 <NavLink
                   key={label}
                   to={to}
                   end={end}
                   aria-current={activeTab(to) ? 'page' : undefined}
-                  className={({ isActive }) => `${styles.navLink} ${styles.drawerLink} ${isActive && activeTab(to) ? styles.active : ''}`}
+                  className={`${styles.navLink} ${styles.drawerLink} ${activeTab(to) ? styles.active : ''}`}
                   onClick={() => setIsDrawerOpen(false)}
                 >
                   <Icon size={19} aria-hidden="true" />
