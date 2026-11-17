@@ -11,6 +11,8 @@ const operationMessage = (method?: string, url = ''): string | null => {
   if (url.includes('/otp/send')) return 'Đã gửi mã xác thực đến email của bạn.';
 
   if (url.includes('/user/me')) return method.toLowerCase() === 'delete' ? 'Đã xóa tài khoản thành công.' : 'Đã cập nhật hồ sơ cá nhân.';
+  if (url.includes('/dev/set-admin')) return 'Đã cấp quyền quản trị viên thành công.';
+  if (url.includes('/dev/cleanup-expired-products')) return 'Đã dọn dẹp các sản phẩm hết hạn.';
   if (url.includes('/notifications/settings')) return 'Đã lưu cài đặt thông báo.';
   if (url.includes('/sales/trigger-alerts')) return 'Đã kích hoạt gửi cảnh báo đợt giảm giá lớn.';
   if (url.includes('/sales')) {

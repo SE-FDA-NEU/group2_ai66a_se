@@ -247,9 +247,9 @@ python backend/seed.py --init
 Để người chấm hoặc kiểm thử viên có thể trải nghiệm toàn diện hệ thống trên giao diện mà không cần cấu hình phức tạp:
 
 1. **Tài khoản Quản trị / Người dùng kiểm thử có sẵn (Seeded Account):**
-   - **Email:** Theo giá trị cấu hình `ADMIN_EMAIL` trong file `.env` (mặc định: `trakora.app@gmail.com`).
-   - **Mật khẩu:** Theo giá trị cấu hình `ADMIN_PASSWORD` trong file `.env` (mặc định: `zxfprznrtsuehsao`).
-   - *Tài khoản này được backend tự động khởi tạo khi container khởi chạy (xem [`backend/admin.py`](file:///c:/Users/YOGA/Desktop/Class/02_Software_Engineering/project/trakora/backend/admin.py)).*
+   - **Email:** Theo giá trị cấu hình `ADMIN_EMAIL` trong file `.env` (lấy tại [tài liệu cấu hình `.env` của dự án](https://docs.google.com/document/d/1wRsOefCmNf4UwL5TNZUKQH-6ogjleDFa_VwJF7GUqys/edit?tab=t.0)).
+   - **Mật khẩu:** Theo giá trị cấu hình `ADMIN_PASSWORD` trong file `.env` (lấy tại [tài liệu cấu hình `.env` của dự án](https://docs.google.com/document/d/1wRsOefCmNf4UwL5TNZUKQH-6ogjleDFa_VwJF7GUqys/edit?tab=t.0)).
+   - *Tài khoản này được backend tự động khởi tạo khi container khởi chạy (xem [`backend/admin.py`](../backend/admin.py)).*
 
 2. **Đăng nhập nhanh bằng Google OAuth:**
    - Tại trang chủ `http://localhost:3000/`, nhấn trực tiếp vào nút **"Đăng nhập bằng Google"** để đăng nhập tức thì nếu `GOOGLE_CLIENT_ID` đã được cấu hình trong `.env`.
